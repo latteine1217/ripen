@@ -47,8 +47,8 @@ struct MenuBarLabel: View {
                 if latest != shownText { shownText = latest }
             }
             .onSystemWake { model.refresh() }
-            .accessibilityLabel(Text("Ripen"))
-            .accessibilityValue(text ?? "")
+            // 狀態列按鈕只讀得到標籤（`accessibilityValue` 會被丟掉），剩餘時間要併進標籤才念得出來
+            .accessibilityLabel(text.map { Text(verbatim: "Ripen, \($0)") } ?? Text("Ripen"))
     }
 
     /// 把圖示與剩餘時間（若有）畫成一張樣板圖。
