@@ -15,16 +15,18 @@ final class AppModel {
     static let idleResetInterval: TimeInterval = 2 * 60 * 60
 
     @ObservationIgnored private let clock: any TimeSource
-    @ObservationIgnored private let configuration: CycleConfiguration
+    /// 使用者設定；階段長度與長休息間隔每次需要時才讀，改動從下一段生效。
+    @ObservationIgnored let settings: AppSettings
     private var cycle = PhaseCycle()
     private var engine: TimerEngine
     /// 這段閒置（沒有任何階段在跑，暫停也算）開始的時刻；有階段在跑時為 nil。
     @ObservationIgnored private var idleSince: Date?
 
-    init(clock: any TimeSource = SystemTimeSource(), configuration: CycleConfiguration = .standard) {
+    /// 未指定設定時用記憶體內儲存：測試與預覽不會讀寫使用者真正的設定。
+    init(clock: any TimeSource = SystemTimeSource(), settings: AppSettings = AppSettings(storage: InMemorySettingsStorage())) {
         self.clock = clock
-        self.configuration = configuration
-        engine = TimerEngine(phase: .focus, duration: configuration.duration(for: .focus))
+        self.settings = settings
+        engine = TimerEngine(phase: .focus, duration: settings.cycleConfiguration.duration(for: .focus))
         idleSince = clock.now()
     }
 
@@ -37,6 +39,7 @@ final class AppModel {
     /// 距離上次長休息已完成的專注次數。
     var completedFocusesInCycle: Int { cycle.completedFocuses }
     var longBreakInterval: Int { configuration.longBreakInterval }
+    private var configuration: CycleConfiguration { settings.cycleConfiguration }
 
     // MARK: - 完成的確立
 
@@ -48,7 +51,9 @@ final class AppModel {
     func refresh() -> PhaseCompletion? {
         let now = clock.now()
         let completion = establishCompletion(at: now)
+        if let completion { startBreakAutomatically(after: completion, now: now) }
         resetCountIfIdle(at: now)
+        applyChangedLength(at: now)
         return completion
     }
 
@@ -78,6 +83,27 @@ final class AppModel {
         } else if cycle.completedFocuses != 0 {
             cycle.resetCount()
         }
+    }
+
+    // MARK: - 設定的套用
+
+    /// 「自動開始休息」開啟時，休息從專注倒數到 0 的那一刻開始，而不是確立的時刻（ADR-0002）。
+    ///
+    /// 若照這樣算休息到現在也已結束（睡眠或鎖定很久），代表使用者不在，休息改停在起點等他。
+    private func startBreakAutomatically(after completion: PhaseCompletion, now: Date) {
+        guard completion.phase == .focus, settings.autoStartBreaks,
+              now < completion.endedAt + engine.duration
+        else { return }
+        engine.start(at: completion.endedAt)
+        idleSince = nil
+    }
+
+    /// 改階段長度從下一段生效；停在起點、還沒開始的階段不算在跑，直接換成新長度。
+    private func applyChangedLength(at now: Date) {
+        guard engine.status(at: now) == .idle,
+              engine.duration != configuration.duration(for: engine.phase)
+        else { return }
+        loadCurrentPhase()
     }
 
     // MARK: - 操作意圖

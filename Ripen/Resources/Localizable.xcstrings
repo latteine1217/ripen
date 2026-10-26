@@ -33,6 +33,22 @@
         }
       }
     },
+    "%lld min": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld min"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld 分鐘"
+          }
+        }
+      }
+    },
     "%lld of %lld focuses completed": {
       "localizations": {
         "en": {
@@ -49,6 +65,86 @@
         }
       }
     },
+    "12-Hour": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "12-Hour"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "12 小時制"
+          }
+        }
+      }
+    },
+    "24-Hour": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "24-Hour"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "24 小時制"
+          }
+        }
+      }
+    },
+    "Clock": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clock"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "時制"
+          }
+        }
+      }
+    },
+    "End Time": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "End Time"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "結束時刻"
+          }
+        }
+      }
+    },
+    "Ends at %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ends at %@"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ 結束"
+          }
+        }
+      }
+    },
     "Focus": {
       "localizations": {
         "en": {
@@ -61,6 +157,54 @@
           "stringUnit": {
             "state": "translated",
             "value": "專注"
+          }
+        }
+      }
+    },
+    "Focuses to complete before each long break": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Focuses to complete before each long break"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "每次長休息前需完成的專注次數"
+          }
+        }
+      }
+    },
+    "Follow System": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Follow System"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "跟隨系統"
+          }
+        }
+      }
+    },
+    "Length changes apply from the next phase; a phase already started keeps its length.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Length changes apply from the next phase; a phase already started keeps its length."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "長度的變更從下一段開始生效；已經開始的階段維持原本的長度。"
           }
         }
       }
@@ -240,6 +384,38 @@
           "stringUnit": {
             "state": "translated",
             "value": "開始"
+          }
+        }
+      }
+    },
+    "Start Breaks Automatically": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Start Breaks Automatically"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "自動開始休息"
+          }
+        }
+      }
+    },
+    "Timer": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Timer"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "計時"
           }
         }
       }

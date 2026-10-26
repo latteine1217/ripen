@@ -2,7 +2,7 @@ import SwiftUI
 
 @main
 struct RipenApp: App {
-    @State private var model = AppModel()
+    @State private var model = AppModel(settings: AppSettings(storage: UserDefaults.standard))
 
     var body: some Scene {
         // 單一實例的 Window（非 WindowGroup），不會有第二個主視窗（ADR-0003）
@@ -10,5 +10,9 @@ struct RipenApp: App {
             TimerPageView(model: model)
         }
         .windowResizability(.contentSize)
+
+        Settings {
+            SettingsView(settings: model.settings)
+        }
     }
 }
