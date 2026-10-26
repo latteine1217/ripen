@@ -32,13 +32,15 @@ struct FloatingWindowView: View {
         let shape = RoundedRectangle(cornerRadius: state.size.cornerRadius, style: .continuous)
         TimelineView(.periodic(from: .now, by: 0.25)) { context in
             layout
-                // 主視窗不在畫面上時也要有人刷新，倒數到 0 後畫面隨即換到下一段起點。
+                // 超時色是時間推導的值，要在 TimelineView 裡讀
+                .tint(model.displayTint)
+                // 主視窗不在畫面上時也要有人刷新，倒數到 0 後隨即送出提醒、進入超時。
                 // 與主視窗並存時重複刷新無妨：每段的完成只確立一次
                 .onChange(of: context.date) { model.refresh() }
         }
         .frame(width: size.width, height: size.height)
-        // 提醒播出時 model.phase 已是下一段，閃的是新階段色；裁成玻璃的形狀
-        .reminderFlash(model.lastReminder, tint: model.phase.tint)
+        // 提醒在倒數到 0 時播出，閃的是超時色；裁成玻璃的形狀
+        .reminderFlash(model.lastReminder, tint: model.displayTint)
         .clipShape(shape)
         .ripenGlass(in: shape, settings: model.settings)
         .contentShape(shape)
@@ -48,7 +50,7 @@ struct FloatingWindowView: View {
                 .onChanged { _ in onDrag(.changed) }
                 .onEnded { _ in onDrag(.ended) }
         )
-        .overlay { PhaseRipple(shape: shape, reminderID: model.lastReminder?.id, tint: model.phase.tint) }
+        .overlay { PhaseRipple(shape: shape, reminderID: model.lastReminder?.id, tint: model.displayTint) }
         .tint(model.phase.tint)
         .scaleEffect(state.isDismissing && !reduceMotion ? 0.85 : 1)
         .opacity(state.isDismissing ? 0 : 1)
@@ -79,7 +81,8 @@ struct FloatingWindowView: View {
                     .foregroundStyle(.secondary)
             }
             Spacer(minLength: 0)
-            Text(verbatim: CountdownFormat.string(model.remaining))
+            Text(verbatim: model.timeText)
+                .overtimeStyle(model.isOvertime)
                 .font(.system(size: 40, weight: .semibold, design: .rounded))
                 .monospacedDigit()
                 .opacity(status == .running ? 1 : 0.45)
@@ -96,14 +99,20 @@ struct FloatingWindowView: View {
     private func controls(status: TimerStatus) -> some View {
         HStack(spacing: 14) {
             switch status {
-            case .idle, .finished:
+            case .idle:
                 IslandIconButton("Start", systemImage: "play.fill", action: model.toggleStartPause)
             case .running:
                 IslandIconButton("Pause", systemImage: "pause.fill", action: model.toggleStartPause)
             case .paused:
                 IslandIconButton("Resume", systemImage: "play.fill", action: model.toggleStartPause)
             }
-            IslandIconButton("Skip", systemImage: "forward.end.fill", help: "Skip to the next phase", action: model.skip)
+            if model.isOvertime {
+                IslandIconButton(
+                    "Done", systemImage: "checkmark", help: "Finish this phase and move to the next", action: model.finish
+                )
+            } else {
+                IslandIconButton("Skip", systemImage: "forward.end.fill", help: "Skip to the next phase", action: model.skip)
+            }
             IslandIconButton(
                 "Expand into Main Window", systemImage: "arrow.up.left.and.arrow.down.right",
                 action: model.expandFloatingWindow

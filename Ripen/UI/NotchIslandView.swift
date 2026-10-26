@@ -33,7 +33,7 @@ struct NotchIslandView: View {
     var body: some View {
         TimelineView(.periodic(from: .now, by: 0.25)) { context in
             island
-                // 主視窗不在畫面上時由島刷新，倒數到 0 後畫面隨即換到下一段起點
+                // 主視窗不在畫面上時由島刷新，倒數到 0 後隨即送出提醒、進入超時
                 .onChange(of: context.date) { model.refresh() }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
@@ -51,13 +51,13 @@ struct NotchIslandView: View {
             .opacity(pulling ? 0 : 1)
             .animation(.easeOut(duration: 0.12), value: pulling)
             .frame(width: size.width, height: size.height + sag, alignment: .top)
-            // 提醒播出時 model.phase 已是下一段，閃的是新階段色；裁成島的形狀
-            .reminderFlash(model.lastReminder, tint: model.phase.tint)
+            // 提醒在倒數到 0 時播出，閃的是超時色；裁成島的形狀
+            .reminderFlash(model.lastReminder, tint: model.displayTint)
             .background(shape.fill(.black.opacity(pulling ? 0 : 1)))
             .clipShape(shape)
             .contentShape(shape)
             .environment(\.colorScheme, .dark)
-            .tint(model.phase.tint)
+            .tint(model.displayTint)
             // 減少動態效果時改為短暫的淡入淡出；下垂是位移，直接切換
             .animation(
                 reduceMotion ? .easeInOut(duration: 0.18) : .spring(response: 0.35, dampingFraction: 0.82),
@@ -69,7 +69,7 @@ struct NotchIslandView: View {
     private func content(expanded: Bool) -> some View {
         let status = model.status
         let isRunning = status == .running
-        let time = CountdownFormat.string(model.remaining)
+        let time = model.timeText
         return VStack(spacing: 0) {
             // 上排落在瀏海兩翼：收合時是進度圈與時間，展開時是階段說明與結束時刻
             HStack {
@@ -86,7 +86,7 @@ struct NotchIslandView: View {
                         .font(.system(size: 11, weight: .medium, design: .rounded))
                         .foregroundStyle(.secondary)
                 } else {
-                    timeText(time, size: 14, dimmed: !isRunning)
+                    timeText(time, size: 14, dimmed: !isRunning, isOvertime: model.isOvertime)
                 }
             }
             .padding(.horizontal, expanded ? 16 : 12)
@@ -94,9 +94,9 @@ struct NotchIslandView: View {
 
             if expanded {
                 VStack(spacing: 10) {
-                    timeText(time, size: 34, dimmed: !isRunning)
+                    timeText(time, size: 34, dimmed: !isRunning, isOvertime: model.isOvertime)
                     ProgressBar(progress: model.phaseProgress)
-                    controls(status: status)
+                    controls(status: status, isOvertime: model.isOvertime)
                     // 把手：暗示整條島可以往下拉
                     Capsule().fill(.secondary.opacity(0.6)).frame(width: 28, height: 4)
                         .accessibilityHidden(true)
@@ -114,25 +114,33 @@ struct NotchIslandView: View {
             : Text("\(Text(model.phase.title)), \(time)"))
     }
 
-    private func timeText(_ time: String, size: CGFloat, dimmed: Bool) -> some View {
+    private func timeText(_ time: String, size: CGFloat, dimmed: Bool, isOvertime: Bool) -> some View {
         Text(verbatim: time)
+            .overtimeStyle(isOvertime)
             .font(.system(size: size, weight: .semibold, design: .rounded))
             .monospacedDigit()
             .opacity(dimmed ? 0.45 : 1)
             .matchedGeometryEffect(id: "time", in: timeSpace)
     }
 
-    private func controls(status: TimerStatus) -> some View {
+    private func controls(status: TimerStatus, isOvertime: Bool) -> some View {
         HStack(spacing: 18) {
             switch status {
-            case .idle, .finished:
+            case .idle:
                 IslandIconButton("Start", systemImage: "play.fill", action: model.start)
             case .running:
                 IslandIconButton("Pause", systemImage: "pause.fill", action: model.pause)
             case .paused:
                 IslandIconButton("Resume", systemImage: "play.fill", action: model.resume)
             }
-            IslandIconButton("Skip", systemImage: "forward.end.fill", help: "Skip to the next phase", action: model.skip)
+            // 超時中「跳過」由「完成」取代（ADR-0006）
+            if isOvertime {
+                IslandIconButton(
+                    "Done", systemImage: "checkmark", help: "Finish this phase and move to the next", action: model.finish
+                )
+            } else {
+                IslandIconButton("Skip", systemImage: "forward.end.fill", help: "Skip to the next phase", action: model.skip)
+            }
             IslandIconButton("Show Main Window", systemImage: "macwindow", action: model.expandNotchIsland)
         }
     }

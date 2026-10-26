@@ -41,7 +41,7 @@ struct MenuBarLabel: View {
     var body: some View {
         let _ = shownText
         let text = Self.remainingText(for: model)
-        Image(nsImage: Self.render(text))
+        Image(nsImage: Self.render(text, isOvertime: model.isOvertime))
             .onReceive(Self.ticks) { _ in
                 model.refresh()
                 let latest = Self.remainingText(for: model)
@@ -56,35 +56,37 @@ struct MenuBarLabel: View {
     ///
     /// `MenuBarExtra` 會把標籤裡的文字轉成狀態列按鈕的標題、丟掉 `.monospacedDigit()`，
     /// 數字寬度不同時整個項目會跳動並推動旁邊的選單列項目；畫成圖片才能保留等寬數字。
-    /// 樣板圖由系統依選單列的深淺與反白上色。
+    /// 樣板圖由系統依選單列的深淺與反白上色；超時中改畫成超時色的一般圖片，深淺選單列都看得出來。
     /// 同樣的文字沿用上一張圖，標籤重算時不必重畫。
-    private static func render(_ text: String?) -> NSImage {
-        if let lastRendered, lastRendered.text == text { return lastRendered.image }
+    private static func render(_ text: String?, isOvertime: Bool) -> NSImage {
+        if let lastRendered, lastRendered.text == text, lastRendered.isOvertime == isOvertime {
+            return lastRendered.image
+        }
         let renderer = ImageRenderer(content: HStack(spacing: 4) {
             Image(systemName: "timer")
             if let text { Text(text).monospacedDigit() }
         }
         .font(.system(size: NSFont.systemFontSize))
-        .foregroundStyle(.black))
+        .foregroundStyle(isOvertime ? Color.overtime : .black))
         renderer.scale = NSScreen.main?.backingScaleFactor ?? 2
         let image = renderer.nsImage ?? NSImage()
-        image.isTemplate = true
-        lastRendered = (text, image)
+        image.isTemplate = !isOvertime
+        lastRendered = (text, isOvertime, image)
         return image
     }
 
-    private static var lastRendered: (text: String?, image: NSImage)?
+    private static var lastRendered: (text: String?, isOvertime: Bool, image: NSImage)?
 
-    /// 只有在跑或暫停時才顯示剩餘時間；停在起點或剛倒數到 0（待確立）時只顯示圖示。
+    /// 只有在跑或暫停時才顯示時間（超時中為 `+mm:ss`）；停在起點時只顯示圖示。
     static func remainingText(for model: AppModel) -> String? {
         switch model.status {
-        case .running, .paused: CountdownFormat.string(model.remaining)
-        case .idle, .finished: nil
+        case .running, .paused: model.timeText
+        case .idle: nil
         }
     }
 }
 
-/// 選單列項目的選單：開始／暫停、跳過、顯示主視窗、設定、退出。
+/// 選單列項目的選單：開始／暫停、跳過（超時中為完成）、顯示主視窗、設定、退出。
 private struct MenuBarMenu: View {
     let model: AppModel
     let mainWindow: MainWindowBridge
@@ -94,7 +96,12 @@ private struct MenuBarMenu: View {
     var body: some View {
         // 標題依狀態變，動作與全域熱鍵共用同一個意圖
         Button(primaryTitle(for: model.status), action: model.toggleStartPause)
-        Button("Skip", action: model.skip)
+        // 選單隨標籤的時間文字每秒重建，超時與否會即時反映
+        if model.isOvertime {
+            Button("Done", action: model.finish)
+        } else {
+            Button("Skip", action: model.skip)
+        }
 
         Divider()
 
@@ -110,7 +117,7 @@ private struct MenuBarMenu: View {
 
     private func primaryTitle(for status: TimerStatus) -> LocalizedStringKey {
         switch status {
-        case .idle, .finished: "Start"
+        case .idle: "Start"
         case .running: "Pause"
         case .paused: "Resume"
         }

@@ -22,8 +22,12 @@ extension FrameDump {
             ("island-expanded-break", true, { model, clock in
                 model.start()
                 clock.current += 25 * 60
+                model.finish()
                 model.start()
             }),
+            // 超時 1:23（再加上統一的 48 秒）：+02:11 與超時色、「完成」按鈕
+            ("island-collapsed-overtime", false, { model, clock in model.start(); clock.current += 25 * 60 + 83 }),
+            ("island-expanded-overtime", true, { model, clock in model.start(); clock.current += 25 * 60 + 83 }),
         ]
         return states.map { state in
             Scene(name: state.name, size: CGSize(width: 420, height: 200)) { _ in
@@ -32,7 +36,7 @@ extension FrameDump {
                 // 第二次專注、剩 24:12：同時看得到「2/4」與進度
                 model.start()
                 clock.current += 25 * 60
-                model.refresh()
+                model.finish()
                 model.skip()
                 state.setUp(model, clock)
                 clock.current += 48

@@ -5,10 +5,16 @@ import AppKit
 final class AppLifecycleDelegate: NSObject, NSApplicationDelegate {
     /// 點 Dock 圖示時呼叫；回傳 true 時交給系統預設處理（把已在畫面上的主視窗帶到前面）。
     var onReopen: (() -> Bool)?
+    /// App 結束前（⌘Q、登出）同步呼叫；回傳後行程就會結束，裡面的工作必須同步完成。
+    var onTerminate: (() -> Void)?
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { false }
 
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
         onReopen?() ?? true
+    }
+
+    func applicationWillTerminate(_ notification: Notification) {
+        onTerminate?()
     }
 }

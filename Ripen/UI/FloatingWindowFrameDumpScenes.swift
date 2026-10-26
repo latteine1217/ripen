@@ -14,6 +14,7 @@ extension FrameDump {
             ("floating-medium-break", { model, clock in
                 model.start()
                 clock.current += 25 * 60
+                model.finish()
                 model.start()
             }),
         ]
@@ -27,7 +28,7 @@ extension FrameDump {
                 // 第二次專注：同時看得到「2/4」與進度
                 model.start()
                 clock.current += 25 * 60
-                model.refresh()
+                model.finish()
                 model.skip()
                 state.setUp(model, clock)
                 clock.current += 48

@@ -11,6 +11,7 @@ final class SystemUserPresence: UserPresence {
         case systemAsleep, screensAsleep, screenLocked, screenSaver, sessionInactive
     }
 
+    var onLeave: (@MainActor () -> Void)?
     var onReturn: (@MainActor () -> Void)?
     var isAway: Bool { !reasons.isEmpty }
 
@@ -49,6 +50,8 @@ final class SystemUserPresence: UserPresence {
         let wasAway = isAway
         if away { reasons.insert(reason) } else { reasons.remove(reason) }
         logger.debug("\(reason.rawValue, privacy: .public) away=\(away) remaining=\(self.reasons.map(\.rawValue), privacy: .public)")
+        // 離開的通知在睡眠或鎖定之前送達，此時的「現在」就是離開的時刻
+        if !wasAway, isAway { onLeave?() }
         if wasAway, !isAway { onReturn?() }
     }
 }
