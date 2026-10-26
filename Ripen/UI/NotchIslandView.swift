@@ -6,6 +6,10 @@ import SwiftUI
 final class NotchIslandState {
     var notch: NotchFrame
     var isExpanded = false
+    /// 滑鼠在島上：底部輕微下垂，暗示可以往下拉（spec #1 user story 67）。
+    var isHovering = false
+    /// 正在被拉成水珠：黑底由 overlay 的液體接手，內容原地淡出（#12）。
+    var isPulling = false
 
     init(notch: NotchFrame, isExpanded: Bool = false) {
         self.notch = notch
@@ -23,8 +27,8 @@ struct NotchIslandView: View {
     /// 收合時翼上的時間與展開時的大字時間是同一個元素，展開時平滑移位而不是消失重現。
     @Namespace private var timeSpace
 
-    private static let collapsedRadius: CGFloat = 12
-    private static let expandedRadius: CGFloat = 22
+    /// 島下緣的圓角；拉出的液體從同樣的圓角開始收攏。
+    static func cornerRadius(expanded: Bool) -> CGFloat { expanded ? 22 : 12 }
 
     var body: some View {
         TimelineView(.periodic(from: .now, by: 0.25)) { context in
@@ -37,26 +41,29 @@ struct NotchIslandView: View {
 
     private var island: some View {
         let expanded = state.isExpanded
+        let pulling = state.isPulling
         let size = NotchGeometry.islandSize(notch: state.notch, expanded: expanded)
-        let shape = UnevenRoundedRectangle(
-            bottomLeadingRadius: expanded ? Self.expandedRadius : Self.collapsedRadius,
-            bottomTrailingRadius: expanded ? Self.expandedRadius : Self.collapsedRadius,
-            style: .continuous
-        )
+        let sag = state.isHovering && !pulling ? NotchGeometry.hoverSag : 0
+        let radius = Self.cornerRadius(expanded: expanded)
+        let shape = UnevenRoundedRectangle(bottomLeadingRadius: radius, bottomTrailingRadius: radius, style: .continuous)
         return content(expanded: expanded)
-            .frame(width: size.width, height: size.height, alignment: .top)
+            // 拉動時內容原地淡出、不跟著水珠走（瀏海島原型）
+            .opacity(pulling ? 0 : 1)
+            .animation(.easeOut(duration: 0.12), value: pulling)
+            .frame(width: size.width, height: size.height + sag, alignment: .top)
             // 提醒播出時 model.phase 已是下一段，閃的是新階段色；裁成島的形狀
             .reminderFlash(model.lastReminder, tint: model.phase.tint)
-            .background(shape.fill(.black))
+            .background(shape.fill(.black.opacity(pulling ? 0 : 1)))
             .clipShape(shape)
             .contentShape(shape)
             .environment(\.colorScheme, .dark)
             .tint(model.phase.tint)
-            // 減少動態效果時改為短暫的淡入淡出
+            // 減少動態效果時改為短暫的淡入淡出；下垂是位移，直接切換
             .animation(
                 reduceMotion ? .easeInOut(duration: 0.18) : .spring(response: 0.35, dampingFraction: 0.82),
                 value: expanded
             )
+            .animation(reduceMotion ? nil : .spring(response: 0.3, dampingFraction: 0.7), value: sag)
     }
 
     private func content(expanded: Bool) -> some View {
@@ -90,7 +97,7 @@ struct NotchIslandView: View {
                     timeText(time, size: 34, dimmed: !isRunning)
                     ProgressBar(progress: progress)
                     controls(status: status)
-                    // 把手：暗示整條島可以往下拉（拉出在 #12）
+                    // 把手：暗示整條島可以往下拉
                     Capsule().fill(.secondary.opacity(0.6)).frame(width: 28, height: 4)
                         .accessibilityHidden(true)
                 }

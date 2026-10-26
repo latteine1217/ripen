@@ -24,8 +24,8 @@ final class MainWindowBridge {
         installCloseInterceptor(on: window)
     }
 
-    /// 已在畫面上時只帶到最前面。
-    func show() {
+    /// 已在畫面上時只帶到最前面。`fadeDuration` 是隱藏中淡入的長度；液體過場結尾與 overlay 交叉淡化時較短。
+    func show(fadeDuration: TimeInterval = PresentationFade.duration) {
         guard let window else { return }
         generation += 1
         // SwiftUI 若換過 delegate，重新接上攔截
@@ -36,7 +36,7 @@ final class MainWindowBridge {
         NSApp.activate()
         guard wasHidden else { return }
         NSAnimationContext.runAnimationGroup { context in
-            context.duration = PresentationFade.duration
+            context.duration = fadeDuration
             window.animator().alphaValue = 1
         }
     }

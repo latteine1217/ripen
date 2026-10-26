@@ -16,6 +16,8 @@ final class NotchIslandController {
 
     private let model: AppModel
     private let state: NotchIslandState
+    /// 往下拉成水珠與拉出過場（#12）。
+    private let puller: NotchPullController
     private var panel: NotchIslandPanel?
     private var displayID: CGDirectDisplayID?
     private var mouseMonitors: [Any] = []
@@ -35,19 +37,23 @@ final class NotchIslandController {
     init(model: AppModel) {
         self.model = model
         // App 啟動時可能還拿不到螢幕；真正的瀏海在 show(on:) 依所在螢幕算出
-        state = NotchIslandState(notch: NotchFrame(rect: .zero, isSimulated: true))
+        let state = NotchIslandState(notch: NotchFrame(rect: .zero, isSimulated: true))
+        self.state = state
+        puller = NotchPullController(model: model, state: state)
         observeReminders()
     }
 
     /// 在 `screen` 的瀏海處淡入收合的島。
     func show(on screen: NSScreen) {
         generation += 1
+        puller.cancel()
         displayID = screen.displayID
         state.notch = NotchGeometry.notch(for: screen.metrics)
         setExpanded(false, animated: false)
         hoverArmed = false
+        state.isHovering = false
         let panel = self.panel ?? makePanel()
-        panel.setFrame(NotchGeometry.islandFrame(notch: state.notch, expanded: false), display: true)
+        panel.setFrame(NotchGeometry.panelFrame(notch: state.notch, expanded: false), display: true)
         installMonitors()
         guard !panel.isVisible || panel.alphaValue < 1 else { return }
         if !panel.isVisible { panel.alphaValue = 0 }
@@ -77,6 +83,34 @@ final class NotchIslandController {
         }
     }
 
+    /// 瀏海島 → 主視窗的拉出過場（#12）。拖曳放開時從手上的水珠接續，否則（「展開」按鈕、
+    /// Dock、選單列）先自動拉成水珠；減少動態效果時島淡出、真視窗淡入。
+    ///
+    /// - Parameter reveal: 讓主視窗以給定長度淡入。
+    func pullOut(into window: NSWindow, reveal: @escaping @MainActor (TimeInterval) -> Void) {
+        guard let panel, panel.isVisible, let screen = currentScreen,
+              !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion else {
+            puller.fadeAway(duration: PresentationFade.duration)
+            hide()
+            reveal(PresentationFade.duration)
+            return
+        }
+        generation += 1
+        let current = generation
+        removeMonitors()
+        cancelWork()
+        puller.pullOut(into: window, panel: panel, screen: screen, removeIsland: { [weak self] in
+            guard let self, self.generation == current else { return }
+            panel.orderOut(nil)
+            self.state.isHovering = false
+            self.setExpanded(false, animated: false)
+        }, reveal: reveal)
+    }
+
+    private var currentScreen: NSScreen? {
+        NSScreen.screens.first { $0.displayID == displayID }
+    }
+
     // MARK: - panel
 
     private func makePanel() -> NotchIslandPanel {
@@ -99,7 +133,7 @@ final class NotchIslandController {
         let screen = NSScreen.screens.first { $0.displayID == displayID } ?? NSScreen.main ?? NSScreen.screens[0]
         displayID = screen.displayID
         state.notch = NotchGeometry.notch(for: screen.metrics)
-        panel?.setFrame(NotchGeometry.islandFrame(notch: state.notch, expanded: state.isExpanded), display: true)
+        panel?.setFrame(NotchGeometry.panelFrame(notch: state.notch, expanded: state.isExpanded), display: true)
     }
 
     /// 展開時先把 panel 撐到展開的大小再播動畫；收回則等動畫播完才縮 panel。
@@ -107,7 +141,7 @@ final class NotchIslandController {
     private func setExpanded(_ expanded: Bool, animated: Bool = true) {
         shrinkWork?.cancel()
         if expanded {
-            panel?.setFrame(NotchGeometry.islandFrame(notch: state.notch, expanded: true), display: true)
+            panel?.setFrame(NotchGeometry.panelFrame(notch: state.notch, expanded: true), display: true)
         }
         if animated {
             state.isExpanded = expanded
@@ -120,7 +154,7 @@ final class NotchIslandController {
         let notch = state.notch
         let shrink = { [weak self] in
             guard let self, !self.state.isExpanded else { return }
-            self.panel?.setFrame(NotchGeometry.islandFrame(notch: notch, expanded: false), display: true)
+            self.panel?.setFrame(NotchGeometry.panelFrame(notch: notch, expanded: false), display: true)
         }
         if animated {
             shrinkWork = Task { [weak self] in
@@ -152,6 +186,21 @@ final class NotchIslandController {
         }) {
             mouseMonitors.append(monitor)
         }
+        // 島的 panel 不搶焦點，但按在上面的事件仍送到本 App，本地監聽收得到
+        if let monitor = NSEvent.addLocalMonitorForEvents(matching: .leftMouseDown, handler: { [weak self] event in
+            MainActor.assumeIsolated { self?.mouseDown(in: event.window) }
+            return event
+        }) {
+            mouseMonitors.append(monitor)
+        }
+    }
+
+    /// 在島上按下：交給拉出判斷是點擊還是往下拉。
+    private func mouseDown(in window: NSWindow?) {
+        guard let panel, window === panel, let screen = currentScreen,
+              NotchGeometry.islandFrame(notch: state.notch, expanded: state.isExpanded)
+                  .contains(NSEvent.mouseLocation) else { return }
+        puller.mouseDown(panel: panel, screen: screen)
     }
 
     private func removeMonitors() {
@@ -160,9 +209,12 @@ final class NotchIslandController {
     }
 
     private func mouseMoved() {
-        guard isVisible, !announcing else { return }
+        // 拉動中與過場中島的形狀由液體決定，hover 不插手
+        guard isVisible, !puller.isActive else { return }
         let frame = NotchGeometry.islandFrame(notch: state.notch, expanded: state.isExpanded)
         let inside = frame.insetBy(dx: -2, dy: -2).contains(NSEvent.mouseLocation)
+        if state.isHovering != inside { state.isHovering = inside }
+        guard !announcing else { return }
         if inside {
             guard hoverArmed, !state.isExpanded else {
                 if state.isExpanded { cancelHover() }
@@ -190,6 +242,8 @@ final class NotchIslandController {
             try? await Task.sleep(for: delay)
             guard !Task.isCancelled, let self else { return }
             self.scheduledTarget = nil
+            // 等待期間開始拉了：島的形狀交給液體
+            guard !self.puller.isActive else { return }
             self.setExpanded(expanded)
         }
     }
@@ -221,7 +275,8 @@ final class NotchIslandController {
     }
 
     private func announcePhaseChange() {
-        guard isVisible else { return }
+        // 拉動中不展開：閃色仍由島的 view 播放
+        guard isVisible, !puller.isActive else { return }
         cancelHover()
         announceWork?.cancel()
         announcing = true
