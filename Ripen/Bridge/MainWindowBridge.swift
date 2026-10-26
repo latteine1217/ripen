@@ -42,12 +42,13 @@ final class MainWindowBridge {
     }
 
     /// 淡出後 `orderOut` 而不是關閉：保留 view 狀態，SwiftUI 也不會當成視窗被關掉。
-    func hide() {
+    /// `fadeDuration` 在收進瀏海時較短，與 overlay 的第一格交叉淡化。
+    func hide(fadeDuration: TimeInterval = PresentationFade.duration) {
         guard let window, window.isVisible else { return }
         generation += 1
         let current = generation
         NSAnimationContext.runAnimationGroup { context in
-            context.duration = PresentationFade.duration
+            context.duration = fadeDuration
             window.animator().alphaValue = 0
         } completionHandler: { [weak self] in
             MainActor.assumeIsolated {

@@ -13,11 +13,17 @@ final class NotchIslandController {
     private static let announceDuration: Duration = .seconds(3)
     /// 收回動畫播完才把 panel 縮回收合的大小；太早縮會切掉還在收的島。
     private static let shrinkDelay: Duration = .milliseconds(500)
+    /// 真島接手後內容淡入、再撤掉 overlay 前的等待（瀏海島原型）。
+    private static let handOffDelay: Duration = .milliseconds(33)
+    private static let overlayLinger: Duration = .milliseconds(150)
 
     private let model: AppModel
     private let state: NotchIslandState
     /// 往下拉成水珠與拉出過場（#12）。
     private let puller: NotchPullController
+    /// 收進瀏海的過場正在播放的 overlay，與它結尾的交接工作（#13）。
+    private var collapsing: TransitionOverlay?
+    private var handOffWork: Task<Void, Never>?
     private var panel: NotchIslandPanel?
     private var displayID: CGDirectDisplayID?
     private var mouseMonitors: [Any] = []
@@ -45,15 +51,9 @@ final class NotchIslandController {
 
     /// 在 `screen` 的瀏海處淡入收合的島。
     func show(on screen: NSScreen) {
+        cancelCollapse()
         generation += 1
-        puller.cancel()
-        displayID = screen.displayID
-        state.notch = NotchGeometry.notch(for: screen.metrics)
-        setExpanded(false, animated: false)
-        hoverArmed = false
-        state.isHovering = false
-        let panel = self.panel ?? makePanel()
-        panel.setFrame(NotchGeometry.panelFrame(notch: state.notch, expanded: false), display: true)
+        let panel = prepare(on: screen)
         installMonitors()
         guard !panel.isVisible || panel.alphaValue < 1 else { return }
         if !panel.isVisible { panel.alphaValue = 0 }
@@ -65,6 +65,7 @@ final class NotchIslandController {
     }
 
     func hide() {
+        cancelCollapse()
         guard let panel, panel.isVisible else { return }
         generation += 1
         let current = generation
@@ -95,6 +96,7 @@ final class NotchIslandController {
             reveal(PresentationFade.duration)
             return
         }
+        cancelCollapse()
         generation += 1
         let current = generation
         removeMonitors()
@@ -105,6 +107,92 @@ final class NotchIslandController {
             self.state.isHovering = false
             self.setExpanded(false, animated: false)
         }, reveal: reveal)
+    }
+
+    /// 主視窗 → 瀏海島的吸入過場（#13），拉出的反向：主視窗在 overlay 中縮成貼著瀏海的水珠、
+    /// 被吸進瀏海攤開成島，最後真島接手、內容淡入。減少動態效果時主視窗淡出、島淡入。
+    ///
+    /// 收進後游標要先離開島一次才會 hover 展開（`prepare` 解除 `hoverArmed`）。
+    /// - Parameter dismiss: 讓主視窗以給定長度淡出。
+    func collapse(from window: NSWindow, on screen: NSScreen, dismiss: @escaping @MainActor (TimeInterval) -> Void) {
+        guard window.isVisible, !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion else {
+            show(on: screen)
+            dismiss(PresentationFade.duration)
+            return
+        }
+        cancelCollapse()
+        generation += 1
+        let current = generation
+        let panel = prepare(on: screen)
+        // 真島出現時先不畫黑底與內容，由 overlay 的實心島墊在下面；交接後才換回來
+        withTransaction(Self.instant) { state.isPulling = true }
+
+        let overlay = TransitionOverlay(screen: screen)
+        collapsing = overlay
+        let from = overlay.local(window.frame)
+        let notch = overlay.local(state.notch.rect)
+        let islandSize = NotchGeometry.islandSize(notch: state.notch, expanded: false)
+        let radius = NotchIslandView.cornerRadius(expanded: false)
+        let snapshot = window.themeFrameSnapshot()
+        overlay.show(TransitionHost(progress: overlay.progress) { t in
+            CollapseView(t: t, window: from, snapshot: snapshot, notch: notch, islandSize: islandSize,
+                         baseRadius: radius)
+        })
+        // overlay 第一格就是視窗快照，真視窗在它下面淡出
+        dismiss(NotchPullController.crossFadeDuration)
+        let c = CollapseMorph.curve
+        overlay.play(.timingCurve(c.x1, c.y1, c.x2, c.y2, duration: CollapseMorph.duration)) { [weak self] in
+            guard let self, self.generation == current else { return }
+            self.handOff(from: overlay, to: panel, generation: current)
+        }
+    }
+
+    /// overlay 最後一格就是實心島：真島（透明底、無內容）先排到上層，下一格換回黑底並淡入內容，
+    /// 黑底畫出來之後才撤 overlay，交接時不會露出空白。
+    private func handOff(from overlay: TransitionOverlay, to panel: NotchIslandPanel, generation current: Int) {
+        panel.alphaValue = 1
+        panel.orderFrontRegardless()
+        installMonitors()
+        handOffWork = Task { [weak self] in
+            try? await Task.sleep(for: Self.handOffDelay)
+            guard !Task.isCancelled, let self, self.generation == current else { return }
+            self.state.isPulling = false
+            try? await Task.sleep(for: Self.overlayLinger)
+            guard !Task.isCancelled, self.generation == current else { return }
+            overlay.close()
+            self.collapsing = nil
+        }
+    }
+
+    /// 撤掉播到一半的收進過場（被其他形態變化取代時）。呼叫端之後才記下新的 `generation`：
+    /// 這裡加一讓 overlay 動畫完成的回呼失效，`close()` 本身停不了它。
+    private func cancelCollapse() {
+        handOffWork?.cancel()
+        handOffWork = nil
+        guard let collapsing else { return }
+        generation += 1
+        collapsing.close()
+        self.collapsing = nil
+        withTransaction(Self.instant) { state.isPulling = false }
+    }
+
+    /// 島回到收合、hover 未解除的起點，panel 擺到 `screen` 的瀏海；不顯示。
+    private func prepare(on screen: NSScreen) -> NotchIslandPanel {
+        puller.cancel()
+        displayID = screen.displayID
+        state.notch = NotchGeometry.notch(for: screen.metrics)
+        setExpanded(false, animated: false)
+        hoverArmed = false
+        state.isHovering = false
+        let panel = self.panel ?? makePanel()
+        panel.setFrame(NotchGeometry.panelFrame(notch: state.notch, expanded: false), display: true)
+        return panel
+    }
+
+    private static var instant: Transaction {
+        var transaction = Transaction()
+        transaction.disablesAnimations = true
+        return transaction
     }
 
     private var currentScreen: NSScreen? {
@@ -146,9 +234,7 @@ final class NotchIslandController {
         if animated {
             state.isExpanded = expanded
         } else {
-            var instant = Transaction()
-            instant.disablesAnimations = true
-            withTransaction(instant) { state.isExpanded = expanded }
+            withTransaction(Self.instant) { state.isExpanded = expanded }
         }
         guard !expanded else { return }
         let notch = state.notch

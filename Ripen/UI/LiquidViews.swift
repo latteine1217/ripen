@@ -132,12 +132,15 @@ struct DropMorphView: View {
     let snapshot: NSImage?
     /// 瀏海；模擬的瀏海在水珠離開後跟著淡出，實體瀏海上畫黑色看不出差別。
     let notch: CGRect
+    /// 水平位置的進度（見 `DropMorph`）；吸入時領先 t。
+    var horizontal: CGFloat?
 
     /// 系統視窗圓角的近似值；結尾會與真視窗交叉淡化，不需精確。
     static let windowRadius: CGFloat = 16
 
     var body: some View {
-        let m = DropMorph(from: from, fromRadius: fromRadius, to: to, toRadius: Self.windowRadius, t: t)
+        let m = DropMorph(from: from, fromRadius: fromRadius, to: to, toRadius: Self.windowRadius, t: t,
+                          horizontal: horizontal)
         ZStack(alignment: .topLeading) {
             Rectangle().fill(.black)
                 .frame(width: notch.width, height: notch.height)

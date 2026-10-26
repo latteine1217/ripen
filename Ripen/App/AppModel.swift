@@ -214,6 +214,9 @@ final class AppModel {
     /// 主視窗的紅色按鈕（ADR-0001）。
     func closeMainWindow() { apply(.closeMainWindow) }
 
+    /// 把主視窗拖到瀏海附近放開。
+    func collapseIntoNotch() { apply(.collapseIntoNotch) }
+
     /// 拉出瀏海島或按島上的「展開」。
     func expandNotchIsland() { apply(.expandNotchIsland) }
 

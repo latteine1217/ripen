@@ -18,20 +18,20 @@ extension FrameDump {
         ]
     }
 
-    private static let builtIn = ScreenMetrics(
+    static let builtIn = ScreenMetrics(
         frame: CGRect(x: 0, y: 0, width: 1470, height: 956),
         visibleFrame: CGRect(x: 0, y: 0, width: 1470, height: 924),
         safeAreaTop: 32, auxiliaryTopLeftWidth: 645.5, auxiliaryTopRightWidth: 645.5
     )
     /// 輸出的區域，全域座標（左下原點）：以瀏海為中心、貼螢幕頂端。
-    private static let crop = CGRect(x: 735 - 400, y: 956 - 760, width: 800, height: 760)
+    static let crop = CGRect(x: 735 - 400, y: 956 - 760, width: 800, height: 760)
     /// 拖曳的格數；最後一格超過門檻。
     private static let dragFrames = 23
     private static let dragStep: CGFloat = 5
     /// 過場的格數：0.49 秒以 60Hz 取樣，進度套用與實際相同的曲線。
     private static let morphFrames = 30
 
-    private static var notch: NotchFrame { NotchGeometry.notch(for: builtIn) }
+    static var notch: NotchFrame { NotchGeometry.notch(for: builtIn) }
 
     /// 第 1 格拉 1pt（剛過拖曳門檻、與靜止的島交接），之後每格多拉 5pt。
     private static func dragPull(_ index: Int) -> CGFloat {
@@ -78,7 +78,7 @@ extension FrameDump {
             .frame(width: crop.width, height: crop.height, alignment: .top)
     }
 
-    private static func stage(@ViewBuilder _ content: () -> some View) -> some View {
+    static func stage(@ViewBuilder _ content: () -> some View) -> some View {
         ZStack(alignment: .top) {
             Color(white: 0.85)
             Rectangle().fill(.black).frame(width: 179, height: 32)
@@ -88,7 +88,7 @@ extension FrameDump {
     }
 
     /// 主視窗快照的替身：深色標題列與淺色內容，看得出淡入的時機。
-    private static var windowPlaceholder: NSImage? {
+    static var windowPlaceholder: NSImage? {
         let view = VStack(spacing: 0) {
             Color(white: 0.25).frame(height: 32)
             Color(white: 0.6)

@@ -18,7 +18,7 @@ extension NSScreen {
     }
 }
 
-/// 淡入淡出的形態過場（收進瀏海的液體過場在 #13；減少動態效果時的拉出）的長度；減少動態效果時縮短（spec #1：0.15–0.2 秒）。
+/// 淡入淡出的形態過場（含減少動態效果時的收進瀏海與拉出）的長度；減少動態效果時縮短（spec #1：0.15–0.2 秒）。
 enum PresentationFade {
     @MainActor static var duration: TimeInterval {
         NSWorkspace.shared.accessibilityDisplayShouldReduceMotion ? 0.15 : 0.2
