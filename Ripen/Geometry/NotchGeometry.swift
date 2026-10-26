@@ -27,6 +27,8 @@ enum NotchGeometry {
     static let expandedMinWidth: CGFloat = 360
     /// 展開時瀏海下方的內容高度：上排說明之外的大字時間、進度條、按鈕與把手。
     static let expandedExtraHeight: CGFloat = 124
+    /// 滑鼠移上去時島底部下垂的量，暗示可以往下拉（spec #1 user story 67）。
+    static let hoverSag: CGFloat = 4
 
     static func notch(for screen: ScreenMetrics) -> NotchFrame {
         let frame = screen.frame
@@ -64,5 +66,11 @@ enum NotchGeometry {
             x: notch.rect.midX - size.width / 2, y: notch.rect.maxY - size.height,
             width: size.width, height: size.height
         )
+    }
+
+    /// 島的 panel：島的框往下多留下垂的空間。透明區只有幾 pt，不會擋到下方的點擊。
+    static func panelFrame(notch: NotchFrame, expanded: Bool) -> CGRect {
+        let island = islandFrame(notch: notch, expanded: expanded)
+        return CGRect(x: island.minX, y: island.minY - hoverSag, width: island.width, height: island.height + hoverSag)
     }
 }

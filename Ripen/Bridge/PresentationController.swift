@@ -3,13 +3,15 @@ import os
 
 /// 依 `AppModel.presentation` 顯示或隱藏主視窗與瀏海島；本身不決定形態（ADR-0003）。
 ///
-/// 過場目前是淡入淡出；液體過場（#12、#13）換掉 `apply` 裡的顯示與隱藏。
+/// 瀏海島 → 主視窗是液體的拉出過場（#12）；其餘方向目前是淡入淡出（收進瀏海在 #13）。
 @MainActor
 final class PresentationController {
     let mainWindow = MainWindowBridge()
     private let model: AppModel
     private let island: NotchIslandController
     private let logger = Logger(subsystem: "com.latteine.ripen", category: "presentation")
+    /// 上一次套用到畫面上的形態；用來判斷過場的方向。
+    private var applied = Presentation.mainWindowOnly
 
     init(model: AppModel) {
         self.model = model
@@ -41,6 +43,12 @@ final class PresentationController {
     private func apply() {
         let presentation = model.presentation
         logger.debug("apply \(String(describing: presentation), privacy: .public)")
+        let previous = applied
+        applied = presentation
+        if previous.showsNotchIsland, presentation.showsMainWindow, let window = mainWindow.window {
+            island.pullOut(into: window) { [weak self] fade in self?.mainWindow.show(fadeDuration: fade) }
+            return
+        }
         if presentation.showsNotchIsland, !island.isVisible {
             // 收進主視窗所在的那台螢幕的瀏海
             let screen = mainWindow.window?.screen ?? NSScreen.main ?? NSScreen.screens[0]
