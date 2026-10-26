@@ -16,14 +16,21 @@ final class AppModel {
 
     @ObservationIgnored private let clock: any TimeSource
     @ObservationIgnored private let configuration: CycleConfiguration
+    /// 完成的專注紀錄，統計頁由此彙總；本身可觀察。
+    @ObservationIgnored let focusLog: FocusLog
     private var cycle = PhaseCycle()
     private var engine: TimerEngine
     /// 這段閒置（沒有任何階段在跑，暫停也算）開始的時刻；有階段在跑時為 nil。
     @ObservationIgnored private var idleSince: Date?
 
-    init(clock: any TimeSource = SystemTimeSource(), configuration: CycleConfiguration = .standard) {
+    init(
+        clock: any TimeSource = SystemTimeSource(),
+        configuration: CycleConfiguration = .standard,
+        focusLog: FocusLog = FocusLog()
+    ) {
         self.clock = clock
         self.configuration = configuration
+        self.focusLog = focusLog
         engine = TimerEngine(phase: .focus, duration: configuration.duration(for: .focus))
         idleSince = clock.now()
     }
@@ -61,6 +68,9 @@ final class AppModel {
             phase: engine.phase, startedAt: startedAt, endedAt: endedAt, duration: engine.duration
         )
         // 完成的副作用（統計、提醒）接在這裡：intent 會丟棄 refresh() 的回傳值，只有這裡保證每段恰好一次
+        if completion.phase == .focus {
+            focusLog.append(FocusRecord(startedAt: startedAt, duration: completion.duration))
+        }
         cycle.advance(completed: true, longBreakInterval: configuration.longBreakInterval)
         loadCurrentPhase()
         // 閒置從倒數到 0 的那一刻算起，而不是確立的時刻（可能在睡眠很久之後）
