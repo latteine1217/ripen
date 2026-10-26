@@ -4,7 +4,10 @@ import SwiftUI
 struct RipenApp: App {
     @State private var model = AppModel(
         settings: AppSettings(storage: UserDefaults.standard),
-        focusLog: FocusLog(storage: JSONFileFocusLogStorage.standard)
+        focusLog: FocusLog(storage: JSONFileFocusLogStorage.standard),
+        presence: SystemUserPresence(),
+        reminderSound: SystemReminderSound(),
+        alarm: TimerPhaseEndAlarm()
     )
 
     var body: some Scene {
