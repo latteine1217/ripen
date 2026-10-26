@@ -607,6 +607,70 @@
           }
         }
       }
+    },
+    "Appearance": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Appearance"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "外觀"
+          }
+        }
+      }
+    },
+    "Tint Opacity": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tint Opacity"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "底色不透明度"
+          }
+        }
+      }
+    },
+    "Background Blur": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Background Blur"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "背景模糊"
+          }
+        }
+      }
+    },
+    "Tint opacity only changes the tint over the blur. Turn off background blur to see the desktop clearly through the glass.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tint opacity only changes the tint over the blur. Turn off background blur to see the desktop clearly through the glass."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "底色不透明度只調整模糊層上方的底色。關閉背景模糊後，可以透過玻璃清楚看到桌面。"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

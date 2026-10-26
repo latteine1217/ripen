@@ -37,6 +37,8 @@ struct MainWindowView: View {
         }
         // 提醒播出時 model.phase 已是下一段，閃的是新階段色
         .reminderFlash(model.lastReminder, tint: model.phase.tint)
+        .ripenGlass(settings: model.settings)
+        .glassWindow()
     }
 }
 
