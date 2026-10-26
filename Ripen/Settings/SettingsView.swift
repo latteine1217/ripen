@@ -8,6 +8,7 @@ struct SettingsView: View {
     var body: some View {
         Form {
             TimerSettingsSection(settings: settings)
+            AppearanceSettingsSection(settings: settings)
         }
         .formStyle(.grouped)
         .frame(width: 440)

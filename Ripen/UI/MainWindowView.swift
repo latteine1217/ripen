@@ -35,6 +35,8 @@ struct MainWindowView: View {
             // 減少動態效果時直接切換，不做淡入淡出
             .animation(reduceMotion ? nil : .easeInOut(duration: 0.2), value: page)
         }
+        .ripenGlass(settings: model.settings)
+        .glassWindow()
     }
 }
 
