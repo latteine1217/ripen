@@ -17,5 +17,7 @@ struct RipenApp: App {
         Settings {
             SettingsView(settings: model.settings)
         }
+
+        MenuBarItem(model: model)
     }
 }
