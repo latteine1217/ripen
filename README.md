@@ -4,7 +4,7 @@
 
 Ripen 是用 Swift 原生開發的 macOS 番茄鐘 App，介面採用磨砂玻璃風格，可以縮小成置頂的懸浮窗，或收進螢幕瀏海成為類似動態島的瀏海島。
 
-狀態：開發中，目前可在主視窗開始、暫停、繼續一次 25 分鐘的專注。
+狀態：開發中，目前可在主視窗跑完整的階段循環（專注 25 分、短休息 5 分、每 4 次專注後長休息 15 分），並可開始、暫停、繼續、跳過與重設目前的階段。
 
 ## 安裝
 
@@ -48,8 +48,9 @@ gh release create v0.1.0 dist/Ripen-0.1.0.dmg --title "Ripen 0.1.0" --notes "...
 ## 專案結構
 
 - `Ripen/App/`：`@main` App 與 `AppModel`（唯一的可觀察狀態根）
-- `Ripen/Timer/`：計時引擎與時鐘注入（`TimeSource`），純邏輯
+- `Ripen/Timer/`：計時引擎、階段循環與時鐘注入（`TimeSource`），純邏輯
 - `Ripen/UI/`：SwiftUI 畫面
+- `Ripen/Bridge/`：AppKit 橋接（目前只有系統喚醒與解鎖事件）
 - `Ripen/Resources/`：String Catalog（`Localizable.xcstrings`，英文與繁體中文）
 - `RipenTests/`：Swift Testing 測試；`Support/` 放假時鐘等測試替身
 - `scripts/`：打包腳本（`make-dmg.sh`）
