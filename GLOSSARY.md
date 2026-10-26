@@ -24,6 +24,10 @@ _Avoid_: Big break
 兩次長休息之間需完成的專注次數，預設 4；完成長休息或閒置 2 小時後重新計數。
 _Avoid_: Rounds, Cycle length
 
+**超時 (Overtime)**：
+階段倒數到 0 之後繼續往上數的時間，以 `+xx:xx` 顯示；按「完成」才結束這一段，離開電腦時自動暫停。
+_Avoid_: 加時, Extra time
+
 **結束時刻 (End Time)**：
 目前階段預計倒數到 0 的時鐘時刻，依使用者選的時制（跟隨系統、12 小時、24 小時）顯示。
 _Avoid_: Deadline, 到期時間
@@ -77,7 +81,7 @@ _Avoid_: Status item, Tray icon
 ## 統計
 
 **完成的專注 (Completed Focus)**：
-倒數到 0 的專注；中途跳過或重設的不算。歸屬於它開始時刻所在的日期。
+倒數到過 0 的專注，記錄實際長度（設定長度加超時，扣掉暫停）；倒數到 0 前跳過或重設的不算。歸屬於它開始時刻所在的日期。
 _Avoid_: Pomodoro, 番茄, Session
 
 **統計頁 (Statistics Page)**：
