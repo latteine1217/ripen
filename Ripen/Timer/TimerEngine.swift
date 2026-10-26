@@ -4,8 +4,6 @@ import Foundation
 ///
 /// 執行中只記住結束時刻，剩餘時間永遠是「結束時刻 − 現在」（ADR-0002）。
 struct TimerEngine: Equatable, Sendable {
-    static let defaultFocusDuration: TimeInterval = 25 * 60
-
     private enum Run: Equatable, Sendable {
         case idle
         case running(endDate: Date)
@@ -15,8 +13,10 @@ struct TimerEngine: Equatable, Sendable {
     let phase: Phase
     let duration: TimeInterval
     private var run: Run = .idle
+    /// 這一段第一次開始的時刻（不因暫停改變）；統計依它歸屬日期。
+    private(set) var startedAt: Date?
 
-    init(phase: Phase = .focus, duration: TimeInterval = TimerEngine.defaultFocusDuration) {
+    init(phase: Phase, duration: TimeInterval) {
         // 長度為 0 會讓進度計算除以 0，屬於設定錯誤，直接中止
         precondition(duration > 0, "階段長度必須大於 0")
         self.phase = phase
@@ -47,11 +47,11 @@ struct TimerEngine: Equatable, Sendable {
 
     // 不符合目前狀態的操作一律忽略：意圖可能同時來自按鈕、熱鍵與選單。
 
-    /// 閒置或已倒數到 0 時，開始一段完整的階段。
+    /// 閒置時開始一段完整的階段。已倒數到 0 的階段不能重來，要由 `AppModel` 確立完成後換下一段。
     mutating func start(at now: Date) {
-        let current = status(at: now)
-        guard current == .idle || current == .finished else { return }
+        guard status(at: now) == .idle else { return }
         run = .running(endDate: now + duration)
+        startedAt = now
     }
 
     /// 暫停時改存剩餘時間，暫停期間不再與時鐘相關。

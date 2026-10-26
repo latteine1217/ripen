@@ -7,33 +7,52 @@ struct TimerPageView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
-        TimelineView(.periodic(from: .now, by: 0.25)) { _ in
+        TimelineView(.periodic(from: .now, by: 0.25)) { context in
             let status = model.status
-            VStack(spacing: 28) {
+            let phase = model.phase
+            VStack(spacing: 20) {
                 TimerRingView(
                     progress: 1 - model.remaining / model.phaseDuration,
                     timeText: CountdownFormat.string(model.remaining),
-                    caption: caption(for: status)
+                    phaseTitle: phase.title,
+                    isPaused: status == .paused
                 )
                 .frame(width: 220, height: 220)
 
-                primaryButton(for: status)
-                    .buttonStyle(.borderedProminent)
-                    .controlSize(.large)
-                    .keyboardShortcut(.space, modifiers: [])
+                CycleProgressView(
+                    completed: model.completedFocusesInCycle,
+                    interval: model.longBreakInterval
+                )
+
+                controls(for: status)
             }
             .padding(32)
+            .tint(phase.tint)
             // 減少動態效果時直接切換，不做過場
             .animation(reduceMotion ? nil : .easeInOut(duration: 0.2), value: status)
+            .animation(reduceMotion ? nil : .easeInOut(duration: 0.35), value: phase)
+            // 倒數到 0 只是推導出的狀態；每次刷新時確立完成，畫面隨即換到下一段起點
+            .onChange(of: context.date) { model.refresh() }
         }
+        .onSystemWake { model.refresh() }
     }
 
-    private func caption(for status: TimerStatus) -> LocalizedStringKey {
-        switch status {
-        case .idle, .running: "Focus"
-        case .paused: "Paused"
-        case .finished: "Focus complete"
+    private func controls(for status: TimerStatus) -> some View {
+        HStack(spacing: 16) {
+            Button("Reset", systemImage: "arrow.counterclockwise", action: model.reset)
+                .help(Text("Reset the current phase"))
+                .disabled(status == .idle)
+
+            primaryButton(for: status)
+                .labelStyle(.titleAndIcon)
+                .buttonStyle(.borderedProminent)
+                .keyboardShortcut(.space, modifiers: [])
+
+            Button("Skip", systemImage: "forward.end.fill", action: model.skip)
+                .help(Text("Skip to the next phase"))
         }
+        .labelStyle(.iconOnly)
+        .controlSize(.large)
     }
 
     @ViewBuilder
