@@ -41,12 +41,12 @@ ln -s /Applications "$STAGING/Applications"
 
 DMG="$DIST_DIR/$APP_NAME-$VERSION.dmg"
 rm -f "$DMG"
-hdiutil create \
-  -volname "$APP_NAME $VERSION" \
-  -srcfolder "$STAGING" \
-  -fs HFS+ \
-  -format UDZO \
-  -ov \
+# hdiutil 自 macOS 27 起 deprecated；diskutil image create 需要 macOS 14 以上的建置機。
+# 以資料夾為來源時產生 APFS 映像，macOS 10.13 以上都能打開，不影響 macOS 14 的使用者。
+diskutil image create from \
+  --format UDZO \
+  --volumeName "$APP_NAME $VERSION" \
+  "$STAGING" \
   "$DMG" >/dev/null
 
 echo "Created $DMG"
