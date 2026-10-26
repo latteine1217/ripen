@@ -35,6 +35,10 @@ struct MainWindowView: View {
             // 減少動態效果時直接切換，不做淡入淡出
             .animation(reduceMotion ? nil : .easeInOut(duration: 0.2), value: page)
         }
+        // 提醒播出時 model.phase 已是下一段，閃的是新階段色
+        .reminderFlash(model.lastReminder, tint: model.phase.tint)
+        .ripenGlass(settings: model.settings)
+        .glassWindow()
     }
 }
 

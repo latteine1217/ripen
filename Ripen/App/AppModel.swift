@@ -19,22 +19,40 @@ final class AppModel {
     @ObservationIgnored let settings: AppSettings
     /// 完成的專注紀錄，統計頁由此彙總；本身可觀察。
     @ObservationIgnored let focusLog: FocusLog
+    @ObservationIgnored private let presence: any UserPresence
+    @ObservationIgnored private let reminderSound: any ReminderSound
+    @ObservationIgnored private let alarm: any PhaseEndAlarm
     private var cycle = PhaseCycle()
-    private var engine: TimerEngine
+    private var engine: TimerEngine {
+        // 結束時刻一變就重排到點計時器；所有操作都經過 engine，不必逐一記得重排
+        didSet { if engine.endDate != oldValue.endDate { alarm.schedule(at: engine.endDate) } }
+    }
     /// 這段閒置（沒有任何階段在跑，暫停也算）開始的時刻；有階段在跑時為 nil。
     @ObservationIgnored private var idleSince: Date?
+    /// 離開期間倒數到 0、還沒播的提醒。多段完成只保留最後一段：回來時只響一次。
+    @ObservationIgnored private var pendingReminder: PhaseCompletion?
+    /// 最後一次播出的提醒；各介面觀察它的 `id` 播換階段動畫。
+    private(set) var lastReminder: PhaseReminder?
 
-    /// 未指定設定時用記憶體內儲存：測試與預覽不會讀寫使用者真正的設定。
+    /// 未指定的依賴一律用不碰系統的版本：測試與預覽不讀寫真正的設定、不出聲。
     init(
         clock: any TimeSource = SystemTimeSource(),
         settings: AppSettings = AppSettings(storage: InMemorySettingsStorage()),
-        focusLog: FocusLog = FocusLog()
+        focusLog: FocusLog = FocusLog(),
+        presence: any UserPresence = AlwaysPresent(),
+        reminderSound: any ReminderSound = SilentReminderSound(),
+        alarm: any PhaseEndAlarm = NoPhaseEndAlarm()
     ) {
         self.clock = clock
         self.settings = settings
         self.focusLog = focusLog
+        self.presence = presence
+        self.reminderSound = reminderSound
+        self.alarm = alarm
         engine = TimerEngine(phase: .focus, duration: settings.cycleConfiguration.duration(for: .focus))
         idleSince = clock.now()
+        presence.onReturn = { [weak self] in self?.userDidReturn() }
+        alarm.onFire = { [weak self] in self?.alarmDidFire() }
     }
 
     var phase: Phase { engine.phase }
@@ -80,7 +98,31 @@ final class AppModel {
         loadCurrentPhase()
         // 閒置從倒數到 0 的那一刻算起，而不是確立的時刻（可能在睡眠很久之後）
         idleSince = endedAt
+        pendingReminder = completion
+        deliverPendingReminder()
         return completion
+    }
+
+    // MARK: - 提醒
+
+    /// 使用者在場才播；離開時留在待播，回來再播（ADR-0002）。
+    private func deliverPendingReminder() {
+        guard let completion = pendingReminder, !presence.isAway else { return }
+        pendingReminder = nil
+        if settings.completionSoundEnabled { reminderSound.play() }
+        lastReminder = PhaseReminder(id: (lastReminder?.id ?? 0) + 1, completion: completion)
+    }
+
+    /// 解鎖或喚醒：先確立睡眠中倒數到 0 的完成（睡眠時 App 不執行），再播待播的提醒。
+    private func userDidReturn() {
+        refresh()
+        deliverPendingReminder()
+    }
+
+    private func alarmDidFire() {
+        refresh()
+        // 計時器可能比結束時刻早一點觸發；還沒到 0 就重排，否則視窗關閉時這段永遠不會確立
+        if engine.status(at: clock.now()) == .running { alarm.schedule(at: engine.endDate) }
     }
 
     private func resetCountIfIdle(at now: Date) {
