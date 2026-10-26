@@ -4,10 +4,11 @@ import SwiftUI
 /// 選單列項目（GLOSSARY）：選單列上的圖示與剩餘時間，以及常用操作的選單。
 struct MenuBarItem: Scene {
     let model: AppModel
+    let mainWindow: MainWindowBridge
 
     var body: some Scene {
         MenuBarExtra(isInserted: isInserted) {
-            MenuBarMenu(model: model)
+            MenuBarMenu(model: model, mainWindow: mainWindow)
         } label: {
             MenuBarLabel(model: model)
         }
@@ -86,16 +87,18 @@ struct MenuBarLabel: View {
 /// 選單列項目的選單：開始／暫停、跳過、顯示主視窗、設定、退出。
 private struct MenuBarMenu: View {
     let model: AppModel
+    let mainWindow: MainWindowBridge
 
     @Environment(\.openWindow) private var openWindow
 
     var body: some View {
-        primaryButton(for: model.status)
+        // 標題依狀態變，動作與全域熱鍵共用同一個意圖
+        Button(primaryTitle(for: model.status), action: model.toggleStartPause)
         Button("Skip", action: model.skip)
 
         Divider()
 
-        Button("Show Main Window") { showMainWindow(using: openWindow) }
+        Button("Show Main Window", action: showMainWindow)
         SettingsLink { Text("Settings…") }
             .keyboardShortcut(",")
 
@@ -105,23 +108,26 @@ private struct MenuBarMenu: View {
             .keyboardShortcut("q")
     }
 
-    @ViewBuilder
-    private func primaryButton(for status: TimerStatus) -> some View {
+    private func primaryTitle(for status: TimerStatus) -> LocalizedStringKey {
         switch status {
-        case .idle, .finished: Button("Start", action: model.start)
-        case .running: Button("Pause", action: model.pause)
-        case .paused: Button("Resume", action: model.resume)
+        case .idle, .finished: "Start"
+        case .running: "Pause"
+        case .paused: "Resume"
         }
     }
-}
 
-/// 顯示主視窗並帶到前景；已顯示時 `openWindow` 不會開第二個（單一實例的 `Window`）。
-///
-/// 從選單列項目的選單操作時 App 不在前景；協作式的 `NSApp.activate()` 實測不會把 App 帶到前景。
-///
-/// TODO: 形態狀態機（#11）接手後，改由它決定要顯示主視窗、懸浮窗或瀏海島。
-@MainActor
-func showMainWindow(using openWindow: OpenWindowAction) {
-    NSApp.activate(ignoringOtherApps: true)
-    openWindow(id: "main")
+    /// 主視窗不在畫面上時經形態狀態機叫回；已在畫面上時狀態機不動作，直接帶到最前面。
+    /// 視窗還沒建立（上次退出時已關閉，SwiftUI 不會還原）時先開出來，建立後由 `onWindowAttach` 接上。
+    ///
+    /// 從選單列項目的選單操作時 App 不在前景，協作式的 `NSApp.activate()` 實測帶不到前景，
+    /// 所以這裡強制啟用。
+    private func showMainWindow() {
+        if model.presentation.showsMainWindow {
+            mainWindow.show()
+        } else {
+            model.showMainWindow()
+        }
+        if mainWindow.window == nil { openWindow(id: "main") }
+        NSApp.activate(ignoringOtherApps: true)
+    }
 }

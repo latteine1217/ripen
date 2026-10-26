@@ -63,6 +63,6 @@ struct RipenApp: App {
                 .environment(loginItem)
         }
 
-        MenuBarItem(model: model)
+        MenuBarItem(model: model, mainWindow: presenter.mainWindow)
     }
 }
