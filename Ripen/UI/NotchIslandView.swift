@@ -74,15 +74,15 @@ struct NotchIslandView: View {
             // 上排落在瀏海兩翼：收合時是進度圈與時間，展開時是階段說明與結束時刻
             HStack {
                 if expanded {
-                    phaseCaption
+                    PhaseCaption(model: model)
                         .font(.system(size: 11, weight: .semibold, design: .rounded))
                         .foregroundStyle(.tint)
                 } else {
-                    PhaseRing(progress: progress, isPaused: status == .paused)
+                    PhaseRing(progress: model.phaseProgress, isPaused: status == .paused)
                 }
                 Spacer(minLength: state.notch.rect.width)
                 if expanded {
-                    endCaption(status: status)
+                    EndCaption(model: model, status: status)
                         .font(.system(size: 11, weight: .medium, design: .rounded))
                         .foregroundStyle(.secondary)
                 } else {
@@ -95,7 +95,7 @@ struct NotchIslandView: View {
             if expanded {
                 VStack(spacing: 10) {
                     timeText(time, size: 34, dimmed: !isRunning)
-                    ProgressBar(progress: progress)
+                    ProgressBar(progress: model.phaseProgress)
                     controls(status: status)
                     // 把手：暗示整條島可以往下拉
                     Capsule().fill(.secondary.opacity(0.6)).frame(width: 28, height: 4)
@@ -114,45 +114,12 @@ struct NotchIslandView: View {
             : Text("\(Text(model.phase.title)), \(time)"))
     }
 
-    private var progress: Double { 1 - model.remaining / model.phaseDuration }
-
     private func timeText(_ time: String, size: CGFloat, dimmed: Bool) -> some View {
         Text(verbatim: time)
             .font(.system(size: size, weight: .semibold, design: .rounded))
             .monospacedDigit()
             .opacity(dimmed ? 0.45 : 1)
             .matchedGeometryEffect(id: "time", in: timeSpace)
-    }
-
-    /// 專注時加上這是長休息間隔中的第幾次，例如「專注 · 2/4」。
-    @ViewBuilder
-    private var phaseCaption: some View {
-        let phase = model.phase
-        if phase == .focus {
-            let interval = model.longBreakInterval
-            Text("\(Text(phase.title)) · \(min(model.completedFocusesInCycle + 1, interval))/\(interval)")
-        } else {
-            Text(phase.title)
-        }
-    }
-
-    /// 倒數中顯示結束時刻、暫停時顯示「已暫停」；停在起點時沒有結束時刻，保留位置。
-    private func endCaption(status: TimerStatus) -> some View {
-        let endTime = model.endDate.map {
-            EndTimeFormat.string(
-                $0, clockFormat: model.settings.clockFormat,
-                language: EndTimeFormat.appLanguage, systemUses24Hour: EndTimeFormat.systemUses24Hour
-            )
-        }
-        return Group {
-            if status == .paused {
-                Text("Paused")
-            } else {
-                Text("Ends at \(endTime ?? "--:--")")
-                    .opacity(endTime == nil ? 0 : 1)
-            }
-        }
-        .monospacedDigit()
     }
 
     private func controls(status: TimerStatus) -> some View {
@@ -172,7 +139,7 @@ struct NotchIslandView: View {
 }
 
 /// 收合時的階段進度圈；暫停時圈內加暫停符號。
-private struct PhaseRing: View {
+struct PhaseRing: View {
     let progress: Double
     let isPaused: Bool
 
@@ -196,7 +163,7 @@ private struct PhaseRing: View {
 }
 
 /// 自繪 4pt 細條：系統 `ProgressView` 在黑底上偏粗，且 `ImageRenderer` 畫不出來（瀏海島原型）。
-private struct ProgressBar: View {
+struct ProgressBar: View {
     let progress: Double
 
     var body: some View {
@@ -215,7 +182,7 @@ private struct ProgressBar: View {
 }
 
 /// 展開時的 30pt 圓形圖示按鈕：hover 變亮、按下縮小，附說明與無障礙標籤。
-private struct IslandIconButton: View {
+struct IslandIconButton: View {
     let title: LocalizedStringKey
     let systemImage: String
     let help: LocalizedStringKey

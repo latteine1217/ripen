@@ -1,19 +1,23 @@
 import AppKit
 import SwiftUI
 
-/// 主視窗 `NSWindow` 的單一存取點：攔截紅色按鈕、以 `orderOut` 隱藏與重新顯示（ADR-0003）。
+/// 主視窗 `NSWindow` 的單一存取點：攔截紅色與黃色按鈕、以 `orderOut` 隱藏與重新顯示（ADR-0003）。
 ///
-/// 只負責關閉攔截與顯示／隱藏；透明標題列等外觀由 `glassWindow()` 設定，兩者不互相覆蓋。
+/// 只負責按鈕攔截與顯示／隱藏；透明標題列等外觀由 `glassWindow()` 設定，兩者不互相覆蓋。
 /// 這是 App 中唯一設定主視窗 delegate 的地方（ADR-0003 允許的唯一例外）。
 @MainActor
 final class MainWindowBridge {
     private(set) weak var window: NSWindow?
     private var closeInterceptor: CloseInterceptor?
+    /// 黃色按鈕的新 target；按鈕只弱參照 target，要由這裡持有。
+    private let miniaturizeTarget = ButtonActionTarget()
     /// 每次顯示或隱藏加一；舊的淡出結束時若已被新的操作取代，就不再 `orderOut`。
     private var generation = 0
 
     /// 紅色按鈕（與 ⌘W）按下時呼叫，取代關閉。
     var onClose: (() -> Void)?
+    /// 黃色按鈕按下時呼叫，取代縮到 Dock；⌘M 由選單指令走同一個意圖。
+    var onMiniaturize: (() -> Void)?
 
     func attach(_ window: NSWindow) {
         guard window !== self.window else { return }
@@ -22,14 +26,16 @@ final class MainWindowBridge {
         window.animationBehavior = .none
         window.isReleasedWhenClosed = false
         installCloseInterceptor(on: window)
+        installMiniaturizeInterceptor(on: window)
     }
 
     /// 已在畫面上時只帶到最前面。`fadeDuration` 是隱藏中淡入的長度；液體過場結尾與 overlay 交叉淡化時較短。
     func show(fadeDuration: TimeInterval = PresentationFade.duration) {
         guard let window else { return }
         generation += 1
-        // SwiftUI 若換過 delegate，重新接上攔截
+        // SwiftUI 若換過 delegate 或按鈕，重新接上攔截
         installCloseInterceptor(on: window)
+        installMiniaturizeInterceptor(on: window)
         let wasHidden = !window.isVisible || window.alphaValue < 1
         if !window.isVisible { window.alphaValue = 0 }
         window.makeKeyAndOrderFront(nil)
@@ -62,26 +68,63 @@ final class MainWindowBridge {
     private func installCloseInterceptor(on window: NSWindow) {
         if let closeInterceptor, window.delegate === closeInterceptor { return }
         // 包住 SwiftUI 原本的 delegate：只攔 windowShouldClose，其餘照原樣轉交，不破壞 scene 的管理
-        let interceptor = CloseInterceptor(forwardingTo: window.delegate) { [weak self] in self?.onClose?() }
+        let interceptor = CloseInterceptor(
+            forwardingTo: window.delegate,
+            onClose: { [weak self] in self?.onClose?() },
+            onMiniaturize: { [weak self] in self?.onMiniaturize?() }
+        )
         closeInterceptor = interceptor
         window.delegate = interceptor
+    }
+
+    /// 縮到 Dock 沒有可以否決的 delegate 訊息，所以換掉黃色按鈕的 target 與 action（spec #1）。
+    private func installMiniaturizeInterceptor(on window: NSWindow) {
+        guard let button = window.standardWindowButton(.miniaturizeButton) else { return }
+        miniaturizeTarget.action = { [weak self] in self?.onMiniaturize?() }
+        button.target = miniaturizeTarget
+        button.action = #selector(ButtonActionTarget.perform(_:))
+    }
+}
+
+/// 把按鈕的 target／action 轉成閉包。
+@MainActor
+private final class ButtonActionTarget: NSObject {
+    var action: (() -> Void)?
+
+    @objc func perform(_ sender: Any?) {
+        action?()
     }
 }
 
 /// 攔截 `windowShouldClose` 的 delegate 代理；其他 delegate 訊息轉交給原本的 delegate。
+///
+/// 也接住繞過黃色按鈕的縮到 Dock（雙按標題列、輔助使用）：叫回視窗、改走懸浮窗，
+/// 否則形態仍是「主視窗」而畫面上什麼都沒有（ADR-0001）。
 private final class CloseInterceptor: NSObject, NSWindowDelegate {
     // responds(to:) 與 forwardingTarget(for:) 是 nonisolated 覆寫；delegate 訊息一律在主執行緒送達
     nonisolated(unsafe) private weak var forwardee: NSWindowDelegate?
     private let onClose: @MainActor () -> Void
+    private let onMiniaturize: @MainActor () -> Void
 
-    init(forwardingTo forwardee: NSWindowDelegate?, onClose: @escaping @MainActor () -> Void) {
+    init(
+        forwardingTo forwardee: NSWindowDelegate?,
+        onClose: @escaping @MainActor () -> Void,
+        onMiniaturize: @escaping @MainActor () -> Void
+    ) {
         self.forwardee = forwardee
         self.onClose = onClose
+        self.onMiniaturize = onMiniaturize
     }
 
     func windowShouldClose(_ sender: NSWindow) -> Bool {
         onClose()
         return false
+    }
+
+    func windowDidMiniaturize(_ notification: Notification) {
+        forwardee?.windowDidMiniaturize?(notification)
+        (notification.object as? NSWindow)?.deminiaturize(nil)
+        onMiniaturize()
     }
 
     override func responds(to aSelector: Selector!) -> Bool {

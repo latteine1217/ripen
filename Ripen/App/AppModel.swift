@@ -35,6 +35,9 @@ final class AppModel {
     private(set) var lastReminder: PhaseReminder?
     /// 畫面上有哪些介面；主視窗與各 panel 只依它顯示或隱藏（ADR-0003）。
     private(set) var presentation = Presentation.mainWindowOnly
+    /// 造成目前形態的操作。同一對形態可能來自不同操作（例如並存時的紅色與黃色按鈕），
+    /// 過場依它選擇；在 `presentation` 之前寫入，觀察到形態改變時已是新值。
+    @ObservationIgnored private(set) var lastPresentationAction: PresentationAction?
 
     /// 未指定的依賴一律用不碰系統的版本：測試與預覽不讀寫真正的設定、不出聲。
     init(
@@ -214,6 +217,15 @@ final class AppModel {
     /// 主視窗的紅色按鈕（ADR-0001）。
     func closeMainWindow() { apply(.closeMainWindow) }
 
+    /// 主視窗的黃色按鈕或 ⌘M：主視窗變形成懸浮窗。
+    func minimizeMainWindow() { apply(.minimizeMainWindow) }
+
+    /// 懸浮窗的「展開」：懸浮窗變形成主視窗。
+    func expandFloatingWindow() { apply(.expandFloatingWindow) }
+
+    /// 懸浮窗的 ✕：主視窗在畫面上時只關懸浮窗，否則收進瀏海。
+    func closeFloatingWindow() { apply(.closeFloatingWindow) }
+
     /// 把主視窗拖到瀏海附近放開。
     func collapseIntoNotch() { apply(.collapseIntoNotch) }
 
@@ -226,6 +238,7 @@ final class AppModel {
     /// 轉換表中沒有這一格時忽略：操作可能來自已在過場中消失的介面。
     private func apply(_ action: PresentationAction) {
         guard let next = presentation.applying(action), next != presentation else { return }
+        lastPresentationAction = action
         presentation = next
     }
 

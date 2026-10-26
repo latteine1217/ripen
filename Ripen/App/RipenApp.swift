@@ -46,6 +46,7 @@ struct RipenApp: App {
                 #endif
         }
         .windowResizability(.contentSize)
+        .commands { MinimizeCommand(model: model, mainWindow: presenter.mainWindow) }
         #if DEBUG
         .commands { GlassTuningCommands() }
         #endif

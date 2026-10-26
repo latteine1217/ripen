@@ -113,8 +113,13 @@ final class NotchIslandController {
     /// 被吸進瀏海攤開成島，最後真島接手、內容淡入。減少動態效果時主視窗淡出、島淡入。
     ///
     /// 收進後游標要先離開島一次才會 hover 展開（`prepare` 解除 `hoverArmed`）。
-    /// - Parameter dismiss: 讓主視窗以給定長度淡出。
-    func collapse(from window: NSWindow, on screen: NSScreen, dismiss: @escaping @MainActor (TimeInterval) -> Void) {
+    /// - Parameters:
+    ///   - frame: 要縮成水珠的範圍（全域座標）；預設是整個視窗。懸浮窗傳玻璃本體，不含外陰影的留白。
+    ///   - dismiss: 讓來源視窗以給定長度淡出。
+    func collapse(
+        from window: NSWindow, frame: CGRect? = nil, on screen: NSScreen,
+        dismiss: @escaping @MainActor (TimeInterval) -> Void
+    ) {
         guard window.isVisible, !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion else {
             show(on: screen)
             dismiss(PresentationFade.duration)
@@ -129,11 +134,11 @@ final class NotchIslandController {
 
         let overlay = TransitionOverlay(screen: screen)
         collapsing = overlay
-        let from = overlay.local(window.frame)
+        let from = overlay.local(frame ?? window.frame)
         let notch = overlay.local(state.notch.rect)
         let islandSize = NotchGeometry.islandSize(notch: state.notch, expanded: false)
         let radius = NotchIslandView.cornerRadius(expanded: false)
-        let snapshot = window.themeFrameSnapshot()
+        let snapshot = if let frame { window.snapshot(of: frame) } else { window.themeFrameSnapshot() }
         overlay.show(TransitionHost(progress: overlay.progress) { t in
             CollapseView(t: t, window: from, snapshot: snapshot, notch: notch, islandSize: islandSize,
                          baseRadius: radius)

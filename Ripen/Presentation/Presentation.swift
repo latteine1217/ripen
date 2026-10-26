@@ -15,10 +15,16 @@ enum Presentation: Equatable, Sendable, CaseIterable {
 
 /// 改變形態的操作；每個 case 對應 spec #1 轉換表的一列。
 ///
-/// 懸浮窗、拖到瀏海等列在各自的 ticket 加 case，並在 `applying(_:)` 補上那一列。
+/// 拖出計時圓環等列在各自的 ticket 加 case，並在 `applying(_:)` 補上那一列。
 enum PresentationAction: Equatable, Sendable {
     /// 主視窗的紅色按鈕（含 ⌘W）。
     case closeMainWindow
+    /// 主視窗的黃色按鈕（含 ⌘M）：主視窗變形成懸浮窗。
+    case minimizeMainWindow
+    /// 懸浮窗的「展開」：懸浮窗變形成主視窗。
+    case expandFloatingWindow
+    /// 懸浮窗的 ✕。
+    case closeFloatingWindow
     /// 把主視窗拖到瀏海附近放開（#13）。
     case collapseIntoNotch
     /// 拉出瀏海島，或按島上的「展開」。
@@ -42,10 +48,32 @@ extension Presentation {
         case (.expandNotchIsland, .notchIslandOnly): .mainWindowOnly
         case (.expandNotchIsland, _): nil
 
-        // 只有懸浮窗時懸浮窗保留，是從並存規則推導出的格子（spec #1 註記待確認）
-        case (.showMainWindow, .floatingWindowOnly): .mainWindowAndFloatingWindow
+        // 並存時主視窗縮進現有的懸浮窗，不會多出第二個（spec #1 user story 36）
+        case (.minimizeMainWindow, .mainWindowOnly), (.minimizeMainWindow, .mainWindowAndFloatingWindow):
+            .floatingWindowOnly
+        case (.minimizeMainWindow, _): nil
+
+        // 展開是懸浮窗「變成」主視窗，懸浮窗消失；只有拖出計時圓環會讓兩者並存
+        case (.expandFloatingWindow, .mainWindowAndFloatingWindow), (.expandFloatingWindow, .floatingWindowOnly):
+            .mainWindowOnly
+        case (.expandFloatingWindow, _): nil
+
+        // 主視窗不在時收進瀏海：除了退出，至少一個介面可見（ADR-0001）
+        case (.closeFloatingWindow, .mainWindowAndFloatingWindow): .mainWindowOnly
+        case (.closeFloatingWindow, .floatingWindowOnly): .notchIslandOnly
+        case (.closeFloatingWindow, _): nil
+
+        case (.showMainWindow, .floatingWindowOnly): Self.mainWindowShownOverFloatingWindow
         case (.showMainWindow, .notchIslandOnly): .mainWindowOnly
         case (.showMainWindow, .mainWindowOnly), (.showMainWindow, .mainWindowAndFloatingWindow): self
         }
     }
+}
+
+extension Presentation {
+    /// 只有懸浮窗時點 Dock 圖示／顯示主視窗的結果。
+    ///
+    /// TODO: 待使用者確認（#14）後定案。spec #1 由並存規則推導為「主視窗＋懸浮窗」（懸浮窗保留），
+    /// 訪談沒有逐格確認；結論若不同，只改這一行與 `PresentationTests` 中標註待確認的測試。
+    static let mainWindowShownOverFloatingWindow = Presentation.mainWindowAndFloatingWindow
 }
