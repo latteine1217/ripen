@@ -24,6 +24,8 @@ struct TimerPageView: View {
                     interval: model.longBreakInterval
                 )
 
+                endTime(model.endDate)
+
                 controls(for: status)
             }
             .padding(32)
@@ -35,6 +37,22 @@ struct TimerPageView: View {
             .onChange(of: context.date) { model.refresh() }
         }
         .onSystemWake { model.refresh() }
+    }
+
+    /// 只在倒數中顯示；暫停或停在起點時沒有結束時刻，保留位置讓版面不跳動。
+    private func endTime(_ endDate: Date?) -> some View {
+        let text = endDate.map {
+            EndTimeFormat.string(
+                $0, clockFormat: model.settings.clockFormat,
+                language: EndTimeFormat.appLanguage, systemUses24Hour: EndTimeFormat.systemUses24Hour
+            )
+        }
+        return Text("Ends at \(text ?? "--:--")")
+            .font(.callout)
+            .monospacedDigit()
+            .foregroundStyle(.secondary)
+            .opacity(text == nil ? 0 : 1)
+            .accessibilityHidden(text == nil)
     }
 
     private func controls(for status: TimerStatus) -> some View {

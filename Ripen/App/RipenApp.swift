@@ -2,7 +2,10 @@ import SwiftUI
 
 @main
 struct RipenApp: App {
-    @State private var model = AppModel(focusLog: FocusLog(storage: JSONFileFocusLogStorage.standard))
+    @State private var model = AppModel(
+        settings: AppSettings(storage: UserDefaults.standard),
+        focusLog: FocusLog(storage: JSONFileFocusLogStorage.standard)
+    )
 
     var body: some Scene {
         // 單一實例的 Window（非 WindowGroup），不會有第二個主視窗（ADR-0003）
@@ -10,5 +13,9 @@ struct RipenApp: App {
             MainWindowView(model: model)
         }
         .windowResizability(.contentSize)
+
+        Settings {
+            SettingsView(settings: model.settings)
+        }
     }
 }

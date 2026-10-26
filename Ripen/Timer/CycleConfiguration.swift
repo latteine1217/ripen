@@ -2,7 +2,7 @@ import Foundation
 
 /// 階段循環的參數：三種階段的長度與長休息間隔。
 ///
-/// 目前只有預設值；之後由設定（#5）建立並注入 `AppModel`。
+/// 由 `AppSettings.cycleConfiguration` 依使用者設定建立；`AppModel` 每次換階段時讀取。
 struct CycleConfiguration: Equatable, Sendable {
     let focusDuration: TimeInterval
     let shortBreakDuration: TimeInterval
