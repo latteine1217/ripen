@@ -5,6 +5,10 @@ struct TimerPageView: View {
     let model: AppModel
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    /// 沒有提供時（例如逐格輸出）圓環不能拖出。
+    @Environment(TearOffController.self) private var tearOff: TearOffController?
+
+    private static let ringDiameter: CGFloat = 220
 
     var body: some View {
         TimelineView(.periodic(from: .now, by: 0.25)) { context in
@@ -20,7 +24,8 @@ struct TimerPageView: View {
                     isPaused: status == .paused,
                     isOvertime: isOvertime
                 )
-                .frame(width: 220, height: 220)
+                .frame(width: Self.ringDiameter, height: Self.ringDiameter)
+                .modifier(TearOffRing(tearOff: tearOff, diameter: Self.ringDiameter))
 
                 CycleProgressView(
                     completed: model.completedFocusesInCycle,
@@ -110,6 +115,45 @@ struct TimerPageView: View {
             Button("Pause", systemImage: "pause.fill", action: model.pause)
         case .paused:
             Button("Resume", systemImage: "play.fill", action: model.resume)
+        }
+    }
+}
+
+/// 計時圓環可以拖出成懸浮窗（#16）：hover 時游標變成手掌並出現提示，拖曳中圓環留在原地變淡。
+///
+/// 手勢用 `minimumDistance: 0`，由 `TearOffDrag.beginsDrag` 判斷 8pt 門檻；圓環本身沒有點擊動作，
+/// 空白鍵是開始／暫停按鈕的快捷鍵，兩者都不經過這個手勢。
+private struct TearOffRing: ViewModifier {
+    let tearOff: TearOffController?
+    let diameter: CGFloat
+
+    func body(content: Content) -> some View {
+        if let tearOff {
+            content
+                .opacity(tearOff.isActive ? 0.55 : 1)
+                .contentShape(Circle())
+                // 不用 push／pop：拖曳中游標離開圓環、或圓環隨視窗消失時，堆疊會失衡讓游標卡住
+                .onContinuousHover { phase in
+                    guard !tearOff.isActive else { return }
+                    switch phase {
+                    case .active: NSCursor.openHand.set()
+                    case .ended: NSCursor.arrow.set()
+                    }
+                }
+                .gesture(
+                    DragGesture(minimumDistance: 0)
+                        .onChanged { value in
+                            tearOff.dragChanged(
+                                start: value.startLocation, translation: value.translation,
+                                offsetFromRingCenter: CGSize(width: value.location.x - diameter / 2,
+                                                             height: value.location.y - diameter / 2)
+                            )
+                        }
+                        .onEnded { _ in tearOff.dragEnded() }
+                )
+                .help(Text("Drag the ring out of the window to make a floating window"))
+        } else {
+            content
         }
     }
 }

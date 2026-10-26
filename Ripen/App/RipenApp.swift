@@ -39,6 +39,7 @@ struct RipenApp: App {
         // 單一實例的 Window（非 WindowGroup），不會有第二個主視窗（ADR-0003）
         Window("Ripen", id: "main") {
             MainWindowView(model: model)
+                .environment(presenter.tearOff)
                 .onWindowAttach { window in
                     presenter.mainWindow.attach(window)
                     lifecycle.onReopen = presenter.handleReopen

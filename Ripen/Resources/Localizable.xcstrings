@@ -1024,6 +1024,22 @@
         }
       }
     },
+    "Drag the ring out of the window to make a floating window": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Drag the ring out of the window to make a floating window"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "按住圓環拖到視窗外，產生懸浮窗"
+          }
+        }
+      }
+    },
     "Done": {
       "localizations": {
         "en": {
