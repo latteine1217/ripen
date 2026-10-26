@@ -7,6 +7,7 @@ struct SettingsView: View {
 
     var body: some View {
         Form {
+            GeneralSettingsSection()
             TimerSettingsSection(settings: settings)
             SoundSettingsSection(settings: settings)
             AppearanceSettingsSection(settings: settings)

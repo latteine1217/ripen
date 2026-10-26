@@ -6,6 +6,8 @@ struct RipenApp: App {
     @State private var model: AppModel
     /// 依形態顯示或隱藏主視窗與瀏海島（ADR-0003）。
     @State private var presenter: PresentationController
+    @State private var hotkeys: GlobalHotkeyController
+    @State private var loginItem = LoginItemController(service: MainAppLoginItem())
     #if DEBUG
     @State private var glassTuning = GlassTuning()
     #endif
@@ -21,8 +23,14 @@ struct RipenApp: App {
             reminderSound: SystemReminderSound(),
             alarm: TimerPhaseEndAlarm()
         )
+        let hotkeys = GlobalHotkeyController(registrar: CarbonHotkeyRegistrar.shared, settings: model.settings) {
+            model.toggleStartPause()
+        }
+        // 啟動就註冊，主視窗沒開也能用熱鍵
+        hotkeys.activate()
         _model = State(initialValue: model)
         _presenter = State(initialValue: PresentationController(model: model))
+        _hotkeys = State(initialValue: hotkeys)
     }
 
     var body: some Scene {
@@ -51,6 +59,8 @@ struct RipenApp: App {
 
         Settings {
             SettingsView(settings: model.settings)
+                .environment(hotkeys)
+                .environment(loginItem)
         }
     }
 }
