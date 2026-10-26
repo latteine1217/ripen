@@ -9,6 +9,8 @@ struct SettingsView: View {
         Form {
             GeneralSettingsSection()
             TimerSettingsSection(settings: settings)
+            SoundSettingsSection(settings: settings)
+            AppearanceSettingsSection(settings: settings)
         }
         .formStyle(.grouped)
         .frame(width: 440)
