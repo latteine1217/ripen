@@ -33,6 +33,8 @@ final class AppModel {
     @ObservationIgnored private var pendingReminder: PhaseCompletion?
     /// 最後一次播出的提醒；各介面觀察它的 `id` 播換階段動畫。
     private(set) var lastReminder: PhaseReminder?
+    /// 畫面上有哪些介面；主視窗與各 panel 只依它顯示或隱藏（ADR-0003）。
+    private(set) var presentation = Presentation.mainWindowOnly
 
     /// 未指定的依賴一律用不碰系統的版本：測試與預覽不讀寫真正的設定、不出聲。
     init(
@@ -203,6 +205,25 @@ final class AppModel {
         } else if idleSince == nil {
             idleSince = clock.now()
         }
+    }
+
+    // MARK: - 形態
+
+    // 形態與計時無關：不刷新計時、不影響閒置。
+
+    /// 主視窗的紅色按鈕（ADR-0001）。
+    func closeMainWindow() { apply(.closeMainWindow) }
+
+    /// 拉出瀏海島或按島上的「展開」。
+    func expandNotchIsland() { apply(.expandNotchIsland) }
+
+    /// 點 Dock 圖示或選單列的「顯示主視窗」。
+    func showMainWindow() { apply(.showMainWindow) }
+
+    /// 轉換表中沒有這一格時忽略：操作可能來自已在過場中消失的介面。
+    private func apply(_ action: PresentationAction) {
+        guard let next = presentation.applying(action), next != presentation else { return }
+        presentation = next
     }
 
     /// 換上循環目前所在的階段，處於起點、尚未開始。

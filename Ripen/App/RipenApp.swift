@@ -2,7 +2,10 @@ import SwiftUI
 
 @main
 struct RipenApp: App {
+    @NSApplicationDelegateAdaptor private var lifecycle: AppLifecycleDelegate
     @State private var model: AppModel
+    /// 依形態顯示或隱藏主視窗與瀏海島（ADR-0003）。
+    @State private var presenter: PresentationController
     @State private var hotkeys: GlobalHotkeyController
     @State private var loginItem = LoginItemController(service: MainAppLoginItem())
     #if DEBUG
@@ -10,6 +13,9 @@ struct RipenApp: App {
     #endif
 
     init() {
+        #if DEBUG
+        FrameDump.runIfRequested()
+        #endif
         let model = AppModel(
             settings: AppSettings(storage: UserDefaults.standard),
             focusLog: FocusLog(storage: JSONFileFocusLogStorage.standard),
@@ -23,6 +29,7 @@ struct RipenApp: App {
         // 啟動就註冊，主視窗沒開也能用熱鍵
         hotkeys.activate()
         _model = State(initialValue: model)
+        _presenter = State(initialValue: PresentationController(model: model))
         _hotkeys = State(initialValue: hotkeys)
     }
 
@@ -30,6 +37,10 @@ struct RipenApp: App {
         // 單一實例的 Window（非 WindowGroup），不會有第二個主視窗（ADR-0003）
         Window("Ripen", id: "main") {
             MainWindowView(model: model)
+                .onWindowAttach { window in
+                    presenter.mainWindow.attach(window)
+                    lifecycle.onReopen = presenter.handleReopen
+                }
                 #if DEBUG
                 .environment(\.glassStyle, glassTuning.style)
                 #endif
