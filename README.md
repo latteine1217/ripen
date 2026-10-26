@@ -29,6 +29,8 @@ xcodebuild test -project Ripen.xcodeproj -scheme Ripen -destination 'platform=ma
 
 只跑單一測試檔：在 `xcodebuild test` 後加上 `-only-testing:RipenTests/AppModelFocusTests`。
 
+畫面與過場不寫單元測試，改用 Debug 建置的逐格輸出檢查：`Ripen.app/Contents/MacOS/Ripen --render-frames <輸出資料夾> [名稱前綴]` 會把 `Ripen/UI/FrameDumpScenes.swift` 列出的場景輸出成 PNG 後結束。
+
 ## 打包與發佈
 
 版本號只在 `project.yml` 的 `MARKETING_VERSION`（顯示版本）與 `CURRENT_PROJECT_VERSION`（build 號）設定。改完後執行：
@@ -50,7 +52,9 @@ gh release create v0.1.0 dist/Ripen-0.1.0.dmg --title "Ripen 0.1.0" --notes "...
 - `Ripen/App/`：`@main` App 與 `AppModel`（唯一的可觀察狀態根）
 - `Ripen/Timer/`：計時引擎、階段循環與時鐘注入（`TimeSource`），純邏輯
 - `Ripen/UI/`：SwiftUI 畫面
-- `Ripen/Bridge/`：AppKit 橋接（目前只有系統喚醒與解鎖事件）
+- `Ripen/Presentation/`：形態狀態機（畫面上有哪些介面），純邏輯
+- `Ripen/Geometry/`：瀏海與版面的幾何計算，純函式
+- `Ripen/Bridge/`：AppKit 橋接（主視窗、瀏海島 panel、App 生命週期、系統事件）
 - `Ripen/Resources/`：String Catalog（`Localizable.xcstrings`，英文與繁體中文）
 - `RipenTests/`：Swift Testing 測試；`Support/` 放假時鐘等測試替身
 - `scripts/`：打包腳本（`make-dmg.sh`）

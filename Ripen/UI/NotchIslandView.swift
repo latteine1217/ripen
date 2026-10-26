@@ -1,0 +1,248 @@
+import SwiftUI
+
+/// 瀏海島的版面狀態：所在螢幕的瀏海，以及是否展開。由 `NotchIslandController` 依 hover 與換階段改變。
+@MainActor
+@Observable
+final class NotchIslandState {
+    var notch: NotchFrame
+    var isExpanded = false
+
+    init(notch: NotchFrame, isExpanded: Bool = false) {
+        self.notch = notch
+        self.isExpanded = isExpanded
+    }
+}
+
+/// 瀏海島：純黑、貼合瀏海（ADR-0004）。收合時左翼是進度圈、右翼是剩餘時間；展開時顯示階段、
+/// 結束時刻、大字時間、進度條與按鈕。時間相關的值在 `TimelineView` 裡重讀（ADR-0002）。
+struct NotchIslandView: View {
+    let model: AppModel
+    let state: NotchIslandState
+
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    /// 收合時翼上的時間與展開時的大字時間是同一個元素，展開時平滑移位而不是消失重現。
+    @Namespace private var timeSpace
+
+    private static let collapsedRadius: CGFloat = 12
+    private static let expandedRadius: CGFloat = 22
+
+    var body: some View {
+        TimelineView(.periodic(from: .now, by: 0.25)) { context in
+            island
+                // 主視窗不在畫面上時由島刷新，倒數到 0 後畫面隨即換到下一段起點
+                .onChange(of: context.date) { model.refresh() }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+    }
+
+    private var island: some View {
+        let expanded = state.isExpanded
+        let size = NotchGeometry.islandSize(notch: state.notch, expanded: expanded)
+        let shape = UnevenRoundedRectangle(
+            bottomLeadingRadius: expanded ? Self.expandedRadius : Self.collapsedRadius,
+            bottomTrailingRadius: expanded ? Self.expandedRadius : Self.collapsedRadius,
+            style: .continuous
+        )
+        return content(expanded: expanded)
+            .frame(width: size.width, height: size.height, alignment: .top)
+            // 提醒播出時 model.phase 已是下一段，閃的是新階段色；裁成島的形狀
+            .reminderFlash(model.lastReminder, tint: model.phase.tint)
+            .background(shape.fill(.black))
+            .clipShape(shape)
+            .contentShape(shape)
+            .environment(\.colorScheme, .dark)
+            .tint(model.phase.tint)
+            // 減少動態效果時改為短暫的淡入淡出
+            .animation(
+                reduceMotion ? .easeInOut(duration: 0.18) : .spring(response: 0.35, dampingFraction: 0.82),
+                value: expanded
+            )
+    }
+
+    private func content(expanded: Bool) -> some View {
+        let status = model.status
+        let isRunning = status == .running
+        let time = CountdownFormat.string(model.remaining)
+        return VStack(spacing: 0) {
+            // 上排落在瀏海兩翼：收合時是進度圈與時間，展開時是階段說明與結束時刻
+            HStack {
+                if expanded {
+                    phaseCaption
+                        .font(.system(size: 11, weight: .semibold, design: .rounded))
+                        .foregroundStyle(.tint)
+                } else {
+                    PhaseRing(progress: progress, isPaused: status == .paused)
+                }
+                Spacer(minLength: state.notch.rect.width)
+                if expanded {
+                    endCaption(status: status)
+                        .font(.system(size: 11, weight: .medium, design: .rounded))
+                        .foregroundStyle(.secondary)
+                } else {
+                    timeText(time, size: 14, dimmed: !isRunning)
+                }
+            }
+            .padding(.horizontal, expanded ? 16 : 12)
+            .frame(height: state.notch.rect.height)
+
+            if expanded {
+                VStack(spacing: 10) {
+                    timeText(time, size: 34, dimmed: !isRunning)
+                    ProgressBar(progress: progress)
+                    controls(status: status)
+                    // 把手：暗示整條島可以往下拉（拉出在 #12）
+                    Capsule().fill(.secondary.opacity(0.6)).frame(width: 28, height: 4)
+                        .accessibilityHidden(true)
+                }
+                .padding(.horizontal, 18)
+                .padding(.bottom, 8)
+                .transition(.opacity)
+            }
+        }
+        .foregroundStyle(.white)
+        .accessibilityElement(children: expanded ? .contain : .ignore)
+        .accessibilityLabel(Text("Notch Island"))
+        .accessibilityValue(status == .paused
+            ? Text("\(Text(model.phase.title)), paused, \(time)")
+            : Text("\(Text(model.phase.title)), \(time)"))
+    }
+
+    private var progress: Double { 1 - model.remaining / model.phaseDuration }
+
+    private func timeText(_ time: String, size: CGFloat, dimmed: Bool) -> some View {
+        Text(verbatim: time)
+            .font(.system(size: size, weight: .semibold, design: .rounded))
+            .monospacedDigit()
+            .opacity(dimmed ? 0.45 : 1)
+            .matchedGeometryEffect(id: "time", in: timeSpace)
+    }
+
+    /// 專注時加上這是長休息間隔中的第幾次，例如「專注 · 2/4」。
+    @ViewBuilder
+    private var phaseCaption: some View {
+        let phase = model.phase
+        if phase == .focus {
+            let interval = model.longBreakInterval
+            Text("\(Text(phase.title)) · \(min(model.completedFocusesInCycle + 1, interval))/\(interval)")
+        } else {
+            Text(phase.title)
+        }
+    }
+
+    /// 倒數中顯示結束時刻、暫停時顯示「已暫停」；停在起點時沒有結束時刻，保留位置。
+    private func endCaption(status: TimerStatus) -> some View {
+        let endTime = model.endDate.map {
+            EndTimeFormat.string(
+                $0, clockFormat: model.settings.clockFormat,
+                language: EndTimeFormat.appLanguage, systemUses24Hour: EndTimeFormat.systemUses24Hour
+            )
+        }
+        return Group {
+            if status == .paused {
+                Text("Paused")
+            } else {
+                Text("Ends at \(endTime ?? "--:--")")
+                    .opacity(endTime == nil ? 0 : 1)
+            }
+        }
+        .monospacedDigit()
+    }
+
+    private func controls(status: TimerStatus) -> some View {
+        HStack(spacing: 18) {
+            switch status {
+            case .idle, .finished:
+                IslandIconButton("Start", systemImage: "play.fill", action: model.start)
+            case .running:
+                IslandIconButton("Pause", systemImage: "pause.fill", action: model.pause)
+            case .paused:
+                IslandIconButton("Resume", systemImage: "play.fill", action: model.resume)
+            }
+            IslandIconButton("Skip", systemImage: "forward.end.fill", help: "Skip to the next phase", action: model.skip)
+            IslandIconButton("Show Main Window", systemImage: "macwindow", action: model.expandNotchIsland)
+        }
+    }
+}
+
+/// 收合時的階段進度圈；暫停時圈內加暫停符號。
+private struct PhaseRing: View {
+    let progress: Double
+    let isPaused: Bool
+
+    var body: some View {
+        ZStack {
+            Circle().stroke(.tint.opacity(0.25), lineWidth: 2.5)
+            Circle()
+                .trim(from: 0, to: progress)
+                .stroke(.tint, style: StrokeStyle(lineWidth: 2.5, lineCap: .round))
+                .rotationEffect(.degrees(-90))
+                // 換階段時進度由滿歸零；跟著動畫會像倒帶
+                .transaction { $0.animation = nil }
+            if isPaused {
+                Image(systemName: "pause.fill")
+                    .font(.system(size: 6, weight: .bold))
+                    .foregroundStyle(.tint)
+            }
+        }
+        .frame(width: 14, height: 14)
+    }
+}
+
+/// 自繪 4pt 細條：系統 `ProgressView` 在黑底上偏粗，且 `ImageRenderer` 畫不出來（瀏海島原型）。
+private struct ProgressBar: View {
+    let progress: Double
+
+    var body: some View {
+        Capsule()
+            .fill(.white.opacity(0.2))
+            .overlay(alignment: .leading) {
+                GeometryReader { proxy in
+                    Capsule().fill(.tint)
+                        .frame(width: max(4, proxy.size.width * min(max(progress, 0), 1)))
+                }
+            }
+            .frame(height: 4)
+            .transaction { $0.animation = nil }
+            .accessibilityHidden(true)
+    }
+}
+
+/// 展開時的 30pt 圓形圖示按鈕：hover 變亮、按下縮小，附說明與無障礙標籤。
+private struct IslandIconButton: View {
+    let title: LocalizedStringKey
+    let systemImage: String
+    let help: LocalizedStringKey
+    let action: () -> Void
+    @State private var isHovering = false
+
+    init(_ title: LocalizedStringKey, systemImage: String, help: LocalizedStringKey? = nil, action: @escaping () -> Void) {
+        self.title = title
+        self.systemImage = systemImage
+        self.help = help ?? title
+        self.action = action
+    }
+
+    var body: some View {
+        Button(action: action) {
+            Label(title, systemImage: systemImage)
+                .labelStyle(.iconOnly)
+                .font(.system(size: 13, weight: .semibold))
+                .frame(width: 30, height: 30)
+                .contentShape(Circle())
+        }
+        .buttonStyle(IslandIconButtonStyle(isHovering: isHovering))
+        .onHover { isHovering = $0 }
+        .help(Text(help))
+    }
+}
+
+private struct IslandIconButtonStyle: ButtonStyle {
+    let isHovering: Bool
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .background(Circle().fill(.white.opacity(configuration.isPressed ? 0.3 : isHovering ? 0.22 : 0.12)))
+            .scaleEffect(configuration.isPressed ? 0.92 : 1)
+            .animation(.easeOut(duration: 0.1), value: configuration.isPressed)
+    }
+}
