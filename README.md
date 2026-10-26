@@ -1,5 +1,7 @@
 # Ripen
 
+[![Ko-fi](https://img.shields.io/badge/Ko--fi-Support-FF5E5B?logo=ko-fi&logoColor=white)](https://ko-fi.com/latteine1217)
+
 Ripen 是用 Swift 原生開發的 macOS 番茄鐘 App，介面採用磨砂玻璃風格，可以縮小成置頂的懸浮窗，或收進螢幕瀏海成為類似動態島的瀏海島。
 
 狀態：開發中，尚無可執行版本。
