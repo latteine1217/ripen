@@ -1,0 +1,56 @@
+name: Ripen
+options:
+  bundleIdPrefix: com.latteine
+  deploymentTarget:
+    macOS: "14.0"
+  developmentLanguage: en
+  createIntermediateGroups: true
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    MACOSX_DEPLOYMENT_TARGET: "14.0"
+    SWIFT_STRICT_CONCURRENCY: complete
+    LOCALIZATION_PREFERS_STRING_CATALOGS: YES
+    SWIFT_EMIT_LOC_STRINGS: YES
+targets:
+  Ripen:
+    type: application
+    platform: macOS
+    sources:
+      - Ripen
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.latteine.ripen
+        PRODUCT_NAME: Ripen
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_CFBundleDisplayName: Ripen
+        INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.productivity
+        INFOPLIST_KEY_NSHumanReadableCopyright: ""
+        MARKETING_VERSION: "0.1.0"
+        CURRENT_PROJECT_VERSION: "1"
+        CODE_SIGN_IDENTITY: "-"
+        CODE_SIGN_STYLE: Manual
+        ENABLE_HARDENED_RUNTIME: NO
+  RipenTests:
+    type: bundle.unit-test
+    platform: macOS
+    sources:
+      - RipenTests
+    dependencies:
+      - target: Ripen
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.latteine.ripen.tests
+        GENERATE_INFOPLIST_FILE: YES
+        CODE_SIGN_IDENTITY: "-"
+        CODE_SIGN_STYLE: Manual
+schemes:
+  Ripen:
+    build:
+      targets:
+        Ripen: all
+        RipenTests: [test]
+    test:
+      targets:
+        - RipenTests
+      gatherCoverageData: false
