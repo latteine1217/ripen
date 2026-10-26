@@ -21,9 +21,11 @@ build/
 Packages/
 Package.resolved.bak
 
-# Archives / exports
+# Archives / exports（scripts/make-dmg.sh 的中間產物在 build/，dmg 在 dist/）
 *.xcarchive
 *.app
+*.dmg
+dist/
 
 # Editors
 .vscode/
