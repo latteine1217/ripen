@@ -4,7 +4,7 @@ import os
 /// 依 `AppModel.presentation` 顯示或隱藏主視窗、懸浮窗與瀏海島；本身不決定形態（ADR-0003）。
 ///
 /// 瀏海島 → 主視窗是液體的拉出過場（#12），主視窗或懸浮窗 → 瀏海島是它的反向、吸入過場（#13、#14）；
-/// 主視窗 ⇄ 懸浮窗是變形過場（#14）；其餘方向是淡入淡出。
+/// 主視窗 ⇄ 懸浮窗是變形過場（#14）；拖出計時圓環由分身落地成懸浮窗（#16）；其餘方向是淡入淡出。
 @MainActor
 final class PresentationController {
     let mainWindow = MainWindowBridge()
@@ -13,6 +13,8 @@ final class PresentationController {
     private let floating: FloatingWindowController
     /// 拖曳主視窗到瀏海附近放開就收進瀏海（#13）。
     private let dragTracker: MainWindowDragTracker
+    /// 拖出計時圓環（#16）；計時頁經 `.environment` 取得。
+    let tearOff: TearOffController
     private let logger = Logger(subsystem: "com.latteine.ripen", category: "presentation")
     /// 上一次套用到畫面上的形態；用來判斷過場的方向。
     private var applied = Presentation.mainWindowOnly
@@ -22,6 +24,7 @@ final class PresentationController {
         island = NotchIslandController(model: model)
         floating = FloatingWindowController(model: model)
         dragTracker = MainWindowDragTracker(model: model, mainWindow: mainWindow)
+        tearOff = TearOffController(model: model, mainWindow: mainWindow, floating: floating)
         mainWindow.onClose = { [weak model] in model?.closeMainWindow() }
         mainWindow.onMiniaturize = { [weak model] in model?.minimizeMainWindow() }
         observe()
@@ -38,6 +41,8 @@ final class PresentationController {
     private func observe() {
         withObservationTracking {
             _ = model.presentation
+            // 再拖出一次時形態不變，只有它會變（#16）
+            _ = model.presentationRevision
         } onChange: { [weak self] in
             // onChange 在值改變之前呼叫；下一輪再讀新值並重新訂閱
             Task { @MainActor in
@@ -64,6 +69,12 @@ final class PresentationController {
             return
         }
         if !presentation.showsNotchIsland { island.hide() }
+        if action == .tearOffTimerRing, let landing = tearOff.takeLanding() {
+            // 已有懸浮窗時舊的原地縮小淡出，分身落地後在放開處出現新的（spec #1 user story 35）
+            floating.dismiss()
+            tearOff.land(at: landing) { [weak self] in self?.floating.appear(at: landing) }
+            return
+        }
         if morphBetweenMainAndFloatingWindow(action: action, from: previous, to: presentation) { return }
         if presentation.showsFloatingWindow {
             floating.show(near: mainWindow.window?.frame)

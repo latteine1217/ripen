@@ -97,6 +97,38 @@ final class FloatingWindowController {
         }
     }
 
+    // MARK: - 拖出計時圓環
+
+    /// panel 的大小（玻璃加每邊 `margin`）；拖出時的分身用同一個外框。
+    var panelSize: CGSize {
+        let glass = state.size.defaultSize
+        return CGSize(width: glass.width + 2 * Self.margin, height: glass.height + 2 * Self.margin)
+    }
+
+    /// 拖出時跟著游標的分身：與懸浮窗同一個畫面，另用一份狀態，舊的懸浮窗縮小淡出時不受影響。
+    func makeGhost() -> some View {
+        let ghostState = FloatingWindowState()
+        ghostState.size = state.size
+        return FloatingWindowView(model: model, state: ghostState) { _ in }
+    }
+
+    /// 拖出放開處的懸浮窗（玻璃本體）：中心對齊游標，夾回可見範圍並貼邊（#16）。
+    func tearOffFrame(centeredAt cursor: CGPoint) -> CGRect {
+        TearOffDrag.landingFrame(cursor: cursor, size: state.size.defaultSize, screens: Self.screenAreas)
+    }
+
+    /// 拖出落地：直接在 `frame` 出現、不淡入，由上方分身的 overlay 淡出完成交叉淡化。
+    /// 舊的懸浮窗縮小淡出到一半時直接換到新位置（spec #1 user story 35）。
+    func appear(at frame: CGRect) {
+        cancelMorph()
+        generation += 1
+        let panel = self.panel ?? makePanel()
+        resetDismissal()
+        place(frame)
+        panel.alphaValue = 1
+        panel.orderFrontRegardless()
+    }
+
     // MARK: - 主視窗 ⇄ 懸浮窗
 
     /// 黃色按鈕：主視窗在 overlay 中縮成懸浮窗，`timingCurve(0.4, 0, 0.2, 1)` 0.42 秒（spec #1）。

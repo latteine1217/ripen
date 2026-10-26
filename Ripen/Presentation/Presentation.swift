@@ -15,7 +15,6 @@ enum Presentation: Equatable, Sendable, CaseIterable {
 
 /// 改變形態的操作；每個 case 對應 spec #1 轉換表的一列。
 ///
-/// 拖出計時圓環等列在各自的 ticket 加 case，並在 `applying(_:)` 補上那一列。
 enum PresentationAction: Equatable, Sendable {
     /// 主視窗的紅色按鈕（含 ⌘W）。
     case closeMainWindow
@@ -31,6 +30,11 @@ enum PresentationAction: Equatable, Sendable {
     case expandNotchIsland
     /// 點 Dock 圖示、選單列的「顯示主視窗」。
     case showMainWindow
+    /// 把計時圓環拖到主視窗外放開（#16）。
+    case tearOffTimerRing
+
+    /// 套用後形態不變仍要通知畫面的操作：再拖出一次是換成新的懸浮窗（spec #1 user story 35）。
+    var replacesFloatingWindow: Bool { self == .tearOffTimerRing }
 }
 
 extension Presentation {
@@ -62,6 +66,11 @@ extension Presentation {
         case (.closeFloatingWindow, .mainWindowAndFloatingWindow): .mainWindowOnly
         case (.closeFloatingWindow, .floatingWindowOnly): .notchIslandOnly
         case (.closeFloatingWindow, _): nil
+
+        // 計時圓環在主視窗裡；已有懸浮窗時換成新的，形態不變
+        case (.tearOffTimerRing, .mainWindowOnly), (.tearOffTimerRing, .mainWindowAndFloatingWindow):
+            .mainWindowAndFloatingWindow
+        case (.tearOffTimerRing, _): nil
 
         case (.showMainWindow, .floatingWindowOnly): Self.mainWindowShownOverFloatingWindow
         case (.showMainWindow, .notchIslandOnly): .mainWindowOnly

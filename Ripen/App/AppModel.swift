@@ -38,6 +38,8 @@ final class AppModel {
     /// 造成目前形態的操作。同一對形態可能來自不同操作（例如並存時的紅色與黃色按鈕），
     /// 過場依它選擇；在 `presentation` 之前寫入，觀察到形態改變時已是新值。
     @ObservationIgnored private(set) var lastPresentationAction: PresentationAction?
+    /// 每套用一個改變畫面的操作加一。再拖出一次時形態不變，畫面要靠它得知換成新的懸浮窗（#16）。
+    private(set) var presentationRevision = 0
 
     /// 未指定的依賴一律用不碰系統的版本：測試與預覽不讀寫真正的設定、不出聲。
     init(
@@ -235,10 +237,15 @@ final class AppModel {
     /// 點 Dock 圖示或選單列的「顯示主視窗」。
     func showMainWindow() { apply(.showMainWindow) }
 
+    /// 把計時圓環拖到主視窗外放開：在放開處產生懸浮窗，主視窗保留（#16）。
+    func tearOffTimerRing() { apply(.tearOffTimerRing) }
+
     /// 轉換表中沒有這一格時忽略：操作可能來自已在過場中消失的介面。
     private func apply(_ action: PresentationAction) {
-        guard let next = presentation.applying(action), next != presentation else { return }
+        guard let next = presentation.applying(action),
+              next != presentation || action.replacesFloatingWindow else { return }
         lastPresentationAction = action
+        presentationRevision += 1
         presentation = next
     }
 
