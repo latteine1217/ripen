@@ -115,7 +115,7 @@ final class MainWindowBridge {
         guard let button = window.standardWindowButton(.miniaturizeButton) else { return }
         miniaturizeTarget.action = { [weak self] in self?.onMiniaturize?() }
         button.target = miniaturizeTarget
-        button.action = #selector(ButtonActionTarget.perform(_:))
+        button.action = #selector(ButtonActionTarget.invoke(_:))
     }
 }
 
@@ -124,7 +124,9 @@ final class MainWindowBridge {
 private final class ButtonActionTarget: NSObject {
     var action: (() -> Void)?
 
-    @objc func perform(_ sender: Any?) {
+    // 不可命名為 perform(_:)：#selector 會解析成 NSObject 的 performSelector:，
+    // 按鈕把自己當成 selector 傳入而什麼都不做（黃色按鈕無反應的根因）
+    @objc func invoke(_ sender: Any?) {
         action?()
     }
 }
@@ -154,9 +156,21 @@ private final class CloseInterceptor: NSObject, NSWindowDelegate {
         return false
     }
 
+    /// 已從 Dock 叫回、等它回到畫面上才改走懸浮窗。
+    private var isRecallingFromDock = false
+
     func windowDidMiniaturize(_ notification: Notification) {
         forwardee?.windowDidMiniaturize?(notification)
+        isRecallingFromDock = true
         (notification.object as? NSWindow)?.deminiaturize(nil)
+    }
+
+    // 叫回完成才觸發意圖：還在 Dock 時視窗不可見，變形與淡出都會略過它，
+    // 叫回動畫結束後主視窗又與懸浮窗並存
+    func windowDidDeminiaturize(_ notification: Notification) {
+        forwardee?.windowDidDeminiaturize?(notification)
+        guard isRecallingFromDock else { return }
+        isRecallingFromDock = false
         onMiniaturize()
     }
 
