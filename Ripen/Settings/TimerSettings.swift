@@ -34,10 +34,10 @@ extension AppSettings {
         set { self[.longBreakInterval] = newValue }
     }
 
-    /// 專注倒數到 0 後，休息自動開始。
-    var autoStartBreaks: Bool {
-        get { self[.autoStartBreaks] }
-        set { self[.autoStartBreaks] = newValue }
+    /// 按「完成」後下一段自動開始（ADR-0006）。儲存鍵沿用舊名 autoStartBreaks，保留使用者原本的選擇。
+    var autoStartNextPhase: Bool {
+        get { self[.autoStartNextPhase] }
+        set { self[.autoStartNextPhase] = newValue }
     }
 
     var clockFormat: ClockFormat {
@@ -70,7 +70,7 @@ private extension SettingKey where Value == Int {
 }
 
 private extension SettingKey where Value == Bool {
-    static var autoStartBreaks: Self { Self("autoStartBreaks", default: false) }
+    static var autoStartNextPhase: Self { Self("autoStartBreaks", default: false) }
 }
 
 private extension SettingKey where Value == ClockFormat {

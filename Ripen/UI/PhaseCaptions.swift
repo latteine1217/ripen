@@ -17,7 +17,7 @@ struct PhaseCaption: View {
     }
 }
 
-/// 倒數中顯示結束時刻、暫停時顯示「已暫停」；停在起點時沒有結束時刻，保留位置。
+/// 倒數中顯示結束時刻、暫停時顯示「已暫停」、超時中顯示「超時」；停在起點時沒有結束時刻，保留位置。
 struct EndCaption: View {
     let model: AppModel
     let status: TimerStatus
@@ -32,6 +32,8 @@ struct EndCaption: View {
         Group {
             if status == .paused {
                 Text("Paused")
+            } else if model.isOvertime {
+                Text("Overtime")
             } else {
                 Text("Ends at \(endTime ?? "--:--")")
                     .opacity(endTime == nil ? 0 : 1)

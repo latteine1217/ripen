@@ -133,7 +133,7 @@ final class TearOffController {
         guard let screen = NSScreen.screens.first(where: { $0.frame.contains(mouse) }) ?? NSScreen.main else { return }
         overlay?.close()
         let overlay = TransitionOverlay(screen: screen)
-        overlay.show(TearOffView(state: ghost, tint: model.phase.tint, face: floating.makeGhost()))
+        overlay.show(TearOffView(state: ghost, tint: model.displayTint, face: floating.makeGhost()))
         self.overlay = overlay
     }
 

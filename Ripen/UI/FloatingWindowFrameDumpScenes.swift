@@ -18,6 +18,7 @@ extension FrameDump {
             ("floating-medium-break", { model, clock in
                 model.start()
                 clock.current += 25 * 60
+                model.finish()
                 model.start()
             }),
         ]
@@ -42,7 +43,7 @@ extension FrameDump {
         let model = AppModel(clock: clock)
         model.start()
         clock.current += 25 * 60
-        model.refresh()
+        model.finish()
         model.skip()
         setUp(model, clock)
         clock.current += 48
@@ -52,19 +53,23 @@ extension FrameDump {
     }
 
     /// 三種尺寸（#15）：預設大小，以及拖角落拖出來的大小（同一尺寸內版面隨大小重新分配），各一張；
-    /// 另加暫停中的小與大。
+    /// 另加暫停中的小與大，以及超時中（#17）的三種尺寸。
     private static var sizeScenes: [Scene] {
-        let cases: [(name: String, size: CGSize, paused: Bool)] = [
-            ("floating-size-small", FloatingWindowSize.small.defaultSize, false),
-            ("floating-size-small-min", CGSize(width: 300, height: 56), false),
-            ("floating-size-small-paused", FloatingWindowSize.small.defaultSize, true),
-            ("floating-size-medium", FloatingWindowSize.medium.defaultSize, false),
-            ("floating-size-medium-min", CGSize(width: 240, height: 112), false),
-            ("floating-size-medium-wide", CGSize(width: 360, height: 210), false),
-            ("floating-size-large", FloatingWindowSize.large.defaultSize, false),
-            ("floating-size-large-min", CGSize(width: 240, height: 225), false),
-            ("floating-size-large-max", CGSize(width: 340, height: 340), false),
-            ("floating-size-large-paused", FloatingWindowSize.large.defaultSize, true),
+        enum Timing { case running, paused, overtime }
+        let cases: [(name: String, size: CGSize, timing: Timing)] = [
+            ("floating-size-small", FloatingWindowSize.small.defaultSize, .running),
+            ("floating-size-small-min", CGSize(width: 300, height: 56), .running),
+            ("floating-size-small-paused", FloatingWindowSize.small.defaultSize, .paused),
+            ("floating-size-small-overtime", FloatingWindowSize.small.defaultSize, .overtime),
+            ("floating-size-medium", FloatingWindowSize.medium.defaultSize, .running),
+            ("floating-size-medium-min", CGSize(width: 240, height: 112), .running),
+            ("floating-size-medium-wide", CGSize(width: 360, height: 210), .running),
+            ("floating-size-medium-overtime", FloatingWindowSize.medium.defaultSize, .overtime),
+            ("floating-size-large", FloatingWindowSize.large.defaultSize, .running),
+            ("floating-size-large-min", CGSize(width: 240, height: 225), .running),
+            ("floating-size-large-max", CGSize(width: 340, height: 340), .running),
+            ("floating-size-large-paused", FloatingWindowSize.large.defaultSize, .paused),
+            ("floating-size-large-overtime", FloatingWindowSize.large.defaultSize, .overtime),
         ]
         let margin = FloatingWindowController.margin
         return cases.map { item in
@@ -72,9 +77,15 @@ extension FrameDump {
                                                 height: item.size.height + 2 * margin)) { _ in
                 let model = sampleModel { model, clock in
                     model.start()
-                    if item.paused {
+                    switch item.timing {
+                    case .running: break
+                    case .paused:
                         clock.current += 48
                         model.pause()
+                    case .overtime:
+                        // 倒數到 0 後再過 1 分鐘，加上共用的 48 秒：顯示 +01:48
+                        clock.current += 25 * 60 + 60
+                        model.refresh()
                     }
                 }
                 return AnyView(

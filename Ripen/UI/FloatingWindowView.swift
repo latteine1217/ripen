@@ -84,8 +84,8 @@ struct FloatingWindowGlass: View, Animatable {
         let shape = RoundedRectangle(cornerRadius: layout.cornerRadius, style: .continuous)
         FloatingWindowContent(model: model, layout: layout)
             .frame(width: size.width, height: size.height)
-            // 提醒播出時 model.phase 已是下一段，閃的是新階段色；裁成玻璃的形狀
-            .reminderFlash(model.lastReminder, tint: model.phase.tint)
+            // 提醒在倒數到 0 時播出，閃的是超時色；裁成玻璃的形狀
+            .reminderFlash(model.lastReminder, tint: model.displayTint)
             .clipShape(shape)
             .ripenGlass(in: shape, settings: model.settings)
             .contentShape(shape)
@@ -100,8 +100,9 @@ struct FloatingWindowGlass: View, Animatable {
                 ResizeHandles(cornerRadius: layout.cornerRadius, showsGrips: showsGrips,
                               keepsCursor: keepsResizeCursor, onResize: onResize)
             }
-            .overlay { PhaseRipple(shape: shape, reminderID: model.lastReminder?.id, tint: model.phase.tint) }
-            .tint(model.phase.tint)
+            .overlay { PhaseRipple(shape: shape, reminderID: model.lastReminder?.id, tint: model.displayTint) }
+            // 超時色是時間推導的值；這個 view 在 TimelineView 裡，每次刷新都重讀
+            .tint(model.displayTint)
             .scaleEffect(isDismissing && !reduceMotion ? 0.85 : 1)
             .opacity(isDismissing ? 0 : 1)
             .accessibilityElement(children: .contain)
@@ -134,7 +135,7 @@ private struct FloatingWindowContent: View {
             ProgressBar(progress: model.phaseProgress)
                 .opacity(layout.barOpacity)
             startPauseButton(status: status)
-            IslandIconButton("Skip", systemImage: "forward.end.fill", help: "Skip to the next phase", action: model.skip)
+            SkipOrDoneButton(model: model, isOvertime: model.isOvertime)
             IslandIconButton(
                 "Expand into Main Window", systemImage: "arrow.up.left.and.arrow.down.right",
                 action: model.expandFloatingWindow
@@ -182,7 +183,8 @@ private struct FloatingWindowContent: View {
 
     /// 剩餘時間：三種尺寸共用這一個元件，只換字級與位置。
     private func timeText(status: TimerStatus) -> some View {
-        Text(verbatim: CountdownFormat.string(model.remaining))
+        Text(verbatim: model.timeText)
+            .overtimeStyle(model.isOvertime)
             .font(.system(size: layout.time.fontSize, weight: .semibold, design: .rounded))
             .monospacedDigit()
             .fixedSize()
@@ -192,7 +194,7 @@ private struct FloatingWindowContent: View {
     @ViewBuilder
     private func startPauseButton(status: TimerStatus) -> some View {
         switch status {
-        case .idle, .finished:
+        case .idle:
             IslandIconButton("Start", systemImage: "play.fill", action: model.toggleStartPause)
         case .running:
             IslandIconButton("Pause", systemImage: "pause.fill", action: model.toggleStartPause)

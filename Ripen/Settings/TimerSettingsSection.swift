@@ -13,7 +13,7 @@ struct TimerSettingsSection: View {
                 Text($0, format: .number)
             }
             .help(Text("Focuses to complete before each long break"))
-            Toggle("Start Breaks Automatically", isOn: $settings.autoStartBreaks)
+            Toggle("Start Next Phase When Done", isOn: $settings.autoStartNextPhase)
         } header: {
             Text("Timer")
         } footer: {

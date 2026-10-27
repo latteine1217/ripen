@@ -31,6 +31,8 @@ struct RipenApp: App {
         _model = State(initialValue: model)
         _presenter = State(initialValue: PresentationController(model: model))
         _hotkeys = State(initialValue: hotkeys)
+        // 在 init 接上：主視窗上次退出時是關閉的就不會建立，接在 onWindowAttach 會漏掉
+        lifecycle.onTerminate = { model.prepareToQuit() }
     }
 
     var body: some Scene {

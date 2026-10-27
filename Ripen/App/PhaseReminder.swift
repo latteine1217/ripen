@@ -1,20 +1,23 @@
 import Foundation
 
-/// 一次已播出的階段結束提醒。
+/// 一次已播出的倒數到 0 提醒。
 ///
-/// 主視窗、瀏海島、懸浮窗觀察 `AppModel.lastReminder` 的 `id` 變化來播換階段動畫；
-/// 播放時 `AppModel.phase` 已是下一段，動畫用它的階段色。
+/// 主視窗、瀏海島、懸浮窗觀察 `AppModel.lastReminder` 的 `id` 變化來播提醒動畫；
+/// 播放時目前階段已進入超時（ADR-0006），動畫用超時色。
 struct PhaseReminder: Equatable, Sendable {
     /// 從 1 起遞增，每次提醒恰好加一。
     let id: Int
-    /// 觸發這次提醒的完成；離開期間有多段完成時是最後一段。
-    let completion: PhaseCompletion
+    /// 倒數到 0 的階段。
+    let phase: Phase
 }
 
-/// 使用者是否在電腦前。鎖定、睡眠、螢幕關閉或螢幕保護程式期間算離開，提醒延到回來才播（ADR-0002）。
+/// 使用者是否在電腦前。鎖定、睡眠、螢幕關閉或螢幕保護程式期間算離開：
+/// 提醒延到回來才播（ADR-0002），超時自動暫停（ADR-0006）。
 @MainActor
 protocol UserPresence: AnyObject {
     var isAway: Bool { get }
+    /// 由在場轉為離開時呼叫一次。
+    var onLeave: (@MainActor () -> Void)? { get set }
     /// 由離開轉為在場時呼叫一次。
     var onReturn: (@MainActor () -> Void)? { get set }
 }
@@ -37,6 +40,7 @@ protocol PhaseEndAlarm: AnyObject {
 
 final class AlwaysPresent: UserPresence {
     var isAway: Bool { false }
+    var onLeave: (@MainActor () -> Void)?
     var onReturn: (@MainActor () -> Void)?
 }
 

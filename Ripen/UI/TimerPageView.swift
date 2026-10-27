@@ -14,12 +14,15 @@ struct TimerPageView: View {
         TimelineView(.periodic(from: .now, by: 0.25)) { context in
             let status = model.status
             let phase = model.phase
+            let isOvertime = model.isOvertime
             VStack(spacing: 20) {
+                // 超時中剩餘時間為 0，圓環維持滿圈、以超時色標示
                 TimerRingView(
-                    progress: 1 - model.remaining / model.phaseDuration,
-                    timeText: CountdownFormat.string(model.remaining),
+                    progress: model.phaseProgress,
+                    timeText: model.timeText,
                     phaseTitle: phase.title,
-                    isPaused: status == .paused
+                    isPaused: status == .paused,
+                    isOvertime: isOvertime
                 )
                 .frame(width: Self.ringDiameter, height: Self.ringDiameter)
                 .modifier(TearOffRing(tearOff: tearOff, diameter: Self.ringDiameter))
@@ -29,23 +32,36 @@ struct TimerPageView: View {
                     interval: model.longBreakInterval
                 )
 
-                endTime(model.endDate)
+                endTime(model.endDate, isOvertime: isOvertime)
 
-                controls(for: status)
+                controls(for: status, isOvertime: isOvertime)
             }
             .padding(32)
-            .tint(phase.tint)
+            .tint(model.displayTint)
             // 減少動態效果時直接切換，不做過場
             .animation(reduceMotion ? nil : .easeInOut(duration: 0.2), value: status)
             .animation(reduceMotion ? nil : .easeInOut(duration: 0.35), value: phase)
-            // 倒數到 0 只是推導出的狀態；每次刷新時確立完成，畫面隨即換到下一段起點
+            .animation(reduceMotion ? nil : .easeInOut(duration: 0.35), value: isOvertime)
+            // 倒數到 0 只是推導出的狀態；每次刷新時送出提醒，畫面隨即進入超時
             .onChange(of: context.date) { model.refresh() }
         }
         .onSystemWake { model.refresh() }
     }
 
     /// 只在倒數中顯示；暫停或停在起點時沒有結束時刻，保留位置讓版面不跳動。
-    private func endTime(_ endDate: Date?) -> some View {
+    /// 超時中結束時刻已過，改標示「超時」。
+    @ViewBuilder
+    private func endTime(_ endDate: Date?, isOvertime: Bool) -> some View {
+        if isOvertime {
+            Text("Overtime")
+                .font(.callout)
+                .foregroundStyle(.tint)
+        } else {
+            endTimeText(endDate)
+        }
+    }
+
+    private func endTimeText(_ endDate: Date?) -> some View {
         let text = endDate.map {
             EndTimeFormat.string(
                 $0, clockFormat: model.settings.clockFormat,
@@ -60,19 +76,31 @@ struct TimerPageView: View {
             .accessibilityHidden(text == nil)
     }
 
-    private func controls(for status: TimerStatus) -> some View {
+    /// 超時中「重設」「跳過」由「完成」取代（ADR-0006），暫停／繼續照常。
+    private func controls(for status: TimerStatus, isOvertime: Bool) -> some View {
         HStack(spacing: 16) {
-            Button("Reset", systemImage: "arrow.counterclockwise", action: model.reset)
-                .help(Text("Reset the current phase"))
-                .disabled(status == .idle)
+            if isOvertime {
+                primaryButton(for: status)
+                    .keyboardShortcut(.space, modifiers: [])
 
-            primaryButton(for: status)
-                .labelStyle(.titleAndIcon)
-                .buttonStyle(.borderedProminent)
-                .keyboardShortcut(.space, modifiers: [])
+                Button("Done", systemImage: "checkmark", action: model.finish)
+                    .labelStyle(.titleAndIcon)
+                    .buttonStyle(.borderedProminent)
+                    .keyboardShortcut(.defaultAction)
+                    .help(Text("Finish this phase and move to the next"))
+            } else {
+                Button("Reset", systemImage: "arrow.counterclockwise", action: model.reset)
+                    .help(Text("Reset the current phase"))
+                    .disabled(status == .idle)
 
-            Button("Skip", systemImage: "forward.end.fill", action: model.skip)
-                .help(Text("Skip to the next phase"))
+                primaryButton(for: status)
+                    .labelStyle(.titleAndIcon)
+                    .buttonStyle(.borderedProminent)
+                    .keyboardShortcut(.space, modifiers: [])
+
+                Button("Skip", systemImage: "forward.end.fill", action: model.skip)
+                    .help(Text("Skip to the next phase"))
+            }
         }
         .labelStyle(.iconOnly)
         .controlSize(.large)
@@ -81,7 +109,7 @@ struct TimerPageView: View {
     @ViewBuilder
     private func primaryButton(for status: TimerStatus) -> some View {
         switch status {
-        case .idle, .finished:
+        case .idle:
             Button("Start", systemImage: "play.fill", action: model.start)
         case .running:
             Button("Pause", systemImage: "pause.fill", action: model.pause)

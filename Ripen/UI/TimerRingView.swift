@@ -7,6 +7,8 @@ struct TimerRingView: View {
     let timeText: String
     let phaseTitle: LocalizedStringKey
     let isPaused: Bool
+    /// 超時中時間改用 tint（超時色）；進度維持滿圈。
+    var isOvertime = false
 
     private let lineWidth: CGFloat = 12
 
@@ -22,6 +24,7 @@ struct TimerRingView: View {
                 .transaction { $0.animation = nil }
             VStack(spacing: 4) {
                 Text(verbatim: timeText)
+                    .overtimeStyle(isOvertime)
                     .font(.system(size: 48, weight: .semibold, design: .rounded))
                     .monospacedDigit()
                     .opacity(isPaused ? 0.5 : 1)
