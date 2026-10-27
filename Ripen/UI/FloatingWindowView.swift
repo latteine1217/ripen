@@ -15,8 +15,10 @@ final class FloatingWindowState {
     )
     /// 寬度被最小寬度撐開時往哪邊長：拖左邊的角時右緣固定。
     var widensLeftward = false
-    /// 游標在玻璃上；離開時角落熱區把換掉的游標還回去。
+    /// 游標在玻璃上：`gripCorner` 畫出把手；離開時角落熱區把換掉的游標還回去。
     var isHovering = false
+    /// 朝螢幕中央的角，hover 時只在這一角畫把手；controller 在擺放、移動或調整大小放開後更新。
+    var gripCorner = ResizeCorner.bottomLeft
     var isResizing = false
     /// ✕ 或收進瀏海時原地縮小淡出。
     var isDismissing = false
@@ -42,6 +44,7 @@ struct FloatingWindowView: View {
             FloatingWindowGlass(
                 model: model, blend: FloatingWindowSizeBlend(state.size), frame: state.glassFrame,
                 widensLeftward: state.widensLeftward,
+                grip: state.isHovering && !state.isResizing ? state.gripCorner : nil,
                 keepsResizeCursor: state.isHovering || state.isResizing,
                 isDismissing: state.isDismissing, onDrag: onDrag, onResize: onResize
             )
@@ -61,6 +64,8 @@ struct FloatingWindowGlass: View, Animatable {
     /// 玻璃在父 view 內的框（左上原點）；寬度不足這一刻的最小寬度時往 `widensLeftward` 那邊撐開。
     let frame: CGRect
     var widensLeftward = false
+    /// 畫把手的角；nil 時不畫（游標不在玻璃上或正在調整大小）。
+    var grip: ResizeCorner?
     /// 游標在玻璃上或正在調整大小；變成 false 時（例如懸浮窗收起）把換掉的游標還回去。
     var keepsResizeCursor = true
     var isDismissing = false
@@ -96,7 +101,8 @@ struct FloatingWindowGlass: View, Animatable {
             )
             // 熱區在移動手勢之外，拖角落不會被當成移動
             .overlay {
-                ResizeHandles(keepsCursor: keepsResizeCursor, onResize: onResize)
+                ResizeHandles(cornerRadius: layout.cornerRadius, grip: grip,
+                              keepsCursor: keepsResizeCursor, onResize: onResize)
             }
             .overlay { PhaseRipple(shape: shape, reminderID: model.lastReminder?.id, tint: model.displayTint) }
             // 超時色是時間推導的值；這個 view 在 TimelineView 裡，每次刷新都重讀
@@ -238,8 +244,11 @@ private struct PlacedLayout: Layout {
     }
 }
 
-/// 四個角的調整大小熱區，不畫把手（使用者回饋：斜線把手太醜）；游標移上去換成對角調整游標是唯一的提示。
+/// 四個角的調整大小熱區，游標移上去換成對角調整游標。hover 時只在朝螢幕中央的一角（`grip`）畫把手：
+/// 四角都畫太吵，全不畫又找不到能放大的地方（使用者回饋；spec #1 user story 43、懸浮窗原型）。
 private struct ResizeHandles: View {
+    let cornerRadius: CGFloat
+    let grip: ResizeCorner?
     let keepsCursor: Bool
     let onResize: (ResizeCorner?) -> Void
 
@@ -249,7 +258,9 @@ private struct ResizeHandles: View {
     var body: some View {
         ZStack {
             ForEach(ResizeCorner.allCases, id: \.self) { corner in
-                CornerHandle(corner: corner, keepsCursor: keepsCursor, onResize: onResize)
+                // 圓角的弧在 45° 處離兩邊約 0.29r：把手畫在弧內側
+                CornerHandle(corner: corner, gripInset: cornerRadius * 0.3 + 3, showsGrip: grip == corner,
+                             keepsCursor: keepsCursor, onResize: onResize)
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: corner.alignment)
             }
         }
@@ -258,12 +269,17 @@ private struct ResizeHandles: View {
 
 private struct CornerHandle: View {
     let corner: ResizeCorner
+    let gripInset: CGFloat
+    let showsGrip: Bool
     let keepsCursor: Bool
     let onResize: (ResizeCorner?) -> Void
     @State private var cursorPushed = false
 
     var body: some View {
-        Color.clear
+        // 把手換角（移動或貼邊後）時舊角淡出、新角淡入
+        Grip(corner: corner, inset: gripInset)
+            .opacity(showsGrip ? 0.6 : 0)
+            .animation(.easeOut(duration: 0.15), value: showsGrip)
             .frame(width: ResizeHandles.hitSize, height: ResizeHandles.hitSize)
             .contentShape(CornerTriangle(corner: corner))
             .onHover { inside in
@@ -321,6 +337,26 @@ private struct CornerTriangle: Shape {
         path.addLine(to: CGPoint(x: x, y: corner.isTop ? rect.maxY : rect.minY))
         path.closeSubpath()
         return path
+    }
+}
+
+/// 角落的兩條斜線把手：畫在右下角，其他角翻轉。
+private struct Grip: View {
+    let corner: ResizeCorner
+    let inset: CGFloat
+
+    var body: some View {
+        Canvas { context, size in
+            var path = Path()
+            let x = size.width - inset, y = size.height - inset
+            for k in [4.0, 8.0] {
+                path.move(to: CGPoint(x: x - k, y: y))
+                path.addLine(to: CGPoint(x: x, y: y - k))
+            }
+            context.stroke(path, with: .color(.white), style: StrokeStyle(lineWidth: 1.5, lineCap: .round))
+        }
+        .scaleEffect(x: corner.isRight ? 1 : -1, y: corner.isTop ? -1 : 1)
+        .allowsHitTesting(false)
     }
 }
 

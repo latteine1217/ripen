@@ -282,6 +282,7 @@ final class FloatingWindowController {
             dragStart = nil
             guard let area = FloatingWindowPlacement.screen(for: glassFrame, in: Self.screenAreas) else { return }
             glassFrame = FloatingWindowPlacement.settle(glassFrame, in: area.visibleFrame)
+            updateGripCorner()
             let frame = Self.panelFrame(for: glassFrame)
             if NSWorkspace.shared.accessibilityDisplayShouldReduceMotion {
                 panel.setFrame(frame, display: true)
@@ -315,7 +316,15 @@ final class FloatingWindowController {
             state.size = FloatingWindowSize(height: rect.height)
             state.glassFrame = CGRect(origin: CGPoint(x: Self.margin, y: Self.margin), size: rect.size)
         }
+        updateGripCorner()
         savePosition()
+    }
+
+    /// 把手換到朝螢幕中央的角。只在位置定下來時呼叫（擺放、移動放開、調整大小放開）：拖曳中途不跟著跳。
+    private func updateGripCorner() {
+        guard let corner = ResizeCorner.facingScreenCenter(from: glassFrame, in: Self.screenAreas),
+              corner != state.gripCorner else { return }
+        state.gripCorner = corner
     }
 
     private func savePosition() {
@@ -425,6 +434,7 @@ final class FloatingWindowController {
         if let area = FloatingWindowPlacement.screen(for: glassFrame, in: Self.screenAreas) {
             glassFrame = FloatingWindowPlacement.settle(glassFrame, in: area.visibleFrame)
         }
+        updateGripCorner()
         let local = Self.local(glassFrame, in: resizing.screenFrame)
         let reduceMotion = NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
         if reduceMotion {
