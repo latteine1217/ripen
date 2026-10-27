@@ -21,7 +21,7 @@ _Avoid_: Rest, Pause
 _Avoid_: Big break
 
 **長休息間隔 (Long Break Interval)**：
-兩次長休息之間需完成的專注次數，預設 4；完成長休息或閒置 2 小時後重新計數。
+兩次長休息之間需完成的專注次數，預設 4；完成長休息或閒置 2 小時後重新計數。閒置是沒有階段在跑（暫停也算）；超時中只有離開電腦時被自動暫停才算閒置，從自動暫停的那一刻起算。
 _Avoid_: Rounds, Cycle length
 
 **超時 (Overtime)**：
