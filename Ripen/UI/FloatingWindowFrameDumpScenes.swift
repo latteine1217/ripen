@@ -91,7 +91,7 @@ extension FrameDump {
                 return AnyView(
                     FloatingWindowGlass(
                         model: model, blend: FloatingWindowSizeBlend(FloatingWindowSize(height: item.size.height)),
-                        frame: CGRect(origin: CGPoint(x: margin, y: margin), size: item.size), showsGrips: true
+                        frame: CGRect(origin: CGPoint(x: margin, y: margin), size: item.size)
                     )
                     .background(Color(white: 0.3))
                 )
