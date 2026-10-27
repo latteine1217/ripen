@@ -31,8 +31,11 @@ final class AppModel {
             alarm.schedule(at: engine.endDate.flatMap { $0 > clock.now() ? $0 : nil })
         }
     }
-    /// 這段閒置（沒有任何階段在跑，暫停也算，但超時中不算）開始的時刻；不在閒置時為 nil。
+    /// 這段閒置開始的時刻；不在閒置時為 nil。沒有階段在跑就是閒置（暫停也算），
+    /// 超時中則只有離開時被自動暫停才算，從自動暫停的那一刻起算。
     @ObservationIgnored private var idleSince: Date?
+    /// 目前的暫停是離開時自動暫停的超時；使用者按繼續或換階段時清掉。
+    @ObservationIgnored private var isPausedWhileAway = false
     /// 目前階段倒數到 0 的提醒是否已送出（含待播）；換階段時歸零。
     @ObservationIgnored private var reachedZero = false
     /// 離開期間倒數到 0、還沒播的提醒；回來時播。
@@ -102,9 +105,13 @@ final class AppModel {
     /// 離開期間的超時不算：在離開的那一刻暫停；離開時還在倒數則停在 0（ADR-0006）。
     ///
     /// 睡眠時 App 不執行，可能要到回來才走到這裡；暫停時刻取自記下的離開時刻與結束時刻，不受刷新時機影響。
+    /// 自動暫停的超時算閒置，從暫停的那一刻起算：整晚睡著時倒數跨過 0，隔天回來計數也會歸零。
     private func pauseOvertimeWhileAway(at now: Date) {
         guard let awaySince, let endDate = engine.endDate, endDate <= now else { return }
-        engine.pause(at: max(awaySince, endDate))
+        let pausedAt = max(awaySince, endDate)
+        engine.pause(at: pausedAt)
+        isPausedWhileAway = true
+        idleSince = pausedAt
     }
 
     /// 每段只提醒一次：繼續、重複刷新、到點計時器再觸發都不重播。
@@ -164,7 +171,7 @@ final class AppModel {
     private func resetCountIfIdle(at now: Date) {
         guard let idleSince, now.timeIntervalSince(idleSince) >= Self.idleResetInterval else { return }
         // 只在真的有變化時寫入：閒置期間每次刷新都會走到這裡，避免無謂的觀察通知
-        // 停在休息起點等待的話，改從第 1 次專注開始；暫停中的階段保留，由使用者決定
+        // 停在休息起點等待的話，改從第 1 次專注開始；暫停中的階段（含自動暫停的超時）保留，由使用者決定
         if engine.status(at: now) == .idle, cycle.phase != .focus {
             cycle = PhaseCycle()
             loadCurrentPhase()
@@ -208,6 +215,7 @@ final class AppModel {
     func resume() {
         refresh()
         engine.resume(at: clock.now())
+        isPausedWhileAway = false
         updateIdleSince()
     }
 
@@ -249,10 +257,10 @@ final class AppModel {
         if let completion = completion(at: clock.now()) { recordIfFocus(completion) }
     }
 
-    /// 開始跑或在超時中就不是閒置；停下來的那一刻開始閒置。已在閒置中的操作不重新計時。
+    /// 開始跑或在超時中就不是閒置，離開時自動暫停的超時除外；停下來的那一刻開始閒置。已在閒置中的操作不重新計時。
     private func updateIdleSince() {
         let now = clock.now()
-        if engine.status(at: now) == .running || engine.isOvertime(at: now) {
+        if engine.status(at: now) == .running || (engine.isOvertime(at: now) && !isPausedWhileAway) {
             idleSince = nil
         } else if idleSince == nil {
             idleSince = now
@@ -300,6 +308,7 @@ final class AppModel {
     private func loadCurrentPhase() {
         engine = TimerEngine(phase: cycle.phase, duration: configuration.duration(for: cycle.phase))
         reachedZero = false
+        isPausedWhileAway = false
     }
 }
 
