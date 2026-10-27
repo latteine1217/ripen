@@ -19,7 +19,7 @@ extension AppSettings {
 
 private extension SettingKey where Value == Double {
     static var glassTintOpacity: Self {
-        Self("glassTintOpacity", default: 0.65) { AppSettings.glassTintOpacityRange.contains($0) }
+        Self("glassTintOpacity", default: 0.35) { AppSettings.glassTintOpacityRange.contains($0) }
     }
 }
 

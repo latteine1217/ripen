@@ -5,25 +5,31 @@ import CoreGraphics
 /// 以游標到圓環中心的直線距離判斷，不看是否離開主視窗（懸浮窗原型選定「距離」）。
 /// 座標是 AppKit 全域座標（左下原點）。
 struct TearOffDrag: Equatable, Sendable {
-    /// 游標離圓環中心這麼遠就過門檻，放開會產生懸浮窗（spec #1）。
-    static let threshold: CGFloat = 110
+    /// 門檻在圓環外緣再往外這麼遠：原型圓環半徑 80pt、門檻 110pt。正式版圓環較大，
+    /// 照相對位置計算，門檻才不會落在環邊、牽線還沒拉開就斷。
+    static let clearance: CGFloat = 30
     /// 移動不到這個距離算點擊或沒有動作，不開始拖出：與按鈕、空白鍵不衝突（spec #1）。
     static let minimumDistance: CGFloat = 8
 
     let ringCenter: CGPoint
+    /// 游標離圓環中心這麼遠就過門檻，放開會產生懸浮窗。
+    let threshold: CGFloat
     private(set) var cursor: CGPoint
 
-    init(ringCenter: CGPoint, cursor: CGPoint) {
+    init(ringCenter: CGPoint, ringRadius: CGFloat, cursor: CGPoint) {
         self.ringCenter = ringCenter
+        self.threshold = Self.threshold(ringRadius: ringRadius)
         self.cursor = cursor
     }
+
+    static func threshold(ringRadius: CGFloat) -> CGFloat { ringRadius + clearance }
 
     var distance: CGFloat { hypot(cursor.x - ringCenter.x, cursor.y - ringCenter.y) }
 
     /// 0…1，1 代表已過門檻；牽線粗細與分身的不透明度都依它。
-    var progress: CGFloat { min(distance / Self.threshold, 1) }
+    var progress: CGFloat { min(distance / threshold, 1) }
 
-    var isPastThreshold: Bool { distance >= Self.threshold }
+    var isPastThreshold: Bool { distance >= threshold }
 
     /// 游標移動；過門檻或拉回的那一刻回傳 true（給觸覺回饋，spec #1 user story 33）。
     mutating func move(to point: CGPoint) -> Bool {

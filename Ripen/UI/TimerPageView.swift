@@ -119,7 +119,11 @@ struct TimerPageView: View {
     }
 }
 
-/// 計時圓環可以拖出成懸浮窗（#16）：hover 時游標變成手掌並出現提示，拖曳中圓環留在原地變淡。
+/// 計時圓環可以拖出成懸浮窗（#16）：hover 時圓環微微浮起、游標變成手掌、下方浮出提示字，
+/// 拖曳中圓環留在原地變淡（懸浮窗原型）。
+///
+/// 提示字一直佔著位置、只切換不透明度，出現時主視窗版面不跳動；不能拖出時（例如逐格輸出）也保留位置，
+/// 版面與實際視窗一致。
 ///
 /// 手勢用 `minimumDistance: 0`，由 `TearOffDrag.beginsDrag` 判斷 8pt 門檻；圓環本身沒有點擊動作，
 /// 空白鍵是開始／暫停按鈕的快捷鍵，兩者都不經過這個手勢。
@@ -127,13 +131,40 @@ private struct TearOffRing: ViewModifier {
     let tearOff: TearOffController?
     let diameter: CGFloat
 
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var isHovering = false
+
+    /// 拖曳中（含分身彈回、落地）不浮起也不顯示提示。
+    private var isLifted: Bool { isHovering && tearOff?.isActive == false }
+
     func body(content: Content) -> some View {
+        VStack(spacing: 10) {
+            ring(content)
+            Text("Drag the ring out of the window to make a floating window")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .opacity(isLifted ? 1 : 0)
+                // 圓環已帶同一句 accessibilityHint，不重複朗讀
+                .accessibilityHidden(true)
+        }
+        // 減少動態效果時不放大（見 ring），陰影與提示字照樣淡入淡出
+        .animation(.easeOut(duration: 0.15), value: isLifted)
+    }
+
+    @ViewBuilder
+    private func ring(_ content: Content) -> some View {
         if let tearOff {
             content
                 .opacity(tearOff.isActive ? 0.55 : 1)
                 .contentShape(Circle())
+                .scaleEffect(isLifted && !reduceMotion ? 1.03 : 1)
+                .shadow(color: .black.opacity(isLifted ? 0.15 : 0), radius: 8, y: 3)
                 // 不用 push／pop：拖曳中游標離開圓環、或圓環隨視窗消失時，堆疊會失衡讓游標卡住
                 .onContinuousHover { phase in
+                    switch phase {
+                    case .active: isHovering = true
+                    case .ended: isHovering = false
+                    }
                     guard !tearOff.isActive else { return }
                     switch phase {
                     case .active: NSCursor.openHand.set()
@@ -146,12 +177,13 @@ private struct TearOffRing: ViewModifier {
                             tearOff.dragChanged(
                                 start: value.startLocation, translation: value.translation,
                                 offsetFromRingCenter: CGSize(width: value.location.x - diameter / 2,
-                                                             height: value.location.y - diameter / 2)
+                                                             height: value.location.y - diameter / 2),
+                                ringRadius: diameter / 2
                             )
                         }
                         .onEnded { _ in tearOff.dragEnded() }
                 )
-                .help(Text("Drag the ring out of the window to make a floating window"))
+                .accessibilityHint(Text("Drag the ring out of the window to make a floating window"))
         } else {
             content
         }

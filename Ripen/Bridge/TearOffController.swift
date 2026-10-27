@@ -52,7 +52,8 @@ final class TearOffController {
     ///   - start: 手勢起點（任何固定座標系），用來辨認被 Esc 取消的那次手勢。
     ///   - translation: 自起點的位移。
     ///   - offsetFromRingCenter: 游標相對圓環中心的位移（SwiftUI 座標，y 向下）。
-    func dragChanged(start: CGPoint, translation: CGSize, offsetFromRingCenter: CGSize) {
+    ///   - ringRadius: 計時圓環半徑，決定門檻（`TearOffDrag.threshold(ringRadius:)`）。
+    func dragChanged(start: CGPoint, translation: CGSize, offsetFromRingCenter: CGSize, ringRadius: CGFloat) {
         if let cancelled = cancelledGestureStart {
             guard cancelled != start else { return }
             cancelledGestureStart = nil
@@ -60,7 +61,7 @@ final class TearOffController {
         gestureStart = start
         if drag == nil {
             guard TearOffDrag.beginsDrag(translation: translation) else { return }
-            begin(offsetFromRingCenter: offsetFromRingCenter)
+            begin(offsetFromRingCenter: offsetFromRingCenter, ringRadius: ringRadius)
         }
     }
 
@@ -77,13 +78,13 @@ final class TearOffController {
 
     // MARK: - 拖曳
 
-    private func begin(offsetFromRingCenter offset: CGSize) {
+    private func begin(offsetFromRingCenter offset: CGSize, ringRadius: CGFloat) {
         guard !isActive, let window = mainWindow.window, window.isVisible,
               model.presentation.applying(.tearOffTimerRing) != nil else { return }
         let mouse = NSEvent.mouseLocation
         // 全域座標 y 向上，SwiftUI 的位移 y 向下
         let center = CGPoint(x: mouse.x - offset.width, y: mouse.y + offset.height)
-        drag = TearOffDrag(ringCenter: center, cursor: mouse)
+        drag = TearOffDrag(ringCenter: center, ringRadius: ringRadius, cursor: mouse)
         session += 1
         ghost.reset(panelSize: floating.panelSize)
         isActive = true

@@ -8,7 +8,8 @@ extension FrameDump {
     static var tearOffScenes: [Scene] {
         let stage = CGSize(width: 760, height: 560)
         let anchor = CGPoint(x: 200, y: 200)
-        let reach = TearOffDrag.threshold * 1.5
+        let radius: CGFloat = 110
+        let reach = TearOffDrag.threshold(ringRadius: radius) * 1.5
         let margin = FloatingWindowController.margin
         let glass = FloatingWindowSize.medium.defaultSize
         let panel = CGSize(width: glass.width + 2 * margin, height: glass.height + 2 * margin)
@@ -20,7 +21,7 @@ extension FrameDump {
                 state.reset(panelSize: panel)
                 state.anchor = anchor
                 state.cursor = cursor
-                state.progress = TearOffDrag(ringCenter: anchor, cursor: cursor).progress
+                state.progress = TearOffDrag(ringCenter: anchor, ringRadius: radius, cursor: cursor).progress
                 let face = RoundedRectangle(cornerRadius: FloatingWindowSize.medium.cornerRadius, style: .continuous)
                     .fill(Color(white: 0.16))
                     .frame(width: glass.width, height: glass.height)
@@ -28,7 +29,7 @@ extension FrameDump {
                     ZStack(alignment: .topLeading) {
                         Circle()
                             .stroke(Color.orange, lineWidth: 12)
-                            .frame(width: 220, height: 220)
+                            .frame(width: 2 * radius, height: 2 * radius)
                             .opacity(0.55)
                             .position(anchor)
                         TearOffView(state: state, tint: .orange, face: face)

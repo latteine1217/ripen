@@ -33,23 +33,34 @@ struct GlassBackground<S: InsettableShape>: View {
             }
             shape.fill(Color(white: style.tintWhite).opacity(settings.glassTintOpacity))
 
+            // 以下五層原型沒有，預設為 0：為 0 時整層不建立，不留任何混合或模糊的痕跡。
             // 混合模式直接作用在模糊後的背景上：變亮、變鮮豔，而不是蓋一層灰
-            shape.fill(.white.opacity(style.lift)).blendMode(.plusLighter)
-            shape.fill(.white.opacity(style.vibrance)).blendMode(.overlay)
+            if style.lift > 0 {
+                shape.fill(.white.opacity(style.lift)).blendMode(.plusLighter)
+            }
+            if style.vibrance > 0 {
+                shape.fill(.white.opacity(style.vibrance)).blendMode(.overlay)
+            }
             shape.fill(.white.opacity(style.wash))
 
-            shape.fill(
-                LinearGradient(
-                    stops: [
-                        .init(color: .white.opacity(style.highlightOpacity), location: 0),
-                        .init(color: .white.opacity(0), location: style.highlightLength),
-                    ],
-                    startPoint: .top, endPoint: .bottom
+            if style.highlightOpacity > 0 {
+                shape.fill(
+                    LinearGradient(
+                        stops: [
+                            .init(color: .white.opacity(style.highlightOpacity), location: 0),
+                            .init(color: .white.opacity(0), location: style.highlightLength),
+                        ],
+                        startPoint: .top, endPoint: .bottom
+                    )
                 )
-            )
+            }
 
-            innerEdge(.white.opacity(style.innerGlowOpacity), radius: style.innerGlowRadius, towardBottom: true)
-            innerEdge(.black.opacity(style.innerShadowOpacity), radius: style.innerShadowRadius, towardBottom: false)
+            if style.innerGlowOpacity > 0 {
+                innerEdge(.white.opacity(style.innerGlowOpacity), radius: style.innerGlowRadius, towardBottom: true)
+            }
+            if style.innerShadowOpacity > 0 {
+                innerEdge(.black.opacity(style.innerShadowOpacity), radius: style.innerShadowRadius, towardBottom: false)
+            }
 
             shape.strokeBorder(
                 LinearGradient(
