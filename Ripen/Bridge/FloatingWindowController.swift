@@ -185,11 +185,15 @@ final class FloatingWindowController {
         let from = overlay.local(window.frame)
         let to = overlay.local(glassFrame)
         let windowSnapshot = window.themeFrameSnapshot()
-        let floatingSnapshot = existing ? panel.snapshot(of: glassFrame) : nil
+        // 新的懸浮窗也要有畫面：變形中途就看得到懸浮窗內容，不是一塊空框（懸浮窗原型）
+        let floatingSnapshot = glassSnapshot(of: panel)
         let radius = glassCornerRadius
         overlay.show(TransitionHost(progress: overlay.progress) { t in
-            FloatingMorphView(progress: t, window: from, windowSnapshot: windowSnapshot,
-                              floating: to, floatingRadius: radius, floatingSnapshot: floatingSnapshot)
+            FloatingMorphView(
+                morph: FloatingMorph(window: from, windowRadius: DropMorphView.windowRadius,
+                                     floating: to, floatingRadius: radius, progress: t),
+                windowSnapshot: windowSnapshot, floatingSnapshot: floatingSnapshot
+            )
         })
         // overlay 第一格就是主視窗快照，真視窗在它下面淡出
         dismissMain(NotchPullController.crossFadeDuration)
@@ -203,8 +207,8 @@ final class FloatingWindowController {
         }
     }
 
-    /// 懸浮窗的「展開」：黃色按鈕過場倒著播，長度乘以 1.1（spec #1）。主視窗已在畫面上時同樣變形，
-    /// 最後只淡掉 overlay。
+    /// 懸浮窗的「展開」：`timingCurve(0.2, 0.9, 0.3, 1)`、黃色按鈕長度的 1.1 倍，前段快速攤開（懸浮窗原型）。
+    /// 主視窗已在畫面上時同樣變形，最後只淡掉 overlay。
     ///
     /// - Parameter reveal: 讓主視窗以給定長度淡入並帶到前面。
     func expand(into window: NSWindow, reveal: @escaping @MainActor (TimeInterval) -> Void) {
@@ -228,18 +232,33 @@ final class FloatingWindowController {
         let floatingSnapshot = panel.snapshot(of: glassFrame)
         let radius = glassCornerRadius
         overlay.show(TransitionHost(progress: overlay.progress) { t in
-            FloatingMorphView(progress: 1 - t, window: from, windowSnapshot: windowSnapshot,
-                              floating: to, floatingRadius: radius, floatingSnapshot: floatingSnapshot)
+            FloatingMorphView(
+                morph: .expanding(floating: to, floatingRadius: radius,
+                                  window: from, windowRadius: DropMorphView.windowRadius, progress: t),
+                windowSnapshot: windowSnapshot, floatingSnapshot: floatingSnapshot
+            )
         })
         // overlay 第一格已畫出同一個懸浮窗，直接撤掉真的
         panel.orderOut(nil)
         removeMouseMonitors()
-        let c = FloatingMorph.curve
+        let c = FloatingMorph.expandCurve
         overlay.play(.timingCurve(c.x1, c.y1, c.x2, c.y2, duration: FloatingMorph.expandDuration)) { [weak self] in
             guard let self, self.generation == current else { return }
             reveal(NotchPullController.crossFadeDuration)
             self.finishMorph(overlay)
         }
+    }
+
+    /// 玻璃本體的快照。還沒顯示的 panel 先以 alpha 0 排上畫面、排版畫出一次再拍，拍完撤掉：
+    /// 不在畫面上的 hosting view 不一定畫過內容（懸浮窗原型以 ImageRenderer 另畫，但它畫不出玻璃）。
+    private func glassSnapshot(of panel: FloatingWindowPanel) -> NSImage? {
+        guard !panel.isVisible else { return panel.snapshot(of: glassFrame) }
+        panel.alphaValue = 0
+        panel.orderFrontRegardless()
+        defer { panel.orderOut(nil) }
+        panel.contentView?.layoutSubtreeIfNeeded()
+        panel.displayIfNeeded()
+        return panel.snapshot(of: glassFrame)
     }
 
     private func finishMorph(_ overlay: TransitionOverlay) {

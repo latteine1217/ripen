@@ -3,11 +3,11 @@ import AppKit
 import SwiftUI
 
 extension FrameDump {
-    /// 懸浮窗（#14、#15）：中尺寸的各個狀態、三種尺寸、拖角落換尺寸的逐格過程，以及依過場曲線逐格（60Hz）的黃色按鈕變形。
+    /// 懸浮窗（#14、#15）：中尺寸的各個狀態、三種尺寸、拖角落換尺寸的逐格過程，以及依過場曲線逐格（60Hz）的黃色按鈕變形與展開。
     ///
     /// `ImageRenderer` 畫不出模糊層，玻璃底下墊深灰代表桌面；版面、按鈕與文字是要比對的部分。
     static var floatingWindowScenes: [Scene] {
-        mediumStateScenes + sizeScenes + resizeScenes + [minimizeScene]
+        mediumStateScenes + sizeScenes + resizeScenes + [minimizeScene, expandScene]
     }
 
     private static var mediumStateScenes: [Scene] {
@@ -161,8 +161,28 @@ extension FrameDump {
         return result
     }
 
-    /// 主視窗縮成右上角的懸浮窗；倒著看就是展開。
+    /// 主視窗縮成右上角的懸浮窗。
     private static var minimizeScene: Scene {
+        morphScene(name: "floating-minimize", duration: FloatingMorph.duration, curve: FloatingMorph.curve) {
+            window, target, p in
+            FloatingMorph(window: window, windowRadius: DropMorphView.windowRadius, floating: target,
+                          floatingRadius: FloatingWindowSize.medium.cornerRadius, progress: p)
+        }
+    }
+
+    /// 右上角的懸浮窗展開成主視窗。
+    private static var expandScene: Scene {
+        morphScene(name: "floating-expand", duration: FloatingMorph.expandDuration, curve: FloatingMorph.expandCurve) {
+            window, target, p in
+            FloatingMorph.expanding(floating: target, floatingRadius: FloatingWindowSize.medium.cornerRadius,
+                                    window: window, windowRadius: DropMorphView.windowRadius, progress: p)
+        }
+    }
+
+    private static func morphScene(
+        name: String, duration: TimeInterval, curve c: (x1: CGFloat, y1: CGFloat, x2: CGFloat, y2: CGFloat),
+        morph: @escaping (_ window: CGRect, _ floating: CGRect, _ progress: CGFloat) -> FloatingMorph
+    ) -> Scene {
         let stage = CGSize(width: 800, height: 760)
         let window = CGRect(x: 160, y: 60, width: 420, height: 652)
         let size = FloatingWindowSize.medium.defaultSize
@@ -170,16 +190,13 @@ extension FrameDump {
         let inset = FloatingWindowPlacement.initialInset
         let target = CGRect(x: window.maxX - inset.width - size.width, y: window.minY + inset.height,
                             width: size.width, height: size.height)
-        let frames = Int((FloatingMorph.duration * 60).rounded())
-        return Scene(name: "floating-minimize", size: stage, frameCount: frames + 1) { time in
-            let c = FloatingMorph.curve
-            let curve = UnitCurve.bezier(startControlPoint: UnitPoint(x: c.x1, y: c.y1),
-                                         endControlPoint: UnitPoint(x: c.x2, y: c.y2))
-            return AnyView(
-                FloatingMorphView(progress: curve.value(at: time), window: window,
-                                  windowSnapshot: windowPlaceholder, floating: target,
-                                  floatingRadius: FloatingWindowSize.medium.cornerRadius,
-                                  floatingSnapshot: floatingPlaceholder)
+        let frames = Int((duration * 60).rounded())
+        let curve = UnitCurve.bezier(startControlPoint: UnitPoint(x: c.x1, y: c.y1),
+                                     endControlPoint: UnitPoint(x: c.x2, y: c.y2))
+        return Scene(name: name, size: stage, frameCount: frames + 1) { time in
+            AnyView(
+                FloatingMorphView(morph: morph(window, target, curve.value(at: time)),
+                                  windowSnapshot: windowPlaceholder, floatingSnapshot: floatingPlaceholder)
                     .frame(width: stage.width, height: stage.height)
                     .background(Color(white: 0.85))
             )
