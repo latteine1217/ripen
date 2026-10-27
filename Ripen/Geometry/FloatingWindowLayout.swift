@@ -14,8 +14,10 @@ struct FloatingWindowLayout: Equatable, Sendable {
         var opacity: Double = 1
     }
 
-    /// 按鈕直徑：`IslandIconButton` 的 30pt。
-    static let button: CGFloat = 30
+    /// 按鈕直徑：懸浮窗原型把點擊目標從瀏海島的 28 加大到 32（原型 FINDINGS §6）。
+    static let button: CGFloat = 32
+    /// 角落調整大小熱區：貼著角、兩股這麼長的直角三角形；按鈕不能伸進去。
+    static let resizeHandle: CGFloat = 28
 
     var cornerRadius: CGFloat
     var ringCenter: CGPoint
@@ -86,14 +88,14 @@ struct FloatingWindowLayout: Equatable, Sendable {
     private static func medium(_ size: CGSize) -> Self {
         let w = size.width, h = size.height, b = button
         let pad: CGFloat = 18, top: CGFloat = 24
-        let rowY = h - 12 - b / 2
-        let bar = CGRect(x: pad, y: rowY - b / 2 - 10 - 4, width: w - 2 * pad, height: 4)
-        // 預設 160pt 高時是 40pt；拉高時跟著變大，最矮時縮到 22pt 不壓到上排與進度條
-        let timeSize = min(max((bar.minY - top - 8) * 0.56, 22), 48)
+        let rowY = h - 14 - b / 2
+        let bar = CGRect(x: pad, y: rowY - 30, width: w - 2 * pad, height: 4)
+        // 預設 160pt 高時是原型的 40pt；拉高時跟著變大，最矮時縮到 22pt 不壓到上排與進度條
+        let timeSize = min(max((bar.minY - top - 8) / 1.7, 22), 48)
         return Self(
             cornerRadius: FloatingWindowSize.medium.cornerRadius,
-            ringCenter: CGPoint(x: pad + 7, y: top), ringDiameter: 14, ringLineWidth: 2.5, ringGlyphOpacity: 1,
-            caption: TextSlot(point: CGPoint(x: pad + 20, y: top), anchorX: 0, fontSize: 12),
+            ringCenter: CGPoint(x: pad + 8, y: top), ringDiameter: 16, ringLineWidth: 3, ringGlyphOpacity: 1,
+            caption: TextSlot(point: CGPoint(x: pad + 22, y: top), anchorX: 0, fontSize: 12),
             time: TextSlot(point: CGPoint(x: w / 2, y: (top + bar.minY) / 2 + 2), anchorX: 0.5, fontSize: timeSize),
             end: TextSlot(point: CGPoint(x: w - pad, y: top), anchorX: 1, fontSize: 12),
             bar: bar, barOpacity: 1,
@@ -111,9 +113,9 @@ struct FloatingWindowLayout: Equatable, Sendable {
         return Self(
             cornerRadius: FloatingWindowSize.large.cornerRadius,
             ringCenter: ring, ringDiameter: d, ringLineWidth: 8, ringGlyphOpacity: 0,
-            caption: TextSlot(point: CGPoint(x: w / 2, y: ring.y - d * 0.2), anchorX: 0.5, fontSize: 12),
+            caption: TextSlot(point: CGPoint(x: w / 2, y: ring.y - d * 0.2), anchorX: 0.5, fontSize: 11),
             time: TextSlot(point: ring, anchorX: 0.5, fontSize: d * 0.17),
-            end: TextSlot(point: CGPoint(x: w / 2, y: ring.y + d * 0.19), anchorX: 0.5, fontSize: 11),
+            end: TextSlot(point: CGPoint(x: w / 2, y: ring.y + d * 0.19), anchorX: 0.5, fontSize: 10),
             bar: CGRect(x: w / 2 - d * 0.3, y: ring.y + d * 0.3, width: d * 0.6, height: 4), barOpacity: 0,
             startPause: rowButton(0, of: w, y: rowY, spacing: 10), skip: rowButton(1, of: w, y: rowY, spacing: 10),
             expand: rowButton(2, of: w, y: rowY, spacing: 10), close: rowButton(3, of: w, y: rowY, spacing: 10)

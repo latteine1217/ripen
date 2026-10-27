@@ -134,12 +134,14 @@ struct DropMorphView: View {
     let notch: CGRect
     /// 水平位置的進度（見 `DropMorph`）；吸入時領先 t。
     var horizontal: CGFloat?
+    /// `to` 那個視窗的圓角；預設是主視窗，從懸浮窗收進瀏海時是懸浮窗玻璃的圓角。
+    var toRadius: CGFloat = Self.windowRadius
 
     /// 系統視窗圓角的近似值；結尾會與真視窗交叉淡化，不需精確。
     static let windowRadius: CGFloat = 16
 
     var body: some View {
-        let m = DropMorph(from: from, fromRadius: fromRadius, to: to, toRadius: Self.windowRadius, t: t,
+        let m = DropMorph(from: from, fromRadius: fromRadius, to: to, toRadius: toRadius, t: t,
                           horizontal: horizontal)
         ZStack(alignment: .topLeading) {
             Rectangle().fill(.black)

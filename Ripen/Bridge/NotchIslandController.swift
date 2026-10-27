@@ -115,10 +115,11 @@ final class NotchIslandController {
     /// 收進後游標要先離開島一次才會 hover 展開（`prepare` 解除 `hoverArmed`）。
     /// - Parameters:
     ///   - frame: 要縮成水珠的範圍（全域座標）；預設是整個視窗。懸浮窗傳玻璃本體，不含外陰影的留白。
+    ///   - cornerRadius: 來源的圓角，過場第一格與它同形；預設是主視窗。懸浮窗傳玻璃目前的圓角。
     ///   - dismiss: 讓來源視窗以給定長度淡出。
     func collapse(
-        from window: NSWindow, frame: CGRect? = nil, on screen: NSScreen,
-        dismiss: @escaping @MainActor (TimeInterval) -> Void
+        from window: NSWindow, frame: CGRect? = nil, cornerRadius: CGFloat = DropMorphView.windowRadius,
+        on screen: NSScreen, dismiss: @escaping @MainActor (TimeInterval) -> Void
     ) {
         guard window.isVisible, !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion else {
             show(on: screen)
@@ -141,7 +142,7 @@ final class NotchIslandController {
         let snapshot = if let frame { window.snapshot(of: frame) } else { window.themeFrameSnapshot() }
         overlay.show(TransitionHost(progress: overlay.progress) { t in
             CollapseView(t: t, window: from, snapshot: snapshot, notch: notch, islandSize: islandSize,
-                         baseRadius: radius)
+                         baseRadius: radius, windowRadius: cornerRadius)
         })
         // overlay 第一格就是視窗快照，真視窗在它下面淡出
         dismiss(NotchPullController.crossFadeDuration)

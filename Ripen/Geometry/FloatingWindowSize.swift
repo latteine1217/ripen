@@ -32,12 +32,12 @@ enum FloatingWindowSize: CaseIterable, Equatable, Sendable {
         }
     }
 
-    /// 玻璃的圓角；小的接近膠囊，矮到一半以下時以高度的一半為限。
+    /// 玻璃的圓角（懸浮窗原型）；小的接近膠囊，矮到一半以下時以高度的一半為限。
     var cornerRadius: CGFloat {
         switch self {
         case .small: 32
-        case .medium: 20
-        case .large: 28
+        case .medium: 24
+        case .large: 30
         }
     }
 

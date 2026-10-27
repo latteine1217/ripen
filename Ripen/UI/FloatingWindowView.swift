@@ -147,6 +147,7 @@ private struct FloatingWindowContent: View {
             IslandIconButton("Close Floating Window", systemImage: "xmark", action: model.closeFloatingWindow)
         }
         .foregroundStyle(.white)
+        .environment(\.iconButtonMetrics, .floatingWindow)
     }
 
     /// 子 view 的順序與 `PlacedLayout` 的子 view 一一對應。
@@ -252,8 +253,8 @@ private struct ResizeHandles: View {
     let keepsCursor: Bool
     let onResize: (ResizeCorner?) -> Void
 
-    /// 熱區是貼著角、兩股 28pt 的三角形：面積與按鈕相近，斜邊離小尺寸最靠角的按鈕仍有 4pt 以上。
-    static let hitSize: CGFloat = 28
+    /// 熱區是貼著角、兩股 28pt 的三角形：面積與按鈕相近，斜邊離小尺寸最靠角的 32pt 按鈕仍有約 4pt。
+    static let hitSize = FloatingWindowLayout.resizeHandle
 
     var body: some View {
         ZStack {

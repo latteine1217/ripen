@@ -201,13 +201,31 @@ struct ProgressBar: View {
     }
 }
 
-/// 展開時的 30pt 圓形圖示按鈕：hover 變亮、按下縮小，附說明與無障礙標籤。
+/// 圓形圖示按鈕的大小與樣式。瀏海島沿用原型的 30pt；懸浮窗照懸浮窗原型的 `CapsuleIconButton`。
+struct IconButtonMetrics: Sendable {
+    var diameter: CGFloat
+    /// 靜止時底色的不透明度；hover 0.22、按下 0.3 兩者相同。
+    var restingOpacity: Double
+    var pressedScale: CGFloat
+
+    static let island = Self(diameter: 30, restingOpacity: 0.12, pressedScale: 0.92)
+    /// 懸浮窗原型：32pt（FINDINGS §6）、靜止 0.10、按下 0.9。
+    static let floatingWindow = Self(diameter: FloatingWindowLayout.button, restingOpacity: 0.1, pressedScale: 0.9)
+}
+
+extension EnvironmentValues {
+    /// `IslandIconButton` 的大小與樣式；懸浮窗在根 view 換成 `.floatingWindow`，共用的按鈕元件不必各自傳參數。
+    @Entry var iconButtonMetrics = IconButtonMetrics.island
+}
+
+/// 展開時的圓形圖示按鈕（大小見 `IconButtonMetrics`）：hover 變亮、按下縮小，附說明與無障礙標籤。
 struct IslandIconButton: View {
     let title: LocalizedStringKey
     let systemImage: String
     let help: LocalizedStringKey
     let action: () -> Void
     @State private var isHovering = false
+    @Environment(\.iconButtonMetrics) private var metrics
 
     init(_ title: LocalizedStringKey, systemImage: String, help: LocalizedStringKey? = nil, action: @escaping () -> Void) {
         self.title = title
@@ -221,10 +239,10 @@ struct IslandIconButton: View {
             Label(title, systemImage: systemImage)
                 .labelStyle(.iconOnly)
                 .font(.system(size: 13, weight: .semibold))
-                .frame(width: 30, height: 30)
+                .frame(width: metrics.diameter, height: metrics.diameter)
                 .contentShape(Circle())
         }
-        .buttonStyle(IslandIconButtonStyle(isHovering: isHovering))
+        .buttonStyle(IslandIconButtonStyle(isHovering: isHovering, metrics: metrics))
         .onHover { isHovering = $0 }
         .help(Text(help))
     }
@@ -232,11 +250,15 @@ struct IslandIconButton: View {
 
 private struct IslandIconButtonStyle: ButtonStyle {
     let isHovering: Bool
+    let metrics: IconButtonMetrics
 
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .background(Circle().fill(.white.opacity(configuration.isPressed ? 0.3 : isHovering ? 0.22 : 0.12)))
-            .scaleEffect(configuration.isPressed ? 0.92 : 1)
+            // 瀏海島與懸浮窗都強制深色外觀，primary 即白色；照懸浮窗原型用 primary，日後有淺色版時跟著外觀變
+            .background(Circle().fill(Color.primary.opacity(
+                configuration.isPressed ? 0.3 : isHovering ? 0.22 : metrics.restingOpacity
+            )))
+            .scaleEffect(configuration.isPressed ? metrics.pressedScale : 1)
             .animation(.easeOut(duration: 0.1), value: configuration.isPressed)
     }
 }

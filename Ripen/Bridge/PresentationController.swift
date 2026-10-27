@@ -117,7 +117,11 @@ final class PresentationController {
     private func collapseIntoNotch(from previous: Presentation, releaseScreen: NSScreen?) {
         if !previous.showsMainWindow, previous.showsFloatingWindow, let panel = floating.window {
             let screen = floating.screen ?? NSScreen.main ?? NSScreen.screens[0]
-            island.collapse(from: panel, frame: floating.glassFrame, on: screen) { [weak self] fade in
+            // 第一格與真懸浮窗同形：靜止時尺寸就是玻璃高度所屬的那一級
+            let glass = floating.glassFrame.size
+            let size = FloatingWindowSize(height: glass.height)
+            let radius = FloatingWindowSizeBlend(size).layout(in: glass).cornerRadius
+            island.collapse(from: panel, frame: floating.glassFrame, cornerRadius: radius, on: screen) { [weak self] fade in
                 self?.floating.hide(fadeDuration: fade)
             }
             return

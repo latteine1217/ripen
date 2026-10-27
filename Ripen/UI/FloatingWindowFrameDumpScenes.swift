@@ -53,7 +53,7 @@ extension FrameDump {
     }
 
     /// 三種尺寸（#15）：預設大小，以及拖角落拖出來的大小（同一尺寸內版面隨大小重新分配），各一張；
-    /// 另加暫停中的小與大，以及超時中（#17）的三種尺寸。
+    /// 另加暫停中的小與大，以及超時中（#17）的三種尺寸與最窄的小。
     private static var sizeScenes: [Scene] {
         enum Timing { case running, paused, overtime }
         let cases: [(name: String, size: CGSize, timing: Timing)] = [
@@ -61,6 +61,8 @@ extension FrameDump {
             ("floating-size-small-min", CGSize(width: 300, height: 56), .running),
             ("floating-size-small-paused", FloatingWindowSize.small.defaultSize, .paused),
             ("floating-size-small-overtime", FloatingWindowSize.small.defaultSize, .overtime),
+            // 最窄的播放器：超時文字要停在 32pt 按鈕之前
+            ("floating-size-small-min-overtime", CGSize(width: 300, height: 56), .overtime),
             ("floating-size-medium", FloatingWindowSize.medium.defaultSize, .running),
             ("floating-size-medium-min", CGSize(width: 240, height: 112), .running),
             ("floating-size-medium-wide", CGSize(width: 360, height: 210), .running),

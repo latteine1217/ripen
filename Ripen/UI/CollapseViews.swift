@@ -13,13 +13,15 @@ struct CollapseView: View {
     /// 收合的島；最後一格與真島同形。
     let islandSize: CGSize
     let baseRadius: CGFloat
+    /// 來源視窗的圓角：第一格要與真視窗同形（主視窗或懸浮窗）。
+    var windowRadius: CGFloat = DropMorphView.windowRadius
 
     var body: some View {
         switch CollapseMorph.stage(at: t) {
         case let .shrink(morph, horizontal):
             let drop = CollapseMorph.drop(notch: notch, islandSize: islandSize, baseRadius: baseRadius)
             DropMorphView(t: morph, from: drop.frame, fromRadius: drop.radius, to: window, snapshot: snapshot,
-                          notch: notch, horizontal: horizontal)
+                          notch: notch, horizontal: horizontal, toRadius: windowRadius)
         case let .absorb(pull, solidIsland):
             ZStack(alignment: .topLeading) {
                 DropLiquidView(pull: pull, notch: notch, islandSize: islandSize, baseRadius: baseRadius,
