@@ -18,12 +18,20 @@ final class TransitionOverlay {
         screenFrame = screen.frame
         hosting = NSHostingView(rootView: AnyView(EmptyView()))
         hosting.sizingOptions = []
-        panel = NotchIslandPanel(contentView: hosting)
+        // hosting view 不當 contentView：是的話，內容在動畫中改變大小時 SwiftUI 會把 panel 縮成內容的
+        // 理想大小（sizingOptions 為空也一樣，`updateAnimatedWindowSize`），擺到螢幕左上角，液體被切掉
+        let container = NSView()
+        panel = NotchIslandPanel(contentView: container)
         panel.ignoresMouseEvents = true
         panel.setFrame(screen.frame, display: false)
+        hosting.frame = container.bounds
+        hosting.autoresizingMask = [.width, .height]
+        container.addSubview(hosting)
     }
 
     var isVisible: Bool { panel.isVisible }
+    /// panel 目前的 frame（全域座標）；應一直等於 `screenFrame`。
+    var frame: CGRect { panel.frame }
 
     func local(_ rect: CGRect) -> CGRect { DropMorph.local(rect, in: screenFrame) }
 
@@ -38,12 +46,24 @@ final class TransitionOverlay {
         }
     }
 
-    /// 以一條曲線把 `progress.t` 從目前值補間到 1。
+    /// 以一條曲線把 `progress.t` 從目前值補間到 1；從畫出第一格之後開始（見 `afterFirstFrame`）。
     func play(_ animation: Animation, completion: @escaping @MainActor () -> Void) {
-        withAnimation(animation, completionCriteria: .logicallyComplete) {
-            progress.t = 1
-        } completion: {
-            completion()
+        afterFirstFrame { [progress] in
+            withAnimation(animation, completionCriteria: .logicallyComplete) {
+                progress.t = 1
+            } completion: {
+                completion()
+            }
+        }
+    }
+
+    /// 剛 `show` 的內容畫出第一格後才執行 `work`：內容還沒畫過就以動畫改它讀的值，
+    /// SwiftUI 不補間、直接跳到終點並立刻完成，整段過場看不見。延到下一輪 run loop 再強制排版，
+    /// 呼叫端在 SwiftUI 更新中（另一段動畫的完成回呼）時，當下排版不會畫出新內容。
+    func afterFirstFrame(_ work: @escaping @MainActor () -> Void) {
+        DispatchQueue.main.async { [hosting] in
+            hosting.layoutSubtreeIfNeeded()
+            work()
         }
     }
 

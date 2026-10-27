@@ -174,10 +174,13 @@ final class NotchPullController {
         }
         guard amount.value < PullGeometry.threshold else { return morph() }
         // 「展開」按鈕、Dock 與選單列：自動播一次拉成水珠，看一次就學會可以往下拉
-        withAnimation(.easeIn(duration: Self.autoPullDuration), completionCriteria: .logicallyComplete) {
-            amount.value = PullGeometry.threshold * Self.autoPullOvershoot
-        } completion: {
-            morph()
+        overlay.afterFirstFrame { [weak self] in
+            guard let self, self.session == current else { return }
+            withAnimation(.easeIn(duration: Self.autoPullDuration), completionCriteria: .logicallyComplete) {
+                amount.value = PullGeometry.threshold * Self.autoPullOvershoot
+            } completion: {
+                morph()
+            }
         }
     }
 
