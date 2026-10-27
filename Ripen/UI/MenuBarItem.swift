@@ -91,8 +91,6 @@ private struct MenuBarMenu: View {
     let model: AppModel
     let mainWindow: MainWindowBridge
 
-    @Environment(\.openWindow) private var openWindow
-
     var body: some View {
         // 標題依狀態變，動作與全域熱鍵共用同一個意圖
         Button(primaryTitle(for: model.status), action: model.toggleStartPause)
@@ -123,18 +121,12 @@ private struct MenuBarMenu: View {
         }
     }
 
-    /// 主視窗不在畫面上時經形態狀態機叫回；已在畫面上時狀態機不動作，直接帶到最前面。
-    /// 視窗還沒建立（上次退出時已關閉，SwiftUI 不會還原）時先開出來，建立後由 `onWindowAttach` 接上。
+    /// 與 Dock 圖示共用 `AppModel.showMainWindow(in:)`；視窗還沒建立時由 `MainWindowBridge` 補建。
     ///
     /// 從選單列項目的選單操作時 App 不在前景，協作式的 `NSApp.activate()` 實測帶不到前景，
     /// 所以這裡強制啟用。
     private func showMainWindow() {
-        if model.presentation.showsMainWindow {
-            mainWindow.show()
-        } else {
-            model.showMainWindow()
-        }
-        if mainWindow.window == nil { openWindow(id: "main") }
+        model.showMainWindow(in: mainWindow)
         NSApp.activate(ignoringOtherApps: true)
     }
 }

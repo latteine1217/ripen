@@ -18,6 +18,15 @@ final class MainWindowBridge {
     var onClose: (() -> Void)?
     /// 黃色按鈕按下時呼叫，取代縮到 Dock；⌘M 由選單指令走同一個意圖。
     var onMiniaturize: (() -> Void)?
+    /// 要求 SwiftUI 建立主視窗（`openWindow(id: "main")`）。`openWindow` 只能從 SwiftUI 環境取得，
+    /// 由 `MainWindowCommand` 接上；接上前就有等待中的工作時，接上當下補送要求。
+    var windowOpener: (() -> Void)? {
+        didSet { requestWindowIfNeeded() }
+    }
+    /// 等主視窗建立後才能做的事（`withWindow`），attach 時依序執行。
+    private var pendingUntilAttach: [@MainActor () -> Void] = []
+    /// 已送出建立要求、還沒 attach；避免重複要求。
+    private var isWindowRequested = false
 
     func attach(_ window: NSWindow) {
         guard window !== self.window else { return }
@@ -27,11 +36,35 @@ final class MainWindowBridge {
         window.isReleasedWhenClosed = false
         installCloseInterceptor(on: window)
         installMiniaturizeInterceptor(on: window)
+        isWindowRequested = false
+        let pending = pendingUntilAttach
+        guard !pending.isEmpty else { return }
+        pendingUntilAttach = []
+        // SwiftUI 建立後會自己帶到前面；先透明，由等待中的工作（過場或淡入）決定何時露出
+        window.alphaValue = 0
+        pending.forEach { $0() }
     }
 
-    /// 已在畫面上時只帶到最前面。`fadeDuration` 是隱藏中淡入的長度；液體過場結尾與 overlay 交叉淡化時較短。
+    /// 主視窗已建立就立即執行；還沒建立（上次退出時已隱藏，SwiftUI 不還原）就要求 SwiftUI 建立，
+    /// attach 後才執行。需要主視窗的地方一律經這裡，不各自呼叫 `openWindow`（ADR-0001）。
+    func withWindow(_ work: @escaping @MainActor () -> Void) {
+        guard window == nil else { return work() }
+        pendingUntilAttach.append(work)
+        requestWindowIfNeeded()
+    }
+
+    private func requestWindowIfNeeded() {
+        guard window == nil, !pendingUntilAttach.isEmpty, !isWindowRequested, let windowOpener else { return }
+        isWindowRequested = true
+        windowOpener()
+    }
+
+    /// 已在畫面上時只帶到最前面；還沒建立時經 `withWindow` 建立後再顯示。
+    /// `fadeDuration` 是隱藏中淡入的長度；液體過場結尾與 overlay 交叉淡化時較短。
     func show(fadeDuration: TimeInterval = PresentationFade.duration) {
-        guard let window else { return }
+        guard let window else {
+            return withWindow { [weak self] in self?.show(fadeDuration: fadeDuration) }
+        }
         generation += 1
         // SwiftUI 若換過 delegate 或按鈕，重新接上攔截
         installCloseInterceptor(on: window)

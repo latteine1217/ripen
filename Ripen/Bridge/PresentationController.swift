@@ -30,12 +30,26 @@ final class PresentationController {
         observe()
     }
 
-    /// 點 Dock 圖示：主視窗已在畫面上時交給系統帶到前面，否則經形態狀態機叫回。
+    /// 點 Dock 圖示：經形態狀態機叫回主視窗。一律不交給系統：主視窗還沒建立時，
+    /// SwiftUI 的預設處理會自己開出視窗、繞過 `presentation`。
     func handleReopen() -> Bool {
         logger.debug("Dock reopen in \(String(describing: self.model.presentation), privacy: .public)")
-        if model.presentation.showsMainWindow { return true }
-        model.showMainWindow()
+        model.showMainWindow(in: mainWindow)
         return false
+    }
+
+    /// 啟動時保證至少一個介面可見（ADR-0001）：上次退出時主視窗是隱藏的，SwiftUI 不會還原它，
+    /// 形態卻從「只有主視窗」開始。SwiftUI 正要自己建立時再要求一次也無妨（單一實例的 `Window`）。
+    func ensureInterfaceVisible() {
+        guard model.presentation.showsMainWindow, mainWindow.window == nil else { return }
+        applyOnceMainWindowExists()
+    }
+
+    /// 主視窗建立並 attach 後再套用形態，過場才拿得到視窗；排到下一輪，讓 SwiftUI 先定好視窗的 frame。
+    private func applyOnceMainWindowExists() {
+        mainWindow.withWindow { [weak self] in
+            DispatchQueue.main.async { self?.apply() }
+        }
     }
 
     private func observe() {
@@ -56,6 +70,11 @@ final class PresentationController {
         let presentation = model.presentation
         let action = model.lastPresentationAction
         logger.debug("apply \(String(describing: presentation), privacy: .public)")
+        if presentation.showsMainWindow, mainWindow.window == nil {
+            // 先不動島與懸浮窗：主視窗出現前它們若先消失，畫面上會什麼都沒有（ADR-0001）
+            applyOnceMainWindowExists()
+            return
+        }
         let previous = applied
         applied = presentation
         // 每次都取走：沒用到（例如島還在淡出）時不留到之後無關的收進
