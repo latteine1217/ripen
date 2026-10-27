@@ -106,13 +106,7 @@ struct FloatingWindowView: View {
             case .paused:
                 IslandIconButton("Resume", systemImage: "play.fill", action: model.toggleStartPause)
             }
-            if model.isOvertime {
-                IslandIconButton(
-                    "Done", systemImage: "checkmark", help: "Finish this phase and move to the next", action: model.finish
-                )
-            } else {
-                IslandIconButton("Skip", systemImage: "forward.end.fill", help: "Skip to the next phase", action: model.skip)
-            }
+            SkipOrDoneButton(model: model, isOvertime: model.isOvertime)
             IslandIconButton(
                 "Expand into Main Window", systemImage: "arrow.up.left.and.arrow.down.right",
                 action: model.expandFloatingWindow

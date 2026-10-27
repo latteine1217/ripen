@@ -133,15 +133,24 @@ struct NotchIslandView: View {
             case .paused:
                 IslandIconButton("Resume", systemImage: "play.fill", action: model.resume)
             }
-            // 超時中「跳過」由「完成」取代（ADR-0006）
-            if isOvertime {
-                IslandIconButton(
-                    "Done", systemImage: "checkmark", help: "Finish this phase and move to the next", action: model.finish
-                )
-            } else {
-                IslandIconButton("Skip", systemImage: "forward.end.fill", help: "Skip to the next phase", action: model.skip)
-            }
+            SkipOrDoneButton(model: model, isOvertime: isOvertime)
             IslandIconButton("Show Main Window", systemImage: "macwindow", action: model.expandNotchIsland)
+        }
+    }
+}
+
+/// 瀏海島與懸浮窗的「跳過」；超時中由「完成」取代（ADR-0006）。
+struct SkipOrDoneButton: View {
+    let model: AppModel
+    let isOvertime: Bool
+
+    var body: some View {
+        if isOvertime {
+            IslandIconButton(
+                "Done", systemImage: "checkmark", help: "Finish this phase and move to the next", action: model.finish
+            )
+        } else {
+            IslandIconButton("Skip", systemImage: "forward.end.fill", help: "Skip to the next phase", action: model.skip)
         }
     }
 }

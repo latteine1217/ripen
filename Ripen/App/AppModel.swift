@@ -117,18 +117,10 @@ final class AppModel {
 
     // MARK: - 完成的確立
 
-    /// 確立超時中的這一段完成；同一段只會確立一次，之後已換成下一段。
-    private func establishCompletion(at now: Date) -> PhaseCompletion? {
+    /// 這一段若在 `now` 完成會是怎樣的完成；倒數到 0 前為 nil。「完成」與 ⌘Q 共用這個長度定義。
+    private func completion(at now: Date) -> PhaseCompletion? {
         guard engine.isOvertime(at: now), let startedAt = engine.startedAt else { return nil }
-
-        let completion = PhaseCompletion(
-            phase: engine.phase, startedAt: startedAt, endedAt: now, duration: engine.elapsed(at: now)
-        )
-        // 完成的副作用（統計）只接在這裡，保證每段恰好一次
-        recordIfFocus(completion)
-        cycle.advance(completed: true, longBreakInterval: configuration.longBreakInterval)
-        loadCurrentPhase()
-        return completion
+        return PhaseCompletion(phase: engine.phase, startedAt: startedAt, duration: engine.elapsed(at: now))
     }
 
     /// 完成的專注記錄實際長度，依開始時刻歸日（GLOSSARY）；FocusLog 同步寫檔。
@@ -223,7 +215,11 @@ final class AppModel {
     func finish() {
         refresh()
         let now = clock.now()
-        guard establishCompletion(at: now) != nil else { return }
+        guard let completion = completion(at: now) else { return }
+        // 前進後已是下一段的起點，再按一次完成不會重複記錄
+        recordIfFocus(completion)
+        cycle.advance(completed: true, longBreakInterval: configuration.longBreakInterval)
+        loadCurrentPhase()
         startNextPhaseAutomatically(now: now)
         updateIdleSince()
     }
@@ -250,11 +246,7 @@ final class AppModel {
     /// 階段狀態不保存（ADR-0002），所以只記錄、不前進；寫檔是同步的，回傳時已存好。
     func prepareToQuit() {
         refresh()
-        let now = clock.now()
-        guard engine.isOvertime(at: now), let startedAt = engine.startedAt else { return }
-        recordIfFocus(PhaseCompletion(
-            phase: engine.phase, startedAt: startedAt, endedAt: now, duration: engine.elapsed(at: now)
-        ))
+        if let completion = completion(at: clock.now()) { recordIfFocus(completion) }
     }
 
     /// 開始跑或在超時中就不是閒置；停下來的那一刻開始閒置。已在閒置中的操作不重新計時。
@@ -316,8 +308,6 @@ struct PhaseCompletion: Equatable, Sendable {
     let phase: Phase
     /// 第一次開始的時刻；完成的專注歸屬於它所在的日期（ADR-0002）。
     let startedAt: Date
-    /// 按下完成（或退出）的時刻。
-    let endedAt: Date
     /// 實際長度：設定長度加超時，扣掉暫停。
     let duration: TimeInterval
 }

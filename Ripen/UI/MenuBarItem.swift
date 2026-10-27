@@ -28,7 +28,7 @@ struct MenuBarItem: Scene {
 /// 選單列上的標籤：閒置時只有圖示，有階段在跑或暫停時加上剩餘時間。
 ///
 /// 主視窗關閉時這裡是唯一持續刷新的介面，所以自己定時呼叫 `refresh()`：
-/// 確立完成與套用改過的階段長度都只在 `refresh()` 中發生。
+/// 倒數到 0 的提醒、離開時暫停超時與套用改過的階段長度都只在 `refresh()` 中發生。
 /// 用計時器而不是 `TimelineView`，才能只在文字真的變了時讓標籤失效（見 `shownText`）。
 struct MenuBarLabel: View {
     let model: AppModel
