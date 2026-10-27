@@ -150,7 +150,10 @@ struct SkipOrDoneButton: View {
                 "Done", systemImage: "checkmark", help: "Finish this phase and move to the next", action: model.finish
             )
         } else {
-            IslandIconButton("Skip", systemImage: "forward.end.fill", help: "Skip to the next phase", action: model.skip)
+            // 畫面可能剛好落後於跨過 0 的那一刻；點下時已超時就改為完成
+            IslandIconButton(
+                "Skip", systemImage: "forward.end.fill", help: "Skip to the next phase", action: model.skipOrFinish
+            )
         }
     }
 }

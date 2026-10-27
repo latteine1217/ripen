@@ -96,11 +96,13 @@ private struct MenuBarMenu: View {
     var body: some View {
         // 標題依狀態變，動作與全域熱鍵共用同一個意圖
         Button(primaryTitle(for: model.status), action: model.toggleStartPause)
-        // 選單隨標籤的時間文字每秒重建，超時與否會即時反映
+        // 超時由時鐘推導、不會通知；讀 `reachedZero` 讓選單在跨過 0 時重建（開著時也會換成「完成」）。
+        // 畫面仍可能落後，所以「跳過」點下時若已超時就改為完成
+        let _ = model.reachedZero
         if model.isOvertime {
             Button("Done", action: model.finish)
         } else {
-            Button("Skip", action: model.skip)
+            Button("Skip", action: model.skipOrFinish)
         }
 
         Divider()

@@ -34,7 +34,8 @@ final class AppModel {
     /// 這段閒置（沒有任何階段在跑，暫停也算，但超時中不算）開始的時刻；不在閒置時為 nil。
     @ObservationIgnored private var idleSince: Date?
     /// 目前階段倒數到 0 的提醒是否已送出（含待播）；換階段時歸零。
-    @ObservationIgnored private var reachedZero = false
+    /// 可觀察：每段只在跨過 0 時變一次，選單列選單靠它在那一刻換成「完成」，不必隨時間文字重建。
+    private(set) var reachedZero = false
     /// 離開期間倒數到 0、還沒播的提醒；回來時播。
     @ObservationIgnored private var pendingReminder: Phase?
     /// 使用者離開電腦的時刻；在場時為 nil。超時只算到這一刻（ADR-0006）。
