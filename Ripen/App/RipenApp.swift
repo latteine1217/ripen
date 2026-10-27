@@ -28,11 +28,14 @@ struct RipenApp: App {
         }
         // 啟動就註冊，主視窗沒開也能用熱鍵
         hotkeys.activate()
+        let presenter = PresentationController(model: model)
         _model = State(initialValue: model)
-        _presenter = State(initialValue: PresentationController(model: model))
+        _presenter = State(initialValue: presenter)
         _hotkeys = State(initialValue: hotkeys)
-        // 在 init 接上：主視窗上次退出時是關閉的就不會建立，接在 onWindowAttach 會漏掉
+        // 在 init 接上：主視窗上次退出時是隱藏的就不會建立，接在 onWindowAttach 會漏掉
         lifecycle.onTerminate = { model.prepareToQuit() }
+        lifecycle.onReopen = presenter.handleReopen
+        lifecycle.onLaunch = presenter.ensureInterfaceVisible
     }
 
     var body: some Scene {
@@ -40,16 +43,16 @@ struct RipenApp: App {
         Window("Ripen", id: "main") {
             MainWindowView(model: model)
                 .environment(presenter.tearOff)
-                .onWindowAttach { window in
-                    presenter.mainWindow.attach(window)
-                    lifecycle.onReopen = presenter.handleReopen
-                }
+                .onWindowAttach { window in presenter.mainWindow.attach(window) }
                 #if DEBUG
                 .environment(\.glassStyle, glassTuning.style)
                 #endif
         }
         .windowResizability(.contentSize)
+        // 「視窗」選單自動加的主視窗項目會直接開視窗、繞過形態；換成 MainWindowCommand 的
+        .commandsRemoved()
         .commands { MinimizeCommand(model: model, mainWindow: presenter.mainWindow) }
+        .commands { MainWindowCommand(model: model, mainWindow: presenter.mainWindow) }
         #if DEBUG
         .commands { GlassTuningCommands() }
         #endif
