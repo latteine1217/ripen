@@ -8,27 +8,37 @@ struct ScreenArea: Equatable, Sendable {
     let visibleFrame: CGRect
 }
 
-/// 記住的懸浮窗位置：玻璃本體的左下角（全域座標）與所在螢幕。存在設定裡，不出現在設定頁（spec #1）。
+/// 記住的懸浮窗位置與實際大小：玻璃本體的左下角（全域座標）、所在螢幕與大小。存在設定裡，不出現在設定頁（spec #1）。
 struct FloatingWindowPosition: Equatable, Sendable {
     var origin: CGPoint
     var screenID: UInt32
+    /// 實際拖出來的大小；#14 的舊格式沒有這一項。
+    var size: CGSize?
 
-    /// 設定儲存用的形式「x,y,螢幕」；沿用設定既有的字串型別，不必為它新增儲存型別。
+    /// 設定儲存用的形式「x,y,螢幕,寬,高」；沿用設定既有的字串型別，不必為它新增儲存型別。
     var stored: String {
-        "\(Double(origin.x)),\(Double(origin.y)),\(screenID)"
+        let position = "\(Double(origin.x)),\(Double(origin.y)),\(screenID)"
+        guard let size else { return position }
+        return position + ",\(Double(size.width)),\(Double(size.height))"
     }
 
-    /// 格式不符（包含從沒存過的空字串）時為 nil。
+    /// 也讀 #14 的「x,y,螢幕」；格式不符（包含從沒存過的空字串）時為 nil。
     init?(stored: String) {
         let parts = stored.split(separator: ",")
-        guard parts.count == 3, let x = Double(parts[0]), let y = Double(parts[1]),
+        guard parts.count == 3 || parts.count == 5, let x = Double(parts[0]), let y = Double(parts[1]),
               let screenID = UInt32(parts[2]) else { return nil }
-        self.init(origin: CGPoint(x: x, y: y), screenID: screenID)
+        var size: CGSize?
+        if parts.count == 5 {
+            guard let width = Double(parts[3]), let height = Double(parts[4]) else { return nil }
+            size = CGSize(width: width, height: height)
+        }
+        self.init(origin: CGPoint(x: x, y: y), screenID: screenID, size: size)
     }
 
-    init(origin: CGPoint, screenID: UInt32) {
+    init(origin: CGPoint, screenID: UInt32, size: CGSize? = nil) {
         self.origin = origin
         self.screenID = screenID
+        self.size = size
     }
 }
 
