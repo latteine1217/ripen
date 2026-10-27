@@ -48,13 +48,16 @@ final class TransitionOverlay {
     }
 
     /// 與真視窗交叉淡化的 overlay 一側；結束後關閉。
+    ///
+    /// 淡出期間由完成回呼持有 overlay：呼叫端交出後常就放手（拉出過場結尾），若在這裡弱參照，
+    /// `close()` 不會執行，AppKit 會一直留著 alpha 0 的 panel，每次過場多一個視窗。
     func fadeOut(duration: TimeInterval, completion: (@MainActor () -> Void)? = nil) {
         NSAnimationContext.runAnimationGroup { context in
             context.duration = duration
             panel.animator().alphaValue = 0
-        } completionHandler: { [weak self] in
+        } completionHandler: {
             MainActor.assumeIsolated {
-                self?.close()
+                self.close()
                 completion?()
             }
         }
