@@ -1,7 +1,9 @@
 import SwiftUI
 
 extension View {
-    /// 每次 `reminder` 換成新的提醒時，以 `tint`（新階段色）蓋滿整個畫面閃一下。
+    /// 每次 `reminder` 換成新的提醒時，以 `tint` 在內容底下鋪滿閃一下。
+    ///
+    /// 照原型放在內容之下、玻璃之上：文字不被蓋住。呼叫端要在玻璃或底色之前套用。
     func reminderFlash(_ reminder: PhaseReminder?, tint: Color) -> some View {
         modifier(ReminderFlash(reminderID: reminder?.id, tint: tint))
     }
@@ -21,7 +23,7 @@ private struct ReminderFlash: ViewModifier {
 
     func body(content: Content) -> some View {
         content
-            .overlay {
+            .background {
                 tint.opacity(opacity)
                     .ignoresSafeArea()
                     .allowsHitTesting(false)

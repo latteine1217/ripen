@@ -88,7 +88,7 @@ struct FloatingWindowGlass: View, Animatable {
         let shape = RoundedRectangle(cornerRadius: layout.cornerRadius, style: .continuous)
         FloatingWindowContent(model: model, layout: layout)
             .frame(width: size.width, height: size.height)
-            // 提醒在倒數到 0 時播出，閃的是超時色；裁成玻璃的形狀
+            // 提醒在倒數到 0 時播出，閃的是該階段的超時色；鋪在內容底下、玻璃之上，裁成玻璃的形狀
             .reminderFlash(model.lastReminder, tint: model.displayTint)
             .clipShape(shape)
             .ripenGlass(in: shape, settings: model.settings)

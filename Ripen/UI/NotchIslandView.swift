@@ -51,7 +51,7 @@ struct NotchIslandView: View {
             .opacity(pulling ? 0 : 1)
             .animation(.easeOut(duration: 0.12), value: pulling)
             .frame(width: size.width, height: size.height + sag, alignment: .top)
-            // 提醒在倒數到 0 時播出，閃的是超時色；裁成島的形狀
+            // 提醒在倒數到 0 時播出，閃的是該階段的超時色；鋪在內容底下、黑底之上，裁成島的形狀
             .reminderFlash(model.lastReminder, tint: model.displayTint)
             .background(shape.fill(.black.opacity(pulling ? 0 : 1)))
             .clipShape(shape)

@@ -41,7 +41,7 @@ struct MenuBarLabel: View {
     var body: some View {
         let _ = shownText
         let text = Self.remainingText(for: model)
-        Image(nsImage: Self.render(text, isOvertime: model.isOvertime))
+        Image(nsImage: Self.render(text, overtimeTint: model.isOvertime ? model.phase.overtimeTint : nil))
             .onReceive(Self.ticks) { _ in
                 model.refresh()
                 let latest = Self.remainingText(for: model)
@@ -56,10 +56,10 @@ struct MenuBarLabel: View {
     ///
     /// `MenuBarExtra` 會把標籤裡的文字轉成狀態列按鈕的標題、丟掉 `.monospacedDigit()`，
     /// 數字寬度不同時整個項目會跳動並推動旁邊的選單列項目；畫成圖片才能保留等寬數字。
-    /// 樣板圖由系統依選單列的深淺與反白上色；超時中改畫成超時色的一般圖片，深淺選單列都看得出來。
+    /// 樣板圖由系統依選單列的深淺與反白上色；超時中改畫成該階段超時色的一般圖片，深淺選單列都看得出來。
     /// 同樣的文字沿用上一張圖，標籤重算時不必重畫。
-    private static func render(_ text: String?, isOvertime: Bool) -> NSImage {
-        if let lastRendered, lastRendered.text == text, lastRendered.isOvertime == isOvertime {
+    private static func render(_ text: String?, overtimeTint: Color?) -> NSImage {
+        if let lastRendered, lastRendered.text == text, lastRendered.overtimeTint == overtimeTint {
             return lastRendered.image
         }
         let renderer = ImageRenderer(content: HStack(spacing: 4) {
@@ -67,15 +67,15 @@ struct MenuBarLabel: View {
             if let text { Text(text).monospacedDigit() }
         }
         .font(.system(size: NSFont.systemFontSize))
-        .foregroundStyle(isOvertime ? Color.overtime : .black))
+        .foregroundStyle(overtimeTint ?? .black))
         renderer.scale = NSScreen.main?.backingScaleFactor ?? 2
         let image = renderer.nsImage ?? NSImage()
-        image.isTemplate = !isOvertime
-        lastRendered = (text, isOvertime, image)
+        image.isTemplate = overtimeTint == nil
+        lastRendered = (text, overtimeTint, image)
         return image
     }
 
-    private static var lastRendered: (text: String?, isOvertime: Bool, image: NSImage)?
+    private static var lastRendered: (text: String?, overtimeTint: Color?, image: NSImage)?
 
     /// 只有在跑或暫停時才顯示時間（超時中為 `+mm:ss`）；停在起點時只顯示圖示。
     static func remainingText(for model: AppModel) -> String? {

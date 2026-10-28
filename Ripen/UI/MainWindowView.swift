@@ -35,7 +35,7 @@ struct MainWindowView: View {
             // 減少動態效果時直接切換，不做淡入淡出
             .animation(reduceMotion ? nil : .easeInOut(duration: 0.2), value: page)
         }
-        // 提醒在倒數到 0 時播出，此時已進入超時，閃的是超時色
+        // 提醒在倒數到 0 時播出，此時已進入超時，閃的是該階段的超時色；鋪在內容底下、玻璃之上
         .reminderFlash(model.lastReminder, tint: model.displayTint)
         .ripenGlass(settings: model.settings)
         .glassWindow()

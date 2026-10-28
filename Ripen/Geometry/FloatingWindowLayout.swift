@@ -90,8 +90,8 @@ struct FloatingWindowLayout: Equatable, Sendable {
         let pad: CGFloat = 18, top: CGFloat = 24
         let rowY = h - 14 - b / 2
         let bar = CGRect(x: pad, y: rowY - 30, width: w - 2 * pad, height: 4)
-        // 預設 160pt 高時是原型的 40pt；拉高時跟著變大，最矮時縮到 22pt 不壓到上排與進度條
-        let timeSize = min(max((bar.minY - top - 8) / 1.7, 22), 48)
+        // 預設 160pt 高時是原型的 40pt；拉高時跟著變大，最矮時縮到 20pt，與進度條之間留出空隙
+        let timeSize = min(max((bar.minY - top - 8) / 1.7, 20), 48)
         return Self(
             cornerRadius: FloatingWindowSize.medium.cornerRadius,
             ringCenter: CGPoint(x: pad + 8, y: top), ringDiameter: 16, ringLineWidth: 3, ringGlyphOpacity: 1,

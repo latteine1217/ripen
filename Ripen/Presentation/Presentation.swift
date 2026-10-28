@@ -82,7 +82,6 @@ extension Presentation {
 extension Presentation {
     /// 只有懸浮窗時點 Dock 圖示／顯示主視窗的結果。
     ///
-    /// TODO: 待使用者確認（#14）後定案。spec #1 由並存規則推導為「主視窗＋懸浮窗」（懸浮窗保留），
-    /// 訪談沒有逐格確認；結論若不同，只改這一行與 `PresentationTests` 中標註待確認的測試。
+    /// 主視窗＋懸浮窗（懸浮窗保留）：spec #1 由並存規則推導，使用者 2026-10-28 確認。
     static let mainWindowShownOverFloatingWindow = Presentation.mainWindowAndFloatingWindow
 }
