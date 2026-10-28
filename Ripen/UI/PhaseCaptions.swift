@@ -21,6 +21,9 @@ struct PhaseCaption: View {
 struct EndCaption: View {
     let model: AppModel
     let status: TimerStatus
+    /// 由呼叫端在刷新時讀好傳入：超時是時間推導的值，不會發出觀察通知，
+    /// 自己讀的話跨過 0 時輸入不變、SwiftUI 不重算，要等下一次狀態改變才換成「超時」。
+    let isOvertime: Bool
 
     var body: some View {
         let endTime = model.endDate.map {
@@ -32,7 +35,7 @@ struct EndCaption: View {
         Group {
             if status == .paused {
                 Text("Paused")
-            } else if model.isOvertime {
+            } else if isOvertime {
                 Text("Overtime")
             } else {
                 Text("Ends at \(endTime ?? "--:--")")

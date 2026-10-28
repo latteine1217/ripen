@@ -82,7 +82,7 @@ struct NotchIslandView: View {
                 }
                 Spacer(minLength: state.notch.rect.width)
                 if expanded {
-                    EndCaption(model: model, status: status)
+                    EndCaption(model: model, status: status, isOvertime: model.isOvertime)
                         .font(.system(size: 11, weight: .medium, design: .rounded))
                         .foregroundStyle(.secondary)
                 } else {

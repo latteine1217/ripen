@@ -42,7 +42,7 @@ struct FloatingWindowView: View {
     var body: some View {
         TimelineView(.periodic(from: .now, by: 0.25)) { context in
             FloatingWindowGlass(
-                model: model, blend: FloatingWindowSizeBlend(state.size), frame: state.glassFrame,
+                model: model, now: context.date, blend: FloatingWindowSizeBlend(state.size), frame: state.glassFrame,
                 widensLeftward: state.widensLeftward,
                 grip: state.isHovering && !state.isResizing ? state.gripCorner : nil,
                 keepsResizeCursor: state.isHovering || state.isResizing,
@@ -60,6 +60,8 @@ struct FloatingWindowView: View {
 /// 每一格依 `FloatingWindowSizeBlend.layout` 重新擺放同一組元件，所以版面是連續變形，不交叉淡化（spec #1）。
 struct FloatingWindowGlass: View, Animatable {
     let model: AppModel
+    /// 這一刻（`TimelineView` 的日期）；只為讓內容每次刷新都重算，見 `FloatingWindowContent.now`。
+    var now = Date.now
     var blend: FloatingWindowSizeBlend
     /// 玻璃在父 view 內的框（左上原點）；寬度不足這一刻的最小寬度時往 `widensLeftward` 那邊撐開。
     let frame: CGRect
@@ -86,7 +88,7 @@ struct FloatingWindowGlass: View, Animatable {
         let size = CGSize(width: width, height: frame.height)
         let layout = blend.layout(in: size)
         let shape = RoundedRectangle(cornerRadius: layout.cornerRadius, style: .continuous)
-        FloatingWindowContent(model: model, layout: layout)
+        FloatingWindowContent(model: model, now: now, layout: layout)
             .frame(width: size.width, height: size.height)
             // 提醒在倒數到 0 時播出，閃的是該階段的超時色；鋪在內容底下、玻璃之上，裁成玻璃的形狀
             .reminderFlash(model.lastReminder, tint: model.displayTint)
@@ -118,6 +120,9 @@ struct FloatingWindowGlass: View, Animatable {
 /// 同一組元件依版面擺放；三種尺寸只有位置、大小與不透明度不同。
 private struct FloatingWindowContent: View {
     let model: AppModel
+    /// body 不讀它：時間相關的值不會發出觀察通知，`model` 與 `layout` 不變時 SwiftUI 會略過重算，
+    /// 每次刷新都換一個值才會重讀剩餘時間（不然只有調整大小或開始／暫停時數字才動）。
+    let now: Date
     let layout: FloatingWindowLayout
 
     var body: some View {
@@ -131,7 +136,7 @@ private struct FloatingWindowContent: View {
                 .fixedSize()
                 .opacity(layout.caption.opacity)
             timeText(status: status)
-            EndCaption(model: model, status: status)
+            EndCaption(model: model, status: status, isOvertime: model.isOvertime)
                 .font(.system(size: layout.end.fontSize, weight: .medium, design: .rounded))
                 .foregroundStyle(.secondary)
                 .fixedSize()
