@@ -100,6 +100,20 @@ Debug App 加 `--render-frames <輸出資料夾> appearance-` 可輸出四種配
 
 Debug App 加 `--render-frames <輸出資料夾> undo-` 可輸出復原膠囊在主視窗、三尺寸懸浮窗與瀏海島上的版面。
 
+## 產品介紹頁
+
+`website/` 是可獨立託管的靜態介紹頁，包含 HTML、CSS、少量原生 JavaScript 與複製自 `docs/images/` 的品牌及 App 截圖，不需要安裝前端套件或建置。從專案根目錄預覽：
+
+```sh
+uv run python -m http.server 4173 --bind 127.0.0.1 --directory website
+```
+
+開啟 `http://127.0.0.1:4173/`。形態展示支援點擊、方向鍵與 Home／End；FAQ 使用原生 `details`。修改後檢查桌面與手機版面、圖片載入、頁內錨點與 Ko-fi 連結。
+
+正式託管使用 GitHub Pages：`.github/workflows/pages.yml` 在 `main` 的 `website/` 或 workflow 變更時，只上傳 `website/` 並部署；也可手動觸發。不部署 App 原始碼、開發文件或本機建置產物。網站網址為 `https://latteine1217.github.io/ripen/`。
+
+下載入口使用公開 GitHub Release 的 DMG，版本固定為目前驗證的 0.1.0；發布新版後，應同步更新頁面的檔名、版本文字並驗證下載。Ko-fi 自願支持與下載分開，不限制 App 使用。
+
 ## 文件
 
 - [GLOSSARY.md](../GLOSSARY.md)：領域用詞
