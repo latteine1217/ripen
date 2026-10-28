@@ -84,11 +84,11 @@ for language in ["en", "zh-Hant"] {
         text("Focus, within reach.", x: 60, y: 44, size: 64, weight: .semibold, color: ink)
         text("Main window", x: 60, y: 145, size: 26, weight: .medium, color: muted)
         text("Notch island", x: 960, y: 205, size: 26, weight: .medium, color: muted)
-        text("Floating window", x: 960, y: 440, size: 26, weight: .medium, color: muted)
+        text("Floating window", x: 960, y: 500, size: 26, weight: .medium, color: muted)
         for (source, rect) in [
             (main, NSRect(x: 60 + (820 - mainWidth) / 2, y: 190, width: mainWidth, height: mainHeight)),
             (notch, NSRect(x: 960, y: 250, width: 780, height: 780 * notch.size.height / notch.size.width)),
-            (floating, NSRect(x: 960, y: 485, width: 780, height: 780 * floating.size.height / floating.size.width))
+            (floating, NSRect(x: 960, y: 545, width: 780, height: 780 * floating.size.height / floating.size.width))
         ] {
             NSGraphicsContext.saveGraphicsState()
             NSBezierPath(roundedRect: rect, xRadius: 22, yRadius: 22).addClip()

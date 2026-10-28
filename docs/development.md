@@ -59,6 +59,12 @@ swift scripts/generate-brand-assets.swift
 
 腳本產生 `AppIcon.appiconset` 的 16–1024 像素圖標與兩種語言的 `showcase.png`。展示圖使用各語言目錄中的 `main.jpg`、`floating-medium.jpg` 與 `notch.jpg` 原始截圖；圖上標題與標籤統一使用英文。圖標首次加入或資產位置改動後，重新執行 `xcodegen generate` 再建置。
 
+產品截圖採用使用者確認的彩色漸層背景，中英文各九張：玻璃及暖瓷白主視窗、三尺寸懸浮窗、瀏海島收合／展開、超時及統計。`docs/images/en/` 與 `zh-Hant/` 保存供 README 使用的 JPEG，`website/assets/` 使用同一批繁中素材；網站首屏採暖瓷白，形態展示保留玻璃。原始 PNG、拍攝副本與工具保留於 `build/screenshots-20261029/`。
+
+拍攝採不同 bundle id、隔離設定與記憶體專注紀錄。只在 `staged/` 副本設定固定時鐘、隱藏首次引導、停用提示音與全域快速鍵；倒數固定為 18:42，超時固定為 +03:17。`backdrop.swift` 開啟不接收滑鼠的彩色背景，不改系統桌布；`capture-all.py` 以 `screencapture` 擷取真實視窗及陰影，完成後結束拍攝 App、背景與保持喚醒程序。統計的七日次數為展示資料 `[5,7,4,8,6,3,4]`，每次 25 分鐘，僅存在拍攝副本的記憶體；README 在圖片旁明示其用途。
+
+主視窗與懸浮窗的原始圖為 1600×1200 PNG；瀏海島保留原生視窗擷取，由 `layout-notch.swift` 排上同色背景，輸出 1600×440 PNG，避免其他選單列圖示混入。`prepare-images.py` 以固定留白裁切並匯出 JPEG，不旋轉、拉伸或重繪介面。下一輪須從當時正式來源重建副本，不可把固定狀態的副本作為發行版；拍攝時 Mac 必須解鎖。
+
 ## 資料相容性與升級
 
 完成的專注存於 `~/Library/Application Support/Ripen/focus-log.sqlite`；設定維持原有 `UserDefaults` 命名空間。首次啟動自動處理舊 `focus-log.json`，不要求手動匯入；原始 JSON 留存，不再作為現行資料來源。設計契約見 [ADR-0007](adr/0007-compatible-data-upgrades.md)。

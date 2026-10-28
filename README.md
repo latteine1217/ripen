@@ -57,8 +57,10 @@ When the countdown reaches zero, Ripen plays a sound and keeps counting as `+mm:
 The Statistics page shows today's focus count and minutes, plus a chart of the last seven days. Everything is stored locally on your Mac.
 
 <p align="center">
-  <img src="docs/images/en/stats.jpg" width="380" alt="Statistics page with today's totals and a seven-day chart">
+  <img src="docs/images/en/stats.jpg" width="380" alt="Statistics page with today's totals and a seven-day chart; demonstration data">
 </p>
+
+<p align="center"><sub>Illustrative focus history for demonstration, not real user data.</sub></p>
 
 ## Features
 

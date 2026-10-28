@@ -57,8 +57,10 @@
 統計頁顯示今天的專注次數與分鐘數，以及最近 7 天的長條圖。所有資料只存在你的 Mac 上。
 
 <p align="center">
-  <img src="docs/images/zh-Hant/stats.jpg" width="380" alt="統計頁：今日總計與最近 7 天長條圖">
+  <img src="docs/images/zh-Hant/stats.jpg" width="380" alt="統計頁：今日總計與最近 7 天長條圖；數據為展示資料">
 </p>
+
+<p align="center"><sub>統計畫面使用展示資料，非真實使用者紀錄。</sub></p>
 
 ## 功能
 
