@@ -66,56 +66,28 @@ final class PresentationController {
         }
     }
 
+    /// 讀出畫面實況、選過場（`PresentationTransition.choose`）、照選到的過場執行。
     private func apply() {
         let presentation = model.presentation
-        let action = model.lastPresentationAction
-        logger.debug("apply \(String(describing: presentation), privacy: .public)")
-        if presentation.showsMainWindow, mainWindow.window == nil {
-            // 先不動島與懸浮窗：主視窗出現前它們若先消失，畫面上會什麼都沒有（ADR-0001）
-            applyOnceMainWindowExists()
-            return
-        }
-        let previous = applied
+        let transition = PresentationTransition.choose(
+            from: applied, to: presentation, action: model.lastPresentationAction, facts: facts()
+        )
+        logger.debug("apply \(String(describing: presentation), privacy: .public): \(String(describing: transition), privacy: .public)")
+        if transition == .waitForMainWindow { return applyOnceMainWindowExists() }
         applied = presentation
         // 每次都取走：沒用到（例如島還在淡出）時不留到之後無關的收進
         let releaseScreen = dragTracker.takeReleaseScreen()
-        if previous.showsNotchIsland, presentation.showsMainWindow, let window = mainWindow.window {
+        let window = mainWindow.window
+        // 拉出、吸入與變形只在對應的視窗存在時選到；guard 失敗代表 choose 與 facts() 不一致
+        switch transition {
+        case .waitForMainWindow:
+            break // 已在上面提早返回
+        case .pullOut:
+            guard let window else { return assertionFailure("拉出時主視窗應已建立") }
             island.pullOut(into: window) { [weak self] fade in self?.mainWindow.show(fadeDuration: fade) }
-            return
-        }
-        if presentation.showsNotchIsland, !island.isVisible {
-            collapseIntoNotch(from: previous, releaseScreen: releaseScreen)
-            return
-        }
-        if !presentation.showsNotchIsland { island.hide() }
-        if action == .tearOffTimerRing, let landing = tearOff.takeLanding() {
-            // 已有懸浮窗時舊的原地縮小淡出，分身落地後在放開處出現新的（spec #1 user story 35）
-            floating.dismiss()
-            tearOff.land(at: landing) { [weak self] in self?.floating.appear(at: landing) }
-            return
-        }
-        if morphBetweenMainAndFloatingWindow(action: action, from: previous, to: presentation) { return }
-        if presentation.showsFloatingWindow {
-            floating.show(near: mainWindow.window?.frame)
-        } else {
-            floating.dismiss()
-        }
-        if presentation.showsMainWindow {
-            // 已在畫面上（例如並存時按懸浮窗的 ✕）不重新叫到前面：show() 會啟用 App、搶走其他 App 的焦點。
-            // 以真實的可見度為準，被打斷的過場留下隱藏的主視窗時仍會叫回
-            let window = mainWindow.window
-            if !previous.showsMainWindow || window?.isVisible != true || window?.alphaValue != 1 {
-                mainWindow.show()
-            }
-        } else {
-            mainWindow.hide()
-        }
-    }
-
-    /// 收進瀏海：懸浮窗的 ✕（主視窗不在）從懸浮窗吸入；紅色按鈕或拖到瀏海從主視窗吸入，
-    /// 懸浮窗原地淡出（兩者沒有空間關係，不飛向瀏海；懸浮窗與瀏海島互斥，ADR-0001）。
-    private func collapseIntoNotch(from previous: Presentation, releaseScreen: NSScreen?) {
-        if !previous.showsMainWindow, previous.showsFloatingWindow, let panel = floating.window {
+        case .collapseFromFloatingWindow:
+            // 懸浮窗的 ✕（主視窗不在）：懸浮窗吸入瀏海
+            guard let panel = floating.window else { return assertionFailure("吸入時懸浮窗 panel 應已建立") }
             let screen = floating.screen ?? NSScreen.main ?? NSScreen.screens[0]
             // 第一格與真懸浮窗同形：靜止時尺寸就是玻璃高度所屬的那一級
             let glass = floating.glassFrame.size
@@ -124,36 +96,67 @@ final class PresentationController {
             island.collapse(from: panel, frame: floating.glassFrame, cornerRadius: radius, on: screen) { [weak self] fade in
                 self?.floating.hide(fadeDuration: fade)
             }
-            return
-        }
-        floating.dismiss()
-        // 拖曳放開時收進游標附近的那個瀏海；紅色按鈕收進主視窗所在那台螢幕的瀏海
-        let screen = releaseScreen ?? mainWindow.window?.screen ?? NSScreen.main ?? NSScreen.screens[0]
-        if previous.showsMainWindow, let window = mainWindow.window, window.isVisible {
-            island.collapse(from: window, on: screen) { [weak self] fade in
+        case .collapseFromMainWindow:
+            // 懸浮窗原地淡出：與瀏海沒有空間關係，不飛向瀏海（懸浮窗與瀏海島互斥，ADR-0001）
+            guard let window else { return assertionFailure("吸入時主視窗應已建立") }
+            floating.dismiss()
+            island.collapse(from: window, on: collapseScreen(releaseScreen)) { [weak self] fade in
                 self?.mainWindow.hide(fadeDuration: fade)
             }
-            return
+        case .showIsland:
+            floating.dismiss()
+            island.show(on: collapseScreen(releaseScreen))
+            mainWindow.hide()
+        case .tearOffLanding:
+            if !presentation.showsNotchIsland { island.hide() }
+            guard let landing = tearOff.takeLanding() else { return assertionFailure("拖出時應有落點") }
+            // 已有懸浮窗時舊的原地縮小淡出，分身落地後在放開處出現新的（spec #1 user story 35）
+            floating.dismiss()
+            tearOff.land(at: landing) { [weak self] in self?.floating.appear(at: landing) }
+        case .minimizeMorph:
+            if !presentation.showsNotchIsland { island.hide() }
+            guard let window else { return assertionFailure("變形時主視窗應已建立") }
+            floating.minimize(from: window) { [weak self] fade in self?.mainWindow.hide(fadeDuration: fade) }
+        case .expandMorph:
+            if !presentation.showsNotchIsland { island.hide() }
+            guard let window else { return assertionFailure("變形時主視窗應已建立") }
+            floating.expand(into: window) { [weak self] fade in self?.mainWindow.show(fadeDuration: fade) }
+        case .settle(let showsFloatingWindow, let mainWindowStep):
+            if !presentation.showsNotchIsland { island.hide() }
+            if showsFloatingWindow {
+                floating.show(near: window?.frame)
+            } else {
+                floating.dismiss()
+            }
+            switch mainWindowStep {
+            case .show: mainWindow.show()
+            case .keep: break
+            case .hide: mainWindow.hide()
+            }
         }
-        island.show(on: screen)
-        mainWindow.hide()
     }
 
-    /// 黃色按鈕與懸浮窗的「展開」播變形過場；並存時的紅色按鈕與懸浮窗 ✕ 只淡出其中一個，不在這裡處理。
-    /// - Returns: 已處理時為 true。
-    private func morphBetweenMainAndFloatingWindow(
-        action: PresentationAction?, from previous: Presentation, to presentation: Presentation
-    ) -> Bool {
-        guard let window = mainWindow.window else { return false }
-        switch action {
-        case .minimizeMainWindow where previous.showsMainWindow && presentation == .floatingWindowOnly:
-            floating.minimize(from: window) { [weak self] fade in self?.mainWindow.hide(fadeDuration: fade) }
-            return true
-        case .expandFloatingWindow where previous.showsFloatingWindow && presentation == .mainWindowOnly:
-            floating.expand(into: window) { [weak self] fade in self?.mainWindow.show(fadeDuration: fade) }
-            return true
-        default:
-            return false
+    /// 拖曳放開時收進游標附近的那個瀏海；紅色按鈕收進主視窗所在那台螢幕的瀏海。
+    private func collapseScreen(_ releaseScreen: NSScreen?) -> NSScreen {
+        releaseScreen ?? mainWindow.window?.screen ?? NSScreen.main ?? NSScreen.screens[0]
+    }
+
+    private func facts() -> PresentationFacts {
+        let mainWindowState: PresentationFacts.MainWindowState
+        if let window = mainWindow.window {
+            if !window.isVisible {
+                mainWindowState = .hidden
+            } else {
+                mainWindowState = window.alphaValue == 1 ? .fullyVisible : .partiallyVisible
+            }
+        } else {
+            mainWindowState = .missing
         }
+        return PresentationFacts(
+            mainWindow: mainWindowState,
+            isIslandVisible: island.isVisible,
+            hasFloatingPanel: floating.window != nil,
+            hasTearOffLanding: tearOff.hasLanding
+        )
     }
 }

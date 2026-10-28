@@ -70,6 +70,9 @@ final class TearOffController {
         finish(cancelled: false)
     }
 
+    /// 有沒有等著被取走的放開處；選過場時只看不取。
+    var hasLanding: Bool { landing != nil }
+
     /// PresentationController 套用拖出時取走放開處；不是拖出造成的形態改變時為 nil。
     func takeLanding() -> CGRect? {
         defer { landing = nil }
