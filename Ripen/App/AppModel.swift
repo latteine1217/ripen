@@ -213,18 +213,45 @@ final class AppModel {
 
     func start() {
         refresh()
-        engine.start(at: clock.now())
-        updateIdleSince()
+        startRefreshed()
     }
 
     func pause() {
         refresh()
-        engine.pause(at: clock.now())
-        updateIdleSince()
+        pauseRefreshed()
     }
 
     func resume() {
         refresh()
+        resumeRefreshed()
+    }
+
+    /// 單一按鍵的開始／暫停：依目前狀態開始、暫停或繼續。全域熱鍵與選單共用。
+    ///
+    /// 超時中同樣是暫停／繼續；結束這一段要按「完成」（ADR-0006）。
+    /// 先刷新再看狀態：離開時自動暫停的超時要先套用，才會選到「繼續」。
+    func toggleStartPause() {
+        refresh()
+        switch status {
+        case .idle: startRefreshed()
+        case .running: pauseRefreshed()
+        case .paused: resumeRefreshed()
+        }
+    }
+
+    // 以下是已刷新過的意圖本體，讓 toggleStartPause() 只刷新一次。
+
+    private func startRefreshed() {
+        engine.start(at: clock.now())
+        updateIdleSince()
+    }
+
+    private func pauseRefreshed() {
+        engine.pause(at: clock.now())
+        updateIdleSince()
+    }
+
+    private func resumeRefreshed() {
         engine.resume(at: clock.now())
         isPausedWhileAway = false
         updateIdleSince()
