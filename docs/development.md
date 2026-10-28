@@ -31,6 +31,8 @@ xcodebuild test -project Ripen.xcodeproj -scheme Ripen -destination 'platform=ma
 gh release create v0.1.0 dist/Ripen-0.1.0.dmg --title "Ripen 0.1.0" --notes "..."
 ```
 
+App 內的「檢查更新…」依賴這個格式（ADR-0009）：標籤為 `v<版本>`、不是 draft 或 prerelease，且附件名稱必須是 `Ripen-<版本>.dmg`，dmg 根目錄有 `Ripen.app`，其 bundle id 與 `CFBundleShortVersionString` 與標籤一致。安裝前以 GitHub 為附件算出的 SHA-256（API 的 `digest` 欄位）核對下載內容；缺少雜湊或任何一項不符時不自動安裝，設定裡改提供下載頁連結。
+
 ## 專案結構
 
 - `Ripen/App/`：`@main` App 與 `AppModel`（唯一的可觀察狀態根）
@@ -38,6 +40,7 @@ gh release create v0.1.0 dist/Ripen-0.1.0.dmg --title "Ripen 0.1.0" --notes "...
 - `Ripen/UI/`：SwiftUI 畫面
 - `Ripen/Presentation/`：形態狀態機（畫面上有哪些介面），純邏輯
 - `Ripen/Geometry/`：瀏海與版面的幾何計算，純函式
+- `Ripen/Update/`：手動檢查更新、下載驗證與換新（ADR-0009）
 - `Ripen/Bridge/`：AppKit 橋接（主視窗、瀏海島 panel、App 生命週期、系統事件）
 - `Ripen/Resources/`：String Catalog（`Localizable.xcstrings`，英文與繁體中文）與 `Assets.xcassets`（應用程式圖標）
 - `RipenTests/`：Swift Testing 測試；`Support/` 放假時鐘等測試替身

@@ -11,6 +11,7 @@ struct RipenApp: App {
     @State private var hotkeys: GlobalHotkeyController
     @State private var appearance: AppAppearanceController?
     @State private var loginItem = LoginItemController(service: MainAppLoginItem())
+    @State private var updater = UpdateChecker()
     #if DEBUG
     @State private var glassTuning = GlassTuning()
     #endif
@@ -83,6 +84,7 @@ struct RipenApp: App {
         .commands { MinimizeCommand(presentation: presentation, mainWindow: presenter.mainWindow) }
         .commands { MainWindowCommand(presenter: presenter) }
         .commands { TimerCommands() }
+        .commands { UpdateCommands(updater: updater) }
         #if DEBUG
         .commands { GlassTuningCommands() }
         #endif
@@ -98,6 +100,7 @@ struct RipenApp: App {
             SettingsView(settings: model.settings, showMainWindow: presenter.showMainWindow)
                 .environment(hotkeys)
                 .environment(loginItem)
+                .environment(updater)
         }
 
         MenuBarItem(model: model, presenter: presenter)

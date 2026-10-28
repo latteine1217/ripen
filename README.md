@@ -70,7 +70,7 @@ The Statistics page shows today's focus count and minutes, plus a chart of the l
 | Always at hand | Three floating-window layouts, a notch island, and an optional menu bar countdown. |
 | A fresh start | The long-break count resets after two hours idle. |
 | Easy to learn | A short intro shows the tear-off, notch and resize gestures on first launch, with one-time tips where they apply. Replay it from Settings. |
-| Local and private | No account or network access. Focus history stays in `~/Library/Application Support/Ripen`. English and Traditional Chinese included. |
+| Local and private | No account needed, and Ripen only goes online when you click **Check for Updates…**; a newer release is downloaded, verified against GitHub's checksum and installed only after you confirm. Focus history stays in `~/Library/Application Support/Ripen`. English and Traditional Chinese included. |
 
 ## Install
 

@@ -98,6 +98,10 @@ _Avoid_: Onboarding, 教學
 第一次碰到某個情境時暫時取代一行文字的提示，幾秒後收起，之後不再出現。
 _Avoid_: Tooltip, Coach mark
 
+**檢查更新 (Check for Updates)**：
+使用者手動要求時才向 GitHub 查詢最新正式版；有新版時經使用者確認才下載、驗證並安裝。Ripen 不自動檢查（ADR-0009）。
+_Avoid_: 自動更新, Auto-update
+
 **開始／暫停快速鍵 (Start/Pause Shortcut)**：
 在任何 App 中開始或暫停目前階段的全域按鍵，預設 ⌥⌘P，可在設定中更改。主視窗在前時另有 ⌘S 跳過（超時中為完成）、⌘R 重設、⌘Z 復原。
 _Avoid_: 熱鍵, Hotkey
