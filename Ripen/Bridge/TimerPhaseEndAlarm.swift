@@ -2,7 +2,8 @@ import Foundation
 
 /// 以主執行緒的 `Timer` 在結束時刻喚起 `AppModel`。
 ///
-/// 睡眠期間 `Timer` 不會準時觸發；那時的完成由喚醒通知（`UserPresence.onReturn`）確立。
+/// 到點只送出提醒並進入超時；完成由使用者按「完成」（`finish()`）確立（ADR-0006）。
+/// 睡眠期間 `Timer` 不會準時觸發；那時跨過 0 的提醒由回來時的刷新（`UserPresence.onReturn`）送出。
 @MainActor
 final class TimerPhaseEndAlarm: PhaseEndAlarm {
     /// 晚一點點觸發：`Timer` 與 `Date` 的時鐘來源不同，剛好在結束時刻觸發可能還差幾毫秒沒到 0。
