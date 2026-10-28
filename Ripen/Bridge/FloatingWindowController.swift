@@ -20,6 +20,7 @@ final class FloatingWindowController {
     private static let resizeSettleDelay: TimeInterval = 0.7
 
     private let model: AppModel
+    private let presentation: PresentationModel
     private let state = FloatingWindowState()
     private var panel: FloatingWindowPanel?
     /// 正在播放的主視窗 ⇄ 懸浮窗過場。
@@ -37,8 +38,9 @@ final class FloatingWindowController {
     /// 玻璃本體的全域座標（左下原點）。
     private(set) var glassFrame: CGRect = .zero
 
-    init(model: AppModel) {
+    init(model: AppModel, presentation: PresentationModel) {
         self.model = model
+        self.presentation = presentation
     }
 
     /// 懸浮窗的 panel；收進瀏海的過場從它開始。
@@ -127,7 +129,7 @@ final class FloatingWindowController {
         let size = rememberedSize
         ghostState.size = FloatingWindowSize(height: size.height)
         ghostState.glassFrame = CGRect(origin: CGPoint(x: Self.margin, y: Self.margin), size: size)
-        return FloatingWindowView(model: model, state: ghostState) { _ in }
+        return FloatingWindowView(model: model, presentation: presentation, state: ghostState) { _ in }
     }
 
     /// 拖出放開處的懸浮窗（玻璃本體）：中心對齊游標，夾回可見範圍並貼邊（#16）。
@@ -532,7 +534,7 @@ final class FloatingWindowController {
 
     private func makePanel() -> FloatingWindowPanel {
         let view = FloatingWindowView(
-            model: model, state: state, onDrag: { [weak self] phase in self?.drag(phase) },
+            model: model, presentation: presentation, state: state, onDrag: { [weak self] phase in self?.drag(phase) },
             onResize: { [weak self] corner in self?.resize(corner) }
         )
         let hosting = NSHostingView(rootView: view)

@@ -21,6 +21,7 @@ final class NotchIslandState {
 /// 結束時刻、大字時間、進度條與按鈕。時間相關的值在 `TimelineView` 裡重讀（ADR-0002）。
 struct NotchIslandView: View {
     let model: AppModel
+    let presentation: PresentationModel
     let state: NotchIslandState
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -134,7 +135,7 @@ struct NotchIslandView: View {
                 IslandIconButton("Resume", systemImage: "play.fill", action: model.resume)
             }
             SkipOrDoneButton(model: model, isOvertime: isOvertime)
-            IslandIconButton("Show Main Window", systemImage: "macwindow", action: model.expandNotchIsland)
+            IslandIconButton("Show Main Window", systemImage: "macwindow", action: presentation.expandNotchIsland)
         }
     }
 }

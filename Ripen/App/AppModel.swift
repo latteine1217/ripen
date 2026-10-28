@@ -1,7 +1,7 @@
 import Foundation
 import Observation
 
-/// 唯一的可觀察狀態根：對外只暴露操作意圖與可觀察狀態。
+/// 計時的可觀察狀態根：對外只暴露操作意圖與可觀察狀態。形態（畫面上有哪些介面）另由 `PresentationModel` 持有。
 ///
 /// 時間相關的值（`status`、`remaining`、`isOvertime`、`overtime`）每次讀取都向注入的時鐘取「現在」，
 /// 本身不會因時間流逝而發出變更通知；UI 需以 `TimelineView` 定期重讀。
@@ -45,13 +45,6 @@ final class AppModel {
     @ObservationIgnored private var awaySince: Date?
     /// 最後一次播出的提醒；各介面觀察它的 `id` 播提醒動畫。
     private(set) var lastReminder: PhaseReminder?
-    /// 畫面上有哪些介面；主視窗與各 panel 只依它顯示或隱藏（ADR-0003）。
-    private(set) var presentation = Presentation.mainWindowOnly
-    /// 造成目前形態的操作。同一對形態可能來自不同操作（例如並存時的紅色與黃色按鈕），
-    /// 過場依它選擇；在 `presentation` 之前寫入，觀察到形態改變時已是新值。
-    @ObservationIgnored private(set) var lastPresentationAction: PresentationAction?
-    /// 每套用一個改變畫面的操作加一。再拖出一次時形態不變，畫面要靠它得知換成新的懸浮窗（#16）。
-    private(set) var presentationRevision = 0
 
     /// 未指定的依賴一律用不碰系統的版本：測試與預覽不讀寫真正的設定、不出聲。
     init(
@@ -303,43 +296,6 @@ final class AppModel {
         } else if idleSince == nil {
             idleSince = now
         }
-    }
-
-    // MARK: - 形態
-
-    // 形態與計時無關：不刷新計時、不影響閒置。
-
-    /// 主視窗的紅色按鈕（ADR-0001）。
-    func closeMainWindow() { apply(.closeMainWindow) }
-
-    /// 主視窗的黃色按鈕或 ⌘M：主視窗變形成懸浮窗。
-    func minimizeMainWindow() { apply(.minimizeMainWindow) }
-
-    /// 懸浮窗的「展開」：懸浮窗變形成主視窗。
-    func expandFloatingWindow() { apply(.expandFloatingWindow) }
-
-    /// 懸浮窗的 ✕：主視窗在畫面上時只關懸浮窗，否則收進瀏海。
-    func closeFloatingWindow() { apply(.closeFloatingWindow) }
-
-    /// 把主視窗拖到瀏海附近放開。
-    func collapseIntoNotch() { apply(.collapseIntoNotch) }
-
-    /// 拉出瀏海島或按島上的「展開」。
-    func expandNotchIsland() { apply(.expandNotchIsland) }
-
-    /// 點 Dock 圖示或選單列的「顯示主視窗」。
-    func showMainWindow() { apply(.showMainWindow) }
-
-    /// 把計時圓環拖到主視窗外放開：在放開處產生懸浮窗，主視窗保留（#16）。
-    func tearOffTimerRing() { apply(.tearOffTimerRing) }
-
-    /// 轉換表中沒有這一格時忽略：操作可能來自已在過場中消失的介面。
-    private func apply(_ action: PresentationAction) {
-        guard let next = presentation.applying(action),
-              next != presentation || action.replacesFloatingWindow else { return }
-        lastPresentationAction = action
-        presentationRevision += 1
-        presentation = next
     }
 
     /// 換上循環目前所在的階段，處於起點、尚未開始。

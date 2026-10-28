@@ -5,7 +5,7 @@ import SwiftUI
 ///
 /// 不攔截視窗本身的拖曳：`willMoveNotification` 只用來得知拖曳開始，之後以 60Hz 輪詢游標與滑鼠按鍵。
 /// 拖標題列時 App 收不到 mouseUp，`didMove` 也不連續（瀏海島原型實測每次拖曳只送 2–15 次）。
-/// 放開時只經 `AppModel.collapseIntoNotch()` 改形態，過場由 `PresentationController` 播放。
+/// 放開時只經 `PresentationModel.collapseIntoNotch()` 改形態，過場由 `PresentationController` 播放。
 @MainActor
 final class MainWindowDragTracker {
     private static let pollInterval: TimeInterval = 1.0 / 60
@@ -13,6 +13,7 @@ final class MainWindowDragTracker {
     private static let hintMargin: CGFloat = 32
 
     private let model: AppModel
+    private let presentation: PresentationModel
     private let mainWindow: MainWindowBridge
     private var observer: NSObjectProtocol?
     private var timer: Timer?
@@ -24,8 +25,9 @@ final class MainWindowDragTracker {
     /// 放開時游標附近瀏海所在的螢幕；`PresentationController` 收進時取走。
     private var releaseScreen: NSScreen?
 
-    init(model: AppModel, mainWindow: MainWindowBridge) {
+    init(model: AppModel, presentation: PresentationModel, mainWindow: MainWindowBridge) {
         self.model = model
+        self.presentation = presentation
         self.mainWindow = mainWindow
         observer = NotificationCenter.default.addObserver(
             forName: NSWindow.willMoveNotification, object: nil, queue: .main
@@ -44,7 +46,7 @@ final class MainWindowDragTracker {
     private func windowWillMove(_ window: NSWindow?) {
         // willMove 也會在程式設定 frame 時送出；只在按住滑鼠時才算使用者拖曳
         guard let window, window === mainWindow.window, timer == nil, NSEvent.pressedMouseButtons & 1 != 0,
-              model.presentation.applying(.collapseIntoNotch) != nil else { return }
+              presentation.presentation.applying(.collapseIntoNotch) != nil else { return }
         releaseScreen = nil
         let timer = Timer(timeInterval: Self.pollInterval, repeats: true) { [weak self] _ in
             MainActor.assumeIsolated { self?.tick() }
@@ -67,9 +69,9 @@ final class MainWindowDragTracker {
         timer?.invalidate()
         timer = nil
         hideHint()
-        guard let target, model.presentation.applying(.collapseIntoNotch) != nil else { return }
+        guard let target, presentation.presentation.applying(.collapseIntoNotch) != nil else { return }
         releaseScreen = screens[target]
-        model.collapseIntoNotch()
+        presentation.collapseIntoNotch()
     }
 
     // MARK: - 提示

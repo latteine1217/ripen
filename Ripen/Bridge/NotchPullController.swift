@@ -4,7 +4,7 @@ import SwiftUI
 /// 拉出：把瀏海島往下拉成水珠，變成正圓後放開就變回主視窗（ADR-0005、spec #1 user story 63–66）。
 ///
 /// 拖曳中與過場的液體都畫在 `TransitionOverlay` 裡；島的 panel 維持原大小，透明區不擋點擊。
-/// 放開時只經 `AppModel.expandNotchIsland()` 改形態，畫面由 `PresentationController` 呼叫
+/// 放開時只經 `PresentationModel.expandNotchIsland()` 改形態，畫面由 `PresentationController` 呼叫
 /// `pullOut` 接續同一個 overlay 播完。
 @MainActor
 final class NotchPullController {
@@ -18,7 +18,7 @@ final class NotchPullController {
     private static let autoPullDuration: TimeInterval = 0.28
     private static let autoPullOvershoot: CGFloat = 1.1
 
-    private let model: AppModel
+    private let presentation: PresentationModel
     private let state: NotchIslandState
     private var timer: Timer?
     private var drag: PullDrag?
@@ -37,8 +37,8 @@ final class NotchPullController {
     /// 正在拖曳，或液體還在畫面上（彈回、過場中）；這段期間島的 hover 不插手。
     var isActive: Bool { drag?.isDragging == true || overlay != nil }
 
-    init(model: AppModel, state: NotchIslandState) {
-        self.model = model
+    init(presentation: PresentationModel, state: NotchIslandState) {
+        self.presentation = presentation
         self.state = state
     }
 
@@ -73,10 +73,10 @@ final class NotchPullController {
         guard NSEvent.pressedMouseButtons & 1 == 0 else { return }
         stopTracking()
         guard drag.isDragging else { return }
-        if drag.isReleased, model.presentation.applying(.expandNotchIsland) != nil {
+        if drag.isReleased, presentation.presentation.applying(.expandNotchIsland) != nil {
             // 液體留在畫面上，由 pullOut 接著長成主視窗；主視窗擺在放開處（使用者 2026-10-28 決定）
             releasePoint = NSEvent.mouseLocation
-            model.expandNotchIsland()
+            presentation.expandNotchIsland()
         } else {
             snapBack()
         }

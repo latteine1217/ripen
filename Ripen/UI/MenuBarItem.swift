@@ -4,11 +4,11 @@ import SwiftUI
 /// 選單列項目（GLOSSARY）：選單列上的圖示與剩餘時間，以及常用操作的選單。
 struct MenuBarItem: Scene {
     let model: AppModel
-    let mainWindow: MainWindowBridge
+    let presenter: PresentationController
 
     var body: some Scene {
         MenuBarExtra(isInserted: isInserted) {
-            MenuBarMenu(model: model, mainWindow: mainWindow)
+            MenuBarMenu(model: model, presenter: presenter)
         } label: {
             MenuBarLabel(model: model)
         }
@@ -88,7 +88,7 @@ struct MenuBarLabel: View {
 /// 選單列項目的選單：開始／暫停、跳過（超時中為完成）、重設、顯示主視窗、設定、結束。
 private struct MenuBarMenu: View {
     let model: AppModel
-    let mainWindow: MainWindowBridge
+    let presenter: PresentationController
 
     var body: some View {
         // 標題依狀態變，動作與全域熱鍵共用同一個意圖
@@ -129,12 +129,12 @@ private struct MenuBarMenu: View {
         }
     }
 
-    /// 與 Dock 圖示共用 `AppModel.showMainWindow(in:)`；視窗還沒建立時由 `MainWindowBridge` 補建。
+    /// 與 Dock 圖示共用 `PresentationController.showMainWindow()`；視窗還沒建立時由 `MainWindowBridge` 補建。
     ///
     /// 從選單列項目的選單操作時 App 不在前景，協作式的 `NSApp.activate()` 實測帶不到前景，
     /// 所以這裡強制啟用。
     private func showMainWindow() {
-        model.showMainWindow(in: mainWindow)
+        presenter.showMainWindow()
         NSApp.activate(ignoringOtherApps: true)
     }
 }

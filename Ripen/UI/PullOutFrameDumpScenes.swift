@@ -74,7 +74,7 @@ extension FrameDump {
         let state = NotchIslandState(notch: notch, isExpanded: true)
         state.isHovering = hovering
         state.isPulling = pulling
-        return NotchIslandView(model: model, state: state)
+        return NotchIslandView(model: model, presentation: PresentationModel(), state: state)
             .frame(width: crop.width, height: crop.height, alignment: .top)
     }
 

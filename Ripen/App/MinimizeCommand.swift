@@ -5,7 +5,7 @@ import SwiftUI
 /// 其他視窗（例如設定）照常縮到 Dock。取代系統的 windowSize 群組，「縮放」也一併拿掉：
 /// 主視窗大小由內容決定，縮放沒有作用。
 struct MinimizeCommand: Commands {
-    let model: AppModel
+    let presentation: PresentationModel
     let mainWindow: MainWindowBridge
 
     var body: some Commands {
@@ -20,7 +20,7 @@ struct MinimizeCommand: Commands {
         if let key = NSApp.keyWindow, (key.sheetParent ?? key) !== mainWindow.window {
             key.performMiniaturize(nil)
         } else {
-            model.minimizeMainWindow()
+            presentation.minimizeMainWindow()
         }
     }
 }

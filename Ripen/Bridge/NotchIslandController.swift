@@ -18,6 +18,7 @@ final class NotchIslandController {
     private static let overlayLinger: Duration = .milliseconds(150)
 
     private let model: AppModel
+    private let presentation: PresentationModel
     private let state: NotchIslandState
     /// 往下拉成水珠與拉出過場（#12）。
     private let puller: NotchPullController
@@ -40,12 +41,13 @@ final class NotchIslandController {
 
     var isVisible: Bool { panel?.isVisible == true }
 
-    init(model: AppModel) {
+    init(model: AppModel, presentation: PresentationModel) {
         self.model = model
+        self.presentation = presentation
         // App 啟動時可能還拿不到螢幕；真正的瀏海在 show(on:) 依所在螢幕算出
         let state = NotchIslandState(notch: NotchFrame(rect: .zero, isSimulated: true))
         self.state = state
-        puller = NotchPullController(model: model, state: state)
+        puller = NotchPullController(presentation: presentation, state: state)
         observeReminders()
     }
 
@@ -218,7 +220,7 @@ final class NotchIslandController {
     // MARK: - panel
 
     private func makePanel() -> NotchIslandPanel {
-        let hosting = NSHostingView(rootView: NotchIslandView(model: model, state: state))
+        let hosting = NSHostingView(rootView: NotchIslandView(model: model, presentation: presentation, state: state))
         // panel 的大小由幾何決定，不讓 SwiftUI 依內容改動
         hosting.sizingOptions = []
         let panel = NotchIslandPanel(contentView: hosting)

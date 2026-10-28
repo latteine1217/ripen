@@ -41,7 +41,7 @@ extension FrameDump {
                 state.setUp(model, clock)
                 clock.current += 48
                 return AnyView(
-                    NotchIslandView(model: model, state: NotchIslandState(notch: notch, isExpanded: state.expanded))
+                    NotchIslandView(model: model, presentation: PresentationModel(), state: NotchIslandState(notch: notch, isExpanded: state.expanded))
                         .background(Color(white: 0.85))
                 )
             }

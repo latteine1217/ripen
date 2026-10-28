@@ -4,7 +4,7 @@ import SwiftUI
 /// 拖出計時圓環（GLOSSARY「拖出」、spec #1 user story 30–35）：拖曳中以「牽線」呈現，
 /// 分身與牽線畫在 `TransitionOverlay` 裡（懸浮窗原型「A 牽線」）。
 ///
-/// 放開時只經 `AppModel.tearOffTimerRing()` 改形態；懸浮窗由 `PresentationController` 取走落點後
+/// 放開時只經 `PresentationModel.tearOffTimerRing()` 改形態；懸浮窗由 `PresentationController` 取走落點後
 /// 呼叫 `land(at:reveal:)` 接續同一個 overlay 出現。
 @MainActor
 @Observable
@@ -22,6 +22,7 @@ final class TearOffController {
     private(set) var isActive = false
 
     @ObservationIgnored private let model: AppModel
+    @ObservationIgnored private let presentation: PresentationModel
     @ObservationIgnored private let mainWindow: MainWindowBridge
     @ObservationIgnored private let floating: FloatingWindowController
     @ObservationIgnored private let ghost = TearOffGhostState()
@@ -38,8 +39,11 @@ final class TearOffController {
     /// 每次開始或結束加一；舊的動畫完成回呼若已被取代就不再動作。
     @ObservationIgnored private var session = 0
 
-    init(model: AppModel, mainWindow: MainWindowBridge, floating: FloatingWindowController) {
+    init(
+        model: AppModel, presentation: PresentationModel, mainWindow: MainWindowBridge, floating: FloatingWindowController
+    ) {
         self.model = model
+        self.presentation = presentation
         self.mainWindow = mainWindow
         self.floating = floating
     }
@@ -83,7 +87,7 @@ final class TearOffController {
 
     private func begin(offsetFromRingCenter offset: CGSize, ringRadius: CGFloat) {
         guard !isActive, let window = mainWindow.window, window.isVisible,
-              model.presentation.applying(.tearOffTimerRing) != nil else { return }
+              presentation.presentation.applying(.tearOffTimerRing) != nil else { return }
         let mouse = NSEvent.mouseLocation
         // 全域座標 y 向上，SwiftUI 的位移 y 向下
         let center = CGPoint(x: mouse.x - offset.width, y: mouse.y + offset.height)
@@ -156,12 +160,12 @@ final class TearOffController {
         keyMonitor = nil
         // 回到圓環上時 hover 會再換成手掌
         NSCursor.arrow.set()
-        guard !cancelled, drag.isPastThreshold, model.presentation.applying(.tearOffTimerRing) != nil else {
+        guard !cancelled, drag.isPastThreshold, presentation.presentation.applying(.tearOffTimerRing) != nil else {
             snapBack()
             return
         }
         landing = floating.tearOffFrame(centeredAt: drag.cursor)
-        model.tearOffTimerRing()
+        presentation.tearOffTimerRing()
     }
 
     // MARK: - 放開

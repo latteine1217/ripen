@@ -2,7 +2,7 @@
 
 App 的進入點是 SwiftUI 的 `@main App`。主視窗以單一實例的 `Window` scene 宣告，不用 `WindowGroup`，因為 ⌘N 開出多個主視窗會破壞 ADR-0001 的可見性規則；選單列項目用 `MenuBarExtra`，設定用 `Settings`，介面內容一律以 SwiftUI view 撰寫。AppKit 只在 SwiftUI 沒有對應 API 時使用，而且要包在單一用途的橋接元件裡，例如 `NSViewRepresentable`、取得 scene 底下 `NSWindow` 的存取點，或由 SwiftUI 端擁有並控制的 `NSPanel`，不另外建一套由 AppKit 主導的視窗管理。
 
-目前的視窗形態（主視窗、懸浮窗、瀏海島的組合）是一個狀態值，存在由 `App` 以 `@State` 持有的 `@Observable` model 裡，是 ADR-0001「至少一個可見」規則的唯一真實來源。SwiftUI scene 與 AppKit panel 都依這個值顯示或隱藏，任何一方都不自行切換形態；過場動畫只負責把畫面從舊形態帶到新形態。
+目前的視窗形態（主視窗、懸浮窗、瀏海島的組合）是一個狀態值，存在由 `App` 以 `@State` 持有的 `@Observable` model（`PresentationModel`，與計時的 `AppModel` 分開持有）裡，是 ADR-0001「至少一個可見」規則的唯一真實來源。SwiftUI scene 與 AppKit panel 都依這個值顯示或隱藏，任何一方都不自行切換形態；過場動畫只負責把畫面從舊形態帶到新形態。
 
 允許橋接的範圍：
 

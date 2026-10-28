@@ -35,6 +35,7 @@ enum FloatingWindowDrag {
 /// 外框留 `FloatingWindowController.margin` 給外陰影與換階段漣漪。時間相關的值在 `TimelineView` 裡重讀（ADR-0002）。
 struct FloatingWindowView: View {
     let model: AppModel
+    let presentation: PresentationModel
     let state: FloatingWindowState
     let onDrag: (FloatingWindowDrag) -> Void
     var onResize: (ResizeCorner?) -> Void = { _ in }
@@ -42,7 +43,7 @@ struct FloatingWindowView: View {
     var body: some View {
         TimelineView(.countdownTick) { context in
             FloatingWindowGlass(
-                model: model, now: context.date, blend: FloatingWindowSizeBlend(state.size), frame: state.glassFrame,
+                model: model, presentation: presentation, now: context.date, blend: FloatingWindowSizeBlend(state.size), frame: state.glassFrame,
                 widensLeftward: state.widensLeftward,
                 grip: state.isHovering && !state.isResizing ? state.gripCorner : nil,
                 keepsResizeCursor: state.isHovering || state.isResizing,
@@ -60,6 +61,7 @@ struct FloatingWindowView: View {
 /// 每一格依 `FloatingWindowSizeBlend.layout` 重新擺放同一組元件，所以版面是連續變形，不交叉淡化（spec #1）。
 struct FloatingWindowGlass: View, Animatable {
     let model: AppModel
+    let presentation: PresentationModel
     /// 這一刻（`TimelineView` 的日期）；只為讓內容每次刷新都重算，見 `FloatingWindowContent.now`。
     var now = Date.now
     var blend: FloatingWindowSizeBlend
@@ -88,7 +90,7 @@ struct FloatingWindowGlass: View, Animatable {
         let size = CGSize(width: width, height: frame.height)
         let layout = blend.layout(in: size)
         let shape = RoundedRectangle(cornerRadius: layout.cornerRadius, style: .continuous)
-        FloatingWindowContent(model: model, now: now, layout: layout)
+        FloatingWindowContent(model: model, presentation: presentation, now: now, layout: layout)
             .frame(width: size.width, height: size.height)
             // 提醒在倒數到 0 時播出，閃的是該階段的超時色；鋪在內容底下、玻璃之上，裁成玻璃的形狀
             .reminderFlash(model.lastReminder, tint: model.displayTint)
@@ -120,6 +122,7 @@ struct FloatingWindowGlass: View, Animatable {
 /// 同一組元件依版面擺放；三種尺寸只有位置、大小與不透明度不同。
 private struct FloatingWindowContent: View {
     let model: AppModel
+    let presentation: PresentationModel
     /// body 不讀它：時間相關的值不會發出觀察通知，`model` 與 `layout` 不變時 SwiftUI 會略過重算，
     /// 每次刷新都換一個值才會重讀剩餘時間（不然只有調整大小或開始／暫停時數字才動）。
     let now: Date
@@ -147,9 +150,9 @@ private struct FloatingWindowContent: View {
             SkipOrDoneButton(model: model, isOvertime: model.isOvertime)
             IslandIconButton(
                 "Expand into Main Window", systemImage: "arrow.up.left.and.arrow.down.right",
-                action: model.expandFloatingWindow
+                action: presentation.expandFloatingWindow
             )
-            IslandIconButton("Close Floating Window", systemImage: "xmark", action: model.closeFloatingWindow)
+            IslandIconButton("Close Floating Window", systemImage: "xmark", action: presentation.closeFloatingWindow)
         }
         .foregroundStyle(.white)
         .environment(\.iconButtonMetrics, .floatingWindow)

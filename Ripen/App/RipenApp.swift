@@ -4,6 +4,8 @@ import SwiftUI
 struct RipenApp: App {
     @NSApplicationDelegateAdaptor private var lifecycle: AppLifecycleDelegate
     @State private var model: AppModel
+    /// 形態的唯一真實來源（ADR-0003）；與計時各自持有。
+    @State private var presentation: PresentationModel
     /// 依形態顯示或隱藏主視窗與瀏海島（ADR-0003）。
     @State private var presenter: PresentationController
     @State private var hotkeys: GlobalHotkeyController
@@ -28,8 +30,10 @@ struct RipenApp: App {
         }
         // 啟動就註冊，主視窗沒開也能用熱鍵
         hotkeys.activate()
-        let presenter = PresentationController(model: model)
+        let presentation = PresentationModel()
+        let presenter = PresentationController(model: model, presentation: presentation)
         _model = State(initialValue: model)
+        _presentation = State(initialValue: presentation)
         _presenter = State(initialValue: presenter)
         _hotkeys = State(initialValue: hotkeys)
         // 在 init 接上：主視窗上次退出時是隱藏的就不會建立，接在 onWindowAttach 會漏掉
@@ -52,8 +56,8 @@ struct RipenApp: App {
         .windowResizability(.contentSize)
         // 「視窗」選單自動加的主視窗項目會直接開視窗、繞過形態；換成 MainWindowCommand 的
         .commandsRemoved()
-        .commands { MinimizeCommand(model: model, mainWindow: presenter.mainWindow) }
-        .commands { MainWindowCommand(model: model, mainWindow: presenter.mainWindow) }
+        .commands { MinimizeCommand(presentation: presentation, mainWindow: presenter.mainWindow) }
+        .commands { MainWindowCommand(presenter: presenter) }
         .commands { TimerCommands() }
         #if DEBUG
         .commands { GlassTuningCommands() }
@@ -72,6 +76,6 @@ struct RipenApp: App {
                 .environment(loginItem)
         }
 
-        MenuBarItem(model: model, mainWindow: presenter.mainWindow)
+        MenuBarItem(model: model, presenter: presenter)
     }
 }

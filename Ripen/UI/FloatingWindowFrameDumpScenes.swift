@@ -29,7 +29,7 @@ extension FrameDump {
             Scene(name: state.name, size: size) { _ in
                 let model = sampleModel(state.setUp)
                 return AnyView(
-                    FloatingWindowView(model: model, state: FloatingWindowState()) { _ in }
+                    FloatingWindowView(model: model, presentation: PresentationModel(), state: FloatingWindowState()) { _ in }
                         .background(Color(white: 0.3))
                 )
             }
@@ -92,7 +92,7 @@ extension FrameDump {
                 }
                 return AnyView(
                     FloatingWindowGlass(
-                        model: model, blend: FloatingWindowSizeBlend(FloatingWindowSize(height: item.size.height)),
+                        model: model, presentation: PresentationModel(), blend: FloatingWindowSizeBlend(FloatingWindowSize(height: item.size.height)),
                         frame: CGRect(origin: CGPoint(x: margin, y: margin), size: item.size), grip: .bottomLeft
                     )
                     .background(Color(white: 0.3))
@@ -122,7 +122,7 @@ extension FrameDump {
                 let frame = frames[Int((t * Double(frameCount - 1)).rounded())]
                 return AnyView(
                     FloatingWindowGlass(
-                        model: sampleModel(), blend: frame.blend,
+                        model: sampleModel(), presentation: PresentationModel(), blend: frame.blend,
                         frame: CGRect(origin: CGPoint(x: margin, y: margin), size: frame.size)
                     )
                     .frame(width: stage.width, height: stage.height)
