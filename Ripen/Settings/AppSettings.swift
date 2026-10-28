@@ -13,6 +13,9 @@ final class AppSettings {
     @ObservationIgnored private let storage: any SettingsStorage
     /// 本次執行中寫過的值。存在這裡只為了讓觀察者在寫入時收到通知；真正的來源是儲存。
     private var written: [String: Any] = [:]
+    /// 每次寫入加一（即使寫入同值）。由設定推導出的值（如 `AppModel` 的階段長度）以它判斷是否要重算，
+    /// 不必在每次刷新時重讀儲存。
+    private(set) var revision = 0
 
     init(storage: any SettingsStorage) {
         self.storage = storage
@@ -24,6 +27,7 @@ final class AppSettings {
             let stored = newValue.storedValue
             written[key.name] = stored
             storage.set(stored, forKey: key.name)
+            revision += 1
         }
     }
 }

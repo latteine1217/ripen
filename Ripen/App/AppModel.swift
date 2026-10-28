@@ -68,7 +68,9 @@ final class AppModel {
         self.presence = presence
         self.reminderSound = reminderSound
         self.alarm = alarm
-        engine = TimerEngine(phase: .focus, duration: settings.cycleConfiguration.duration(for: .focus))
+        let configuration = settings.cycleConfiguration
+        cachedConfiguration = (settings.revision, configuration)
+        engine = TimerEngine(phase: .focus, duration: configuration.duration(for: .focus))
         idleSince = clock.now()
         presence.onLeave = { [weak self] leftAgo in self?.userDidLeave(leftAgo: leftAgo) }
         presence.onReturn = { [weak self] in self?.userDidReturn() }
@@ -88,7 +90,14 @@ final class AppModel {
     /// 距離上次長休息已完成的專注次數。
     var completedFocusesInCycle: Int { cycle.completedFocuses }
     var longBreakInterval: Int { configuration.longBreakInterval }
-    private var configuration: CycleConfiguration { settings.cycleConfiguration }
+    /// 只在設定寫入後重算：UI 每 0.25 秒刷新，每次都從 UserDefaults 讀多個 key 太浪費。
+    private var configuration: CycleConfiguration {
+        if let cached = cachedConfiguration, cached.revision == settings.revision { return cached.value }
+        let value = settings.cycleConfiguration
+        cachedConfiguration = (settings.revision, value)
+        return value
+    }
+    @ObservationIgnored private var cachedConfiguration: (revision: Int, value: CycleConfiguration)?
 
     // MARK: - 刷新
 
