@@ -39,10 +39,22 @@ gh release create v0.1.0 dist/Ripen-0.1.0.dmg --title "Ripen 0.1.0" --notes "...
 - `Ripen/Presentation/`：形態狀態機（畫面上有哪些介面），純邏輯
 - `Ripen/Geometry/`：瀏海與版面的幾何計算，純函式
 - `Ripen/Bridge/`：AppKit 橋接（主視窗、瀏海島 panel、App 生命週期、系統事件）
-- `Ripen/Resources/`：String Catalog（`Localizable.xcstrings`，英文與繁體中文）
+- `Ripen/Resources/`：String Catalog（`Localizable.xcstrings`，英文與繁體中文）與 `Assets.xcassets`（應用程式圖標）
 - `RipenTests/`：Swift Testing 測試；`Support/` 放假時鐘等測試替身
 - `scripts/`：打包腳本（`make-dmg.sh`）
 - `docs/images/`：README 截圖（`en/`、`zh-Hant/`）
+
+## 圖標與產品展示
+
+正式圖標原稿為 `docs/images/brand/app-icon.png`，採用已選定的 D3：暖白底、珊瑚紅小寫 r 與綠葉。圓角外為透明，原稿與 README 共用；`project.yml` 以 `ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon` 選取 macOS 圖標資產。
+
+更新原稿或既有截圖後，在專案根目錄執行：
+
+```sh
+swift scripts/generate-brand-assets.swift
+```
+
+腳本產生 `AppIcon.appiconset` 的 16–1024 像素圖標與兩種語言的 `showcase.png`。展示圖使用各語言目錄中的 `main.jpg`、`floating-medium.jpg` 與 `notch.jpg` 原始截圖；圖上標題與標籤統一使用英文。圖標首次加入或資產位置改動後，重新執行 `xcodegen generate` 再建置。
 
 ## 文件
 

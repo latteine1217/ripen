@@ -1,8 +1,12 @@
 <div align="center">
 
+<img src="docs/images/brand/app-icon.png" width="128" height="128" alt="Ripen app icon: a coral r with a green leaf">
+
 # Ripen
 
-**A frosted-glass Pomodoro timer for macOS that lives where you need it: a window, a floating panel, or your notch.**
+**A little space for focus.**
+
+A native macOS Pomodoro timer with frosted glass, floating windows, and a home in your notch.
 
 [![macOS 14+](https://img.shields.io/badge/macOS-14%2B-000000?logo=apple&logoColor=white)](#install)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
@@ -10,11 +14,13 @@
 
 English · [繁體中文](README.zh-Hant.md)
 
-<img src="docs/images/en/main.jpg" width="420" alt="Ripen main window counting down a focus session">
+[Installation](#install) · [Features](#features) · [Releases](https://github.com/latteine1217/ripen/releases) · [Report an issue](https://github.com/latteine1217/ripen/issues)
+
+<img src="docs/images/en/showcase.png" width="1000" alt="Ripen in three presentations: the main timer window, the notch island, and an always-on-top floating window">
 
 </div>
 
-Ripen is a native Swift app for the classic focus-and-break rhythm. It stays small, stays on screen without getting in the way, and when a focus session runs long it keeps counting instead of cutting you off.
+Keep your timer in view and your attention on your work. Ripen follows your focus-and-break rhythm, remembers where you put it, and keeps counting when you need a little longer. Your focus history stays on your Mac.
 
 > Ripen is in active development. The first release will be published on [GitHub Releases](https://github.com/latteine1217/ripen/releases).
 
@@ -57,16 +63,14 @@ The Statistics page shows today's focus count and minutes, plus a chart of the l
 
 ## Features
 
-- **Pomodoro cycle**: 25-minute focus, 5-minute short break, and a 15-minute long break after every 4 focuses. Every length (1–180 minutes) and the long-break interval (1–12) can be changed.
-- **Global shortcut**: start or pause from any app with <kbd>⌥</kbd><kbd>⌘</kbd><kbd>P</kbd>, or record your own.
-- **Keyboard control** in the main window: <kbd>⌘</kbd><kbd>S</kbd> to skip (or finish during overtime) and <kbd>⌘</kbd><kbd>R</kbd> to reset.
-- **Menu bar item** with the remaining time, which can be hidden in Settings.
-- **Reminder sound** chosen from the macOS system sounds, or turned off.
-- **Optional auto-start** of the next phase, **open at login**, and a 12- or 24-hour clock for end times.
-- **Adjustable glass**: change the tint opacity or turn off the background blur.
-- **Fresh start after a break**: after two hours idle, the long-break count resets.
-- **Private by design**: no account and no network access. Your focus history stays in `~/Library/Application Support/Ripen`.
-- Available in **English** and **Traditional Chinese**.
+| Feature | Details |
+| :--- | :--- |
+| Your rhythm | 25-minute focus, 5-minute short break, 15-minute long break after every 4 focuses. Adjust each length from 1–180 minutes and the long-break interval from 1–12. |
+| Quick control | <kbd>⌥</kbd><kbd>⌘</kbd><kbd>P</kbd> to start or pause from any app, or record your own shortcut. In the main window: <kbd>⌘</kbd><kbd>S</kbd> to skip or finish, <kbd>⌘</kbd><kbd>R</kbd> to reset. |
+| Make it yours | Adjustable glass opacity and blur, system reminder sounds or silence, optional auto-start and open at login, and 12- or 24-hour end times. |
+| Always at hand | Three floating-window layouts, a notch island, and an optional menu bar countdown. |
+| A fresh start | The long-break count resets after two hours idle. |
+| Local and private | No account or network access. Focus history stays in `~/Library/Application Support/Ripen`. English and Traditional Chinese included. |
 
 ## Install
 

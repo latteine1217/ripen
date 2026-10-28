@@ -1,8 +1,12 @@
 <div align="center">
 
+<img src="docs/images/brand/app-icon.png" width="128" height="128" alt="Ripen 應用程式圖標：珊瑚紅 r 與綠葉">
+
 # Ripen
 
-**磨砂玻璃風格的 macOS 番茄鐘，放在你需要的地方：視窗、懸浮窗，或螢幕瀏海。**
+**留一點空間，給專注。**
+
+原生 macOS 番茄鐘，以磨砂玻璃呈現，放在主視窗、懸浮窗，或你的螢幕瀏海。
 
 [![macOS 14+](https://img.shields.io/badge/macOS-14%2B-000000?logo=apple&logoColor=white)](#安裝)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
@@ -10,11 +14,13 @@
 
 [English](README.md) · 繁體中文
 
-<img src="docs/images/zh-Hant/main.jpg" width="420" alt="Ripen 主視窗正在倒數專注">
+[安裝方式](#安裝) · [完整功能](#功能) · [版本下載](https://github.com/latteine1217/ripen/releases) · [問題回報](https://github.com/latteine1217/ripen/issues)
+
+<img src="docs/images/zh-Hant/showcase.png" width="1000" alt="Ripen 的三種呈現：主視窗計時、瀏海島，以及永遠置頂的懸浮窗">
 
 </div>
 
-Ripen 是用 Swift 原生開發的番茄鐘，照著「專注、休息」的節奏走。它小巧、留在畫面上卻不擋路；專注超過時間時也不會硬把你打斷，而是繼續計時。
+讓計時留在視線裡，把注意力留給手上的事。Ripen 跟著專注與休息的節奏走，記住你放的位置；需要多一點時間時，就繼續計時。專注紀錄只留在你的 Mac 上。
 
 > Ripen 仍在開發中，第一個版本會發佈在 [GitHub Releases](https://github.com/latteine1217/ripen/releases)。
 
@@ -57,16 +63,14 @@ Ripen 是用 Swift 原生開發的番茄鐘，照著「專注、休息」的節�
 
 ## 功能
 
-- **番茄鐘循環**：專注 25 分、短休息 5 分，每 4 次專注後長休息 15 分。各段長度（1–180 分）與長休息間隔（1–12 次）都可以調整。
-- **全域快速鍵**：在任何 App 中按 <kbd>⌥</kbd><kbd>⌘</kbd><kbd>P</kbd> 開始或暫停，也可以錄製自己的組合。
-- **鍵盤操作**（主視窗）：<kbd>⌘</kbd><kbd>S</kbd> 跳過（超時中為完成）、<kbd>⌘</kbd><kbd>R</kbd> 重設。
-- **選單列項目**顯示剩餘時間，可在設定中隱藏。
-- **提示音**可從 macOS 系統音效挑選，也可以關掉。
-- 可選擇**自動開始下一段**、**登入時開啟**，結束時刻可用 12 或 24 小時制。
-- **可調整的玻璃**：調整底色不透明度，或關閉背景模糊。
-- **休息夠久就重新開始**：閒置兩小時後，長休息的計數歸零。
-- **重視隱私**：不需要帳號、不連網路。專注紀錄存在 `~/Library/Application Support/Ripen`。
-- 提供**英文**與**繁體中文**介面。
+| 功能 | 說明 |
+| :--- | :--- |
+| 你的節奏 | 專注 25 分、短休息 5 分，每 4 次專注後長休息 15 分。各段長度可設為 1–180 分，長休息間隔可設為 1–12 次。 |
+| 快速操作 | 在任何 App 中按 <kbd>⌥</kbd><kbd>⌘</kbd><kbd>P</kbd> 開始或暫停，也可錄製自己的組合。主視窗支援 <kbd>⌘</kbd><kbd>S</kbd> 跳過或完成、<kbd>⌘</kbd><kbd>R</kbd> 重設。 |
+| 自訂習慣 | 可調整玻璃不透明度與模糊、選擇系統提示音或靜音、自動開始下一段、登入時開啟，以及 12 或 24 小時制的結束時刻。 |
+| 隨時看得到 | 三種懸浮窗版面、瀏海島，以及可選擇顯示的選單列倒數。 |
+| 休息後重新開始 | 閒置兩小時後，長休息的計數歸零。 |
+| 本機與隱私 | 不需要帳號、不連網路。專注紀錄存在 `~/Library/Application Support/Ripen`，提供英文與繁體中文介面。 |
 
 ## 安裝
 

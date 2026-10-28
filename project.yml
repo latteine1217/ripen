@@ -22,6 +22,7 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.latteine.ripen
         PRODUCT_NAME: Ripen
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         GENERATE_INFOPLIST_FILE: YES
         INFOPLIST_KEY_CFBundleDisplayName: Ripen
         INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.productivity
