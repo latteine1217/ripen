@@ -25,7 +25,7 @@ protocol UserPresence: AnyObject {
 /// 提醒的提示音。
 @MainActor
 protocol ReminderSound: AnyObject {
-    func play()
+    func play(named name: String)
 }
 
 /// 在目前階段的結束時刻喚起 `AppModel`，讓主視窗不在畫面上時完成也能準時確立。
@@ -45,7 +45,7 @@ final class AlwaysPresent: UserPresence {
 }
 
 final class SilentReminderSound: ReminderSound {
-    func play() {}
+    func play(named name: String) {}
 }
 
 final class NoPhaseEndAlarm: PhaseEndAlarm {

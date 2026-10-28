@@ -143,7 +143,7 @@ final class AppModel {
     private func deliverPendingReminder() {
         guard let phase = pendingReminder, !presence.isAway else { return }
         pendingReminder = nil
-        if settings.completionSoundEnabled { reminderSound.play() }
+        if settings.completionSoundEnabled { reminderSound.play(named: settings.reminderSoundName) }
         lastReminder = PhaseReminder(id: (lastReminder?.id ?? 0) + 1, phase: phase)
     }
 

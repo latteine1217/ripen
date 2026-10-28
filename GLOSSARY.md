@@ -78,6 +78,10 @@ _Avoid_: 水滴, Blob
 選單列上的圖示與選單，可在設定中開關。
 _Avoid_: Status item, Tray icon
 
+**開始／暫停快速鍵 (Start/Pause Shortcut)**：
+在任何 App 中開始或暫停目前階段的全域按鍵，預設 ⌥⌘P，可在設定中更改。主視窗在前時另有 ⌘S 跳過（超時中為完成）、⌘R 重設。
+_Avoid_: 熱鍵, Hotkey
+
 ## 統計
 
 **完成的專注 (Completed Focus)**：

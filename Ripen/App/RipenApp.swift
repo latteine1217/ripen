@@ -44,6 +44,7 @@ struct RipenApp: App {
             MainWindowView(model: model)
                 .environment(presenter.tearOff)
                 .onWindowAttach { window in presenter.mainWindow.attach(window) }
+                .focusedSceneValue(\.timerModel, model)
                 #if DEBUG
                 .environment(\.glassStyle, glassTuning.style)
                 #endif
@@ -53,6 +54,7 @@ struct RipenApp: App {
         .commandsRemoved()
         .commands { MinimizeCommand(model: model, mainWindow: presenter.mainWindow) }
         .commands { MainWindowCommand(model: model, mainWindow: presenter.mainWindow) }
+        .commands { TimerCommands() }
         #if DEBUG
         .commands { GlassTuningCommands() }
         #endif

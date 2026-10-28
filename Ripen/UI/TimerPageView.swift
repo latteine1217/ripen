@@ -87,10 +87,10 @@ struct TimerPageView: View {
                     .labelStyle(.titleAndIcon)
                     .buttonStyle(.borderedProminent)
                     .keyboardShortcut(.defaultAction)
-                    .help(Text("Finish this phase and move to the next"))
+                    .help(Text("Finish this phase and move to the next (⌘S)"))
             } else {
                 Button("Reset", systemImage: "arrow.counterclockwise", action: model.reset)
-                    .help(Text("Reset the current phase"))
+                    .help(Text("Reset the current phase (⌘R)"))
                     .disabled(status == .idle)
 
                 primaryButton(for: status)
@@ -99,7 +99,7 @@ struct TimerPageView: View {
                     .keyboardShortcut(.space, modifiers: [])
 
                 Button("Skip", systemImage: "forward.end.fill", action: model.skip)
-                    .help(Text("Skip to the next phase"))
+                    .help(Text("Skip to the next phase (⌘S)"))
             }
         }
         .labelStyle(.iconOnly)
