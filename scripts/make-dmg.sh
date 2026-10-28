@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # 以 Release 設定建置 Ripen，並打包成未公證的 dist/Ripen-<version>.dmg。
 # 版本號唯一來源是 project.yml 的 MARKETING_VERSION；這裡從建置出的 Info.plist 讀回，不另存一份。
-# 只產生檔案，不上傳；上傳 GitHub Releases 由使用者手動執行。
+# 只產生檔案，不上傳；上傳 GitHub Releases 由使用者手動執行。需要 uv（自動取得固定版本的 dmgbuild）。
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -32,21 +32,16 @@ VERSION="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$APP/
 [[ -n "$VERSION" ]] || { echo "error: CFBundleShortVersionString is empty" >&2; exit 1; }
 
 echo "=== Package $APP_NAME-$VERSION.dmg ==="
-# 暫存資料夾放 .app 與指向 /Applications 的捷徑，讓使用者直接拖曳安裝
-STAGING="$BUILD_DIR/dmg-staging"
-rm -rf "$STAGING"
-mkdir -p "$STAGING" "$DIST_DIR"
-cp -R "$APP" "$STAGING/"
-ln -s /Applications "$STAGING/Applications"
-
+# dmgbuild 直接寫入視窗排版（背景、圖示位置、隱藏工具列），不必操作 Finder，每次打包結果相同。
+# 設定在 scripts/dmg-settings.py，背景由 scripts/generate-dmg-background.swift 產生。
+mkdir -p "$DIST_DIR"
 DMG="$DIST_DIR/$APP_NAME-$VERSION.dmg"
 rm -f "$DMG"
-# hdiutil 自 macOS 27 起 deprecated；diskutil image create 需要 macOS 14 以上的建置機。
-# 以資料夾為來源時產生 APFS 映像，macOS 10.13 以上都能打開，不影響 macOS 14 的使用者。
-diskutil image create from \
-  --format UDZO \
-  --volumeName "$APP_NAME $VERSION" \
-  "$STAGING" \
+uv run --quiet --with 'dmgbuild==1.6.7' dmgbuild \
+  -s "$ROOT/scripts/dmg-settings.py" \
+  -D app="$APP" \
+  -D scripts="$ROOT/scripts" \
+  "$APP_NAME $VERSION" \
   "$DMG" >/dev/null
 
 echo "Created $DMG"

@@ -23,7 +23,7 @@ xcodebuild test -project Ripen.xcodeproj -scheme Ripen -destination 'platform=ma
 ./scripts/make-dmg.sh
 ```
 
-腳本會以 Release 設定建置 universal（arm64 + x86_64）的 `Ripen.app`，產生 `dist/Ripen-<version>.dmg`，內含拖到 `Applications` 的捷徑。中間產物在 `build/release/`，`build/` 與 `dist/` 都不進 git。
+腳本會以 Release 設定建置 universal（arm64 + x86_64）的 `Ripen.app`，產生 `dist/Ripen-<version>.dmg`，內含拖到 `Applications` 的捷徑。安裝視窗的排版（600×400 背景、圖示位置、上方的安裝說明）由 `dmgbuild` 依 `scripts/dmg-settings.py` 直接寫入，不操作 Finder；腳本以 `uv` 取得固定版本的 dmgbuild。背景改動時執行 `swift scripts/generate-dmg-background.swift` 重建 `scripts/dmg/` 的 1x／2x 圖，圖示座標須與設定檔一致。上傳前重新掛載 dmg 核對版本與簽章，並比對 SHA-256，`dist/` 裡的檔案可能在安裝測試時被 Finder 改動。中間產物在 `build/release/`，`build/` 與 `dist/` 都不進 git。
 
 腳本不會上傳。發佈時手動建立 GitHub Release 並附上 dmg，例如：
 
