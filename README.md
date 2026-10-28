@@ -1,74 +1,97 @@
+<div align="center">
+
 # Ripen
 
+**A frosted-glass Pomodoro timer for macOS that lives where you need it: a window, a floating panel, or your notch.**
+
+[![macOS 14+](https://img.shields.io/badge/macOS-14%2B-000000?logo=apple&logoColor=white)](#install)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Ko-fi](https://img.shields.io/badge/Ko--fi-Support-FF5E5B?logo=ko-fi&logoColor=white)](https://ko-fi.com/latteine1217)
 
-Ripen 是用 Swift 原生開發的 macOS 番茄鐘 App，介面採用磨砂玻璃風格，可以縮小成置頂的懸浮窗，或收進螢幕瀏海成為類似動態島的瀏海島。
+English · [繁體中文](README.zh-Hant.md)
 
-狀態：開發中（v1 功能已齊，尚待調整玻璃質感與淺色外觀）。目前可以：
+<img src="docs/images/en/main.jpg" width="420" alt="Ripen main window counting down a focus session">
 
-- 跑完整的階段循環（專注 25 分、短休息 5 分、每 4 次專注後長休息 15 分），倒數到 0 後進入超時（`+mm:ss`），按「完成」才進入下一段。
-- 按黃色按鈕或拖出計時圓環，產生可調整小／中／大尺寸、置頂的懸浮窗。
-- 按紅色按鈕或把主視窗拖到瀏海，收進瀏海島；往下拉出水珠變回主視窗。
-- 在統計頁查看今天與最近 7 天的專注；從選單列項目或全域快速鍵（預設 ⌥⌘P）開始與暫停。
+</div>
 
-## 安裝
+Ripen is a native Swift app for the classic focus-and-break rhythm. It stays small, stays on screen without getting in the way, and when a focus session runs long it keeps counting instead of cutting you off.
 
-1. 從 [GitHub Releases](https://github.com/latteine1217/ripen/releases) 下載 `Ripen-<version>.dmg`（需要 macOS 14 以上）。
-2. 打開 dmg，把 `Ripen` 拖到 `Applications` 捷徑上。
-3. Ripen 只有 ad-hoc 簽章、未經 Apple 公證，第一次打開會被 Gatekeeper 擋下：
-   - macOS 14：在「應用程式」資料夾對 Ripen 按右鍵（或 Control 點按）選「打開」，再於對話框按「打開」。
-   - macOS 15 以上：右鍵「打開」已不能略過檢查。先雙擊 Ripen 讓系統擋下，再到「系統設定 > 隱私權與安全性」，在下方找到 Ripen 按「強制打開」並確認。
+> Ripen is in active development. The first release will be published on [GitHub Releases](https://github.com/latteine1217/ripen/releases).
 
-之後就能正常雙擊打開。
+## Highlights
 
-## 建置
+### Shrink it to a floating window
 
-需求：macOS 14 以上、Xcode（Swift 6）、[XcodeGen](https://github.com/yonaskolb/XcodeGen)。`Ripen.xcodeproj` 由 `project.yml` 產生，不進 git；新增或移動原始檔後要重新 generate。
+Click the yellow button, or drag the timer ring out of the main window, to get a small always-on-top panel. Drag any corner to switch between three layouts; Ripen remembers where you left it.
 
-```sh
-brew install xcodegen
-xcodegen generate
-xcodebuild build -project Ripen.xcodeproj -scheme Ripen -destination 'platform=macOS'
-xcodebuild test -project Ripen.xcodeproj -scheme Ripen -destination 'platform=macOS'
-```
+<p align="center">
+  <img src="docs/images/en/floating-small.jpg" width="300" alt="Small floating window">
+  <img src="docs/images/en/floating-medium.jpg" width="270" alt="Medium floating window">
+  <img src="docs/images/en/floating-large.jpg" width="250" alt="Large floating window">
+</p>
 
-只跑單一測試檔：在 `xcodebuild test` 後加上 `-only-testing:RipenTests/AppModelFocusTests`。
+### Tuck it into the notch
 
-畫面與過場不寫單元測試，改用 Debug 建置的逐格輸出檢查：`Ripen.app/Contents/MacOS/Ripen --render-frames <輸出資料夾> [名稱前綴]` 會把 `Ripen/UI/FrameDumpScenes.swift` 列出的場景輸出成 PNG 後結束。
+Click the red button, or drag the main window up into the notch, and Ripen becomes a black island around the camera: progress on the left, time on the right. Hover to see the full controls; pull it down to bring the main window back. On a Mac without a notch, the island sits at the top center of the screen.
 
-## 打包與發佈
+<p align="center">
+  <img src="docs/images/en/notch.jpg" width="640" alt="Collapsed notch island">
+  <img src="docs/images/en/notch-expanded.jpg" width="640" alt="Expanded notch island with controls">
+</p>
 
-版本號只在 `project.yml` 的 `MARKETING_VERSION`（顯示版本）與 `CURRENT_PROJECT_VERSION`（build 號）設定。改完後執行：
+### Overtime instead of interruption
 
-```sh
-./scripts/make-dmg.sh
-```
+When the countdown reaches zero, Ripen plays a sound and keeps counting as `+mm:ss` in a new color: teal for focus, orange for breaks. Press **Done** when you are ready, and the focus is recorded with its real length. Time you spend away from your Mac is not counted as overtime.
 
-腳本會以 Release 設定建置 universal（arm64 + x86_64）的 `Ripen.app`，產生 `dist/Ripen-<version>.dmg`，內含拖到 `Applications` 的捷徑。中間產物在 `build/release/`，`build/` 與 `dist/` 都不進 git。
+<p align="center">
+  <img src="docs/images/en/overtime.jpg" width="380" alt="Focus session in overtime showing +03:17 and a Done button">
+</p>
 
-腳本不會上傳。發佈時手動建立 GitHub Release 並附上 dmg，例如：
+### See your week
 
-```sh
-gh release create v0.1.0 dist/Ripen-0.1.0.dmg --title "Ripen 0.1.0" --notes "..."
-```
+The Statistics page shows today's focus count and minutes, plus a chart of the last seven days. Everything is stored locally on your Mac.
 
-## 專案結構
+<p align="center">
+  <img src="docs/images/en/stats.jpg" width="380" alt="Statistics page with today's totals and a seven-day chart">
+</p>
 
-- `Ripen/App/`：`@main` App 與 `AppModel`（唯一的可觀察狀態根）
-- `Ripen/Timer/`：計時引擎、階段循環與時鐘注入（`TimeSource`），純邏輯
-- `Ripen/UI/`：SwiftUI 畫面
-- `Ripen/Presentation/`：形態狀態機（畫面上有哪些介面），純邏輯
-- `Ripen/Geometry/`：瀏海與版面的幾何計算，純函式
-- `Ripen/Bridge/`：AppKit 橋接（主視窗、瀏海島 panel、App 生命週期、系統事件）
-- `Ripen/Resources/`：String Catalog（`Localizable.xcstrings`，英文與繁體中文）
-- `RipenTests/`：Swift Testing 測試；`Support/` 放假時鐘等測試替身
-- `scripts/`：打包腳本（`make-dmg.sh`）
+## Features
 
-## 文件
+- **Pomodoro cycle**: 25-minute focus, 5-minute short break, and a 15-minute long break after every 4 focuses. Every length (1–180 minutes) and the long-break interval (1–12) can be changed.
+- **Global shortcut**: start or pause from any app with <kbd>⌥</kbd><kbd>⌘</kbd><kbd>P</kbd>, or record your own.
+- **Keyboard control** in the main window: <kbd>⌘</kbd><kbd>S</kbd> to skip (or finish during overtime) and <kbd>⌘</kbd><kbd>R</kbd> to reset.
+- **Menu bar item** with the remaining time, which can be hidden in Settings.
+- **Reminder sound** chosen from the macOS system sounds, or turned off.
+- **Optional auto-start** of the next phase, **open at login**, and a 12- or 24-hour clock for end times.
+- **Adjustable glass**: change the tint opacity or turn off the background blur.
+- **Fresh start after a break**: after two hours idle, the long-break count resets.
+- **Private by design**: no account and no network access. Your focus history stays in `~/Library/Application Support/Ripen`.
+- Available in **English** and **Traditional Chinese**.
 
-- [GLOSSARY.md](GLOSSARY.md)：領域用詞
-- [docs/adr/](docs/adr/)：設計決策紀錄
+## Install
 
-## 授權
+1. Download `Ripen-<version>.dmg` from [GitHub Releases](https://github.com/latteine1217/ripen/releases). Ripen requires macOS 14 Sonoma or later.
+2. Open the dmg and drag **Ripen** onto the **Applications** shortcut.
+3. Ripen is ad-hoc signed and not notarized by Apple, so Gatekeeper blocks the first launch:
+   - **macOS 14**: in the Applications folder, right-click (or Control-click) Ripen, choose **Open**, then click **Open** in the dialog.
+   - **macOS 15 and later**: double-click Ripen so macOS blocks it, then open **System Settings › Privacy & Security**, find Ripen near the bottom, click **Open Anyway**, and confirm.
+
+After that, Ripen opens normally.
+
+## Roadmap
+
+- Light appearance that follows the system setting
+- Liquid Glass on macOS 26 and later
+- Shortcuts app support
+
+## Support
+
+If Ripen helps you focus, you can support its development on [Ko-fi](https://ko-fi.com/latteine1217). Bug reports and ideas are welcome in [Issues](https://github.com/latteine1217/ripen/issues).
+
+## Development
+
+Building, testing, packaging, and the project layout are covered in [docs/development.md](docs/development.md).
+
+## License
 
 [MIT](LICENSE)
