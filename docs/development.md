@@ -81,6 +81,14 @@ xcodebuild test -project Ripen.xcodeproj -scheme Ripen -destination 'platform=ma
 
 升級備份不是日常備份，也不保證降版相容。還原之前須先保留現行資料及升級後的新紀錄，不能直接覆蓋；目前不提供自動還原或部分壞資料復原介面。
 
+## 外觀
+
+設定的「外觀」提供黑、白、玻璃。黑與白是實色背景並固定深淺色；玻璃可跟隨系統或指定深淺色，保留既有透明度與模糊設定。未選擇時仍為深色玻璃。主視窗、統計、懸浮窗、設定與標題列一致；瀏海島與水珠保持純黑。規則見 [ADR-0008](adr/0008-app-appearance.md)。
+
+`AppAppearanceController` 統一 AppKit 外觀；共用背景依 `AppSettings.appearanceColorMode` 解析 SwiftUI 外觀。黑與白採石墨黑／暖瓷白的微弱漸層，`AppPalette` 統一數字、次要文字、軌道與按鈕，配色集中於 Asset Catalog；`TimerButtonStyle` 明確控制主按鈕文字。淺色玻璃參數在 `GlassStyle.light`，深色維持 `GlassStyle.standard`；Debug 玻璃調整面板目前調整深色參數。階段與超時配色在 Asset Catalog，深淺各有對應的低飽和配色。
+
+Debug App 加 `--render-frames <輸出資料夾> appearance-` 可輸出四種配色的計時、統計與三尺寸懸浮窗，以及石墨黑／暖瓷白三個階段的暫停與超時，共 32 張版面圖。模糊層不在 ImageRenderer 的擷取範圍，輸出時關閉模糊；設定 Form 亦無法以此驗收。這些圖只能核對配色與版面，不能代替實機材質與即時切換驗收。
+
 ## 文件
 
 - [GLOSSARY.md](../GLOSSARY.md)：領域用詞

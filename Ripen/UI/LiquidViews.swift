@@ -150,6 +150,8 @@ struct DropMorphView: View {
                 .opacity(1 - DropMorph.smoothstep(0, 0.3, t))
             ZStack {
                 Color.black
+                // 水珠仍是黑色；接近主視窗時才顯露淺色底，避免淺色快照透出黑底。
+                Rectangle().fill(AppPalette.surfaceGradient).opacity(m.contentOpacity)
                 if let snapshot {
                     Image(nsImage: snapshot).resizable().opacity(m.contentOpacity)
                 }

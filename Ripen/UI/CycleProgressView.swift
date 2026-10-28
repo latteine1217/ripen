@@ -4,6 +4,7 @@ import SwiftUI
 struct CycleProgressView: View {
     let completed: Int
     let interval: Int
+    @Environment(\.appPalette) private var palette
 
     /// 在設定裡把間隔調到比已完成次數還小時，最多顯示到滿格（下一次專注完成就會進長休息）。
     private var shownCompleted: Int { min(completed, interval) }
@@ -12,7 +13,7 @@ struct CycleProgressView: View {
         HStack(spacing: 8) {
             ForEach(0..<interval, id: \.self) { index in
                 Circle()
-                    .fill(index < shownCompleted ? AnyShapeStyle(.tint) : AnyShapeStyle(.quaternary))
+                    .fill(index < shownCompleted ? AnyShapeStyle(.tint) : AnyShapeStyle(palette.track))
                     .frame(width: 8, height: 8)
             }
         }

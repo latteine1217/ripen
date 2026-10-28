@@ -50,6 +50,19 @@ struct GlassStyle: Equatable {
     var contactShadowY: Double = 1
 
     static let standard = GlassStyle()
+
+    /// 淺色磨砂：白底與細暗邊維持桌面上的輪廓，文字另外使用系統語意色。
+    static let light: GlassStyle = {
+        var style = GlassStyle()
+        style.tintWhite = 1
+        style.wash = 0.18
+        style.highlightOpacity = 0.25
+        style.rimTopLeading = 0.9
+        style.rimMiddle = 0.45
+        style.rimBottomTrailing = 0.6
+        style.ambientShadowOpacity = 0.16
+        return style
+    }()
 }
 
 extension EnvironmentValues {

@@ -11,11 +11,12 @@ struct TimerRingView: View {
     var isOvertime = false
 
     private let lineWidth: CGFloat = 12
+    @Environment(\.appPalette) private var palette
 
     var body: some View {
         ZStack {
             Circle()
-                .stroke(.quaternary, lineWidth: lineWidth)
+                .stroke(palette.track, lineWidth: lineWidth)
             Circle()
                 .trim(from: 0, to: progress)
                 .stroke(.tint, style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
@@ -24,16 +25,16 @@ struct TimerRingView: View {
                 .transaction { $0.animation = nil }
             VStack(spacing: 4) {
                 Text(verbatim: timeText)
-                    .overtimeStyle(isOvertime)
+                    .foregroundStyle(isOvertime ? AnyShapeStyle(.tint)
+                                     : AnyShapeStyle(isPaused ? palette.secondary : palette.primary))
                     .font(.system(size: 48, weight: .semibold, design: .rounded))
                     .monospacedDigit()
-                    .opacity(isPaused ? 0.5 : 1)
                 Text(phaseTitle)
                     .font(.headline)
                     .foregroundStyle(.tint)
                 Text("Paused")
                     .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(palette.secondary)
                     // 保留位置，切換暫停時版面不跳動
                     .opacity(isPaused ? 1 : 0)
             }

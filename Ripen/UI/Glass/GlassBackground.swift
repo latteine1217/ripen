@@ -1,16 +1,28 @@
 import SwiftUI
 
 extension View {
-    /// 把霧面玻璃鋪在這個 view 後面，內容改用深色外觀（白字）。主視窗與懸浮窗共用。
+    /// 主視窗與懸浮窗共用的背景與外觀。
     ///
     /// 玻璃會延伸到 safe area 之外：主視窗開了全尺寸內容後，標題列也是玻璃。
     /// 外陰影畫在 `shape` 之外，呼叫端要留出空間（主視窗改用系統的視窗陰影）。
     func ripenGlass(in shape: some InsettableShape = Rectangle(), settings: AppSettings) -> some View {
-        background {
-            GlassBackground(shape: shape, settings: settings)
-                .ignoresSafeArea()
-        }
-        .environment(\.colorScheme, .dark)
+        modifier(AppearanceBackground(shape: shape, settings: settings))
+    }
+}
+
+private struct AppearanceBackground<S: InsettableShape>: ViewModifier {
+    let shape: S
+    let settings: AppSettings
+    @Environment(\.colorScheme) private var systemScheme
+
+    private var palette: AppPalette { settings.appearanceStyle == .glass ? .glass : .solid }
+
+    func body(content: Content) -> some View {
+        content
+            .foregroundStyle(palette.primary)
+            .background { GlassBackground(shape: shape, settings: settings).ignoresSafeArea() }
+            .environment(\.appPalette, palette)
+            .environment(\.colorScheme, settings.appearanceColorMode.resolved(against: systemScheme))
     }
 }
 
@@ -21,12 +33,28 @@ struct GlassBackground<S: InsettableShape>: View {
     let shape: S
     let settings: AppSettings
 
-    @Environment(\.glassStyle) private var style
+    @Environment(\.glassStyle) private var configuredStyle
+    @Environment(\.colorScheme) private var colorScheme
+
+    private var style: GlassStyle { colorScheme == .light ? .light : configuredStyle }
 
     var body: some View {
         ZStack {
             outerShadows
 
+            if settings.appearanceStyle == .glass {
+                glassLayers
+            } else {
+                shape.fill(AppPalette.surfaceGradient)
+                shape.strokeBorder(Color("SurfaceBorder"), lineWidth: 0.5)
+            }
+        }
+        .allowsHitTesting(false)
+        .accessibilityHidden(true)
+    }
+
+    private var glassLayers: some View {
+        ZStack {
             // 模糊層不跟著底色淡出：清楚與模糊的背景疊在一起會像重影
             if settings.glassBlurEnabled {
                 VisualEffectBackdrop().clipShape(shape)
@@ -73,9 +101,10 @@ struct GlassBackground<S: InsettableShape>: View {
                 ),
                 lineWidth: style.rimWidth
             )
+            if colorScheme == .light {
+                shape.strokeBorder(.black.opacity(0.12), lineWidth: 0.5)
+            }
         }
-        .allowsHitTesting(false)
-        .accessibilityHidden(true)
     }
 
     /// 沿邊緣往內暈開的光或暗部。整圈往下（或往上）偏移，所以只有上緣（或下緣）明顯。

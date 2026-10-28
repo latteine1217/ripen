@@ -14,7 +14,7 @@ struct FloatingMorphView: View {
     var body: some View {
         let m = morph
         // 快照隨框拉伸：兩張畫面各自只在接近自己大小的那一段看得到。放在底色的 overlay 裡，不撐大版面
-        Color(white: 0.16)
+        Rectangle().fill(AppPalette.surfaceGradient)
             .overlay {
                 ZStack {
                     picture(windowSnapshot).opacity(m.windowOpacity)

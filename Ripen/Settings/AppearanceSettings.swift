@@ -1,6 +1,44 @@
 import Foundation
+import SwiftUI
+
+/// 黑與白是實色外觀；只有玻璃另外選擇深淺色。
+enum AppearanceStyle: String, CaseIterable, SettingValue {
+    case black, white, glass
+}
+
+enum AppearanceColorMode: String, CaseIterable, SettingValue {
+    case system, light, dark
+
+    var colorScheme: ColorScheme? {
+        switch self {
+        case .system: nil
+        case .light: .light
+        case .dark: .dark
+        }
+    }
+
+    func resolved(against system: ColorScheme) -> ColorScheme { colorScheme ?? system }
+}
 
 extension AppSettings {
+    var appearanceStyle: AppearanceStyle {
+        get { self[.appearanceStyle] }
+        set { self[.appearanceStyle] = newValue }
+    }
+
+    var glassColorMode: AppearanceColorMode {
+        get { self[.glassColorMode] }
+        set { self[.glassColorMode] = newValue }
+    }
+
+    var appearanceColorMode: AppearanceColorMode {
+        switch appearanceStyle {
+        case .black: .dark
+        case .white: .light
+        case .glass: glassColorMode
+        }
+    }
+
     nonisolated static let glassTintOpacityRange = 0.0...1.0
 
     /// 霧面玻璃底色的不透明度：只調模糊層上方那層底色，模糊層本身不淡出，
@@ -15,6 +53,15 @@ extension AppSettings {
         get { self[.glassBlurEnabled] }
         set { self[.glassBlurEnabled] = newValue }
     }
+}
+
+private extension SettingKey where Value == AppearanceStyle {
+    static var appearanceStyle: Self { Self("appearanceStyle", default: .glass) }
+}
+
+private extension SettingKey where Value == AppearanceColorMode {
+    // 沿用既有深色玻璃；切換跟隨系統須由使用者主動選擇。
+    static var glassColorMode: Self { Self("glassColorMode", default: .dark) }
 }
 
 private extension SettingKey where Value == Double {

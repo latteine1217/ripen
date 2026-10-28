@@ -6,6 +6,7 @@ struct StatisticsPageView: View {
     let focusLog: FocusLog
 
     @Environment(\.calendar) private var calendar
+    @Environment(\.appPalette) private var palette
     @State private var hoveredDate: Date?
 
     var body: some View {
@@ -41,7 +42,7 @@ struct StatisticsPageView: View {
                 .monospacedDigit()
             Text(label)
                 .font(.subheadline)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(palette.secondary)
         }
         .accessibilityElement(children: .combine)
     }
@@ -73,6 +74,13 @@ struct StatisticsPageView: View {
         .chartXAxis {
             AxisMarks(values: .stride(by: .day, calendar: calendar)) {
                 AxisValueLabel(format: .dateTime.weekday(.abbreviated), centered: true)
+                    .foregroundStyle(palette.secondary)
+            }
+        }
+        .chartYAxis {
+            AxisMarks {
+                AxisGridLine().foregroundStyle(palette.track)
+                AxisValueLabel().foregroundStyle(palette.secondary)
             }
         }
         .chartYAxisLabel("Minutes")

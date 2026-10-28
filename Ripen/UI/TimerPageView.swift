@@ -5,6 +5,7 @@ struct TimerPageView: View {
     let model: AppModel
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.appPalette) private var palette
     /// 沒有提供時（例如逐格輸出）圓環不能拖出。
     @Environment(TearOffController.self) private var tearOff: TearOffController?
 
@@ -70,7 +71,7 @@ struct TimerPageView: View {
         return Text("Ends at \(text ?? "--:--")")
             .font(.callout)
             .monospacedDigit()
-            .foregroundStyle(.secondary)
+            .foregroundStyle(palette.secondary)
             .opacity(text == nil ? 0 : 1)
             .accessibilityHidden(text == nil)
     }
@@ -84,7 +85,7 @@ struct TimerPageView: View {
 
                 Button("Done", systemImage: "checkmark", action: model.finish)
                     .labelStyle(.titleAndIcon)
-                    .buttonStyle(.borderedProminent)
+                    .buttonStyle(TimerButtonStyle(prominent: true))
                     .keyboardShortcut(.defaultAction)
                     .help(Text("Finish this phase and move to the next (⌘S)"))
             } else {
@@ -94,7 +95,7 @@ struct TimerPageView: View {
 
                 primaryButton(for: status)
                     .labelStyle(.titleAndIcon)
-                    .buttonStyle(.borderedProminent)
+                    .buttonStyle(TimerButtonStyle(prominent: true))
                     .keyboardShortcut(.space, modifiers: [])
 
                 Button("Skip", systemImage: "forward.end.fill", action: model.skip)
@@ -102,6 +103,7 @@ struct TimerPageView: View {
             }
         }
         .labelStyle(.iconOnly)
+        .buttonStyle(TimerButtonStyle())
         .controlSize(.large)
     }
 
@@ -131,6 +133,7 @@ private struct TearOffRing: ViewModifier {
     let diameter: CGFloat
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.appPalette) private var palette
     @State private var isHovering = false
 
     /// 拖曳中（含分身彈回、落地）不浮起也不顯示提示。
@@ -141,7 +144,7 @@ private struct TearOffRing: ViewModifier {
             ring(content)
             Text("Drag the ring out of the window to make a floating window")
                 .font(.caption)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(palette.secondary)
                 .opacity(isLifted ? 1 : 0)
                 // 圓環已帶同一句 accessibilityHint，不重複朗讀
                 .accessibilityHidden(true)

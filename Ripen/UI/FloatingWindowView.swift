@@ -121,6 +121,7 @@ struct FloatingWindowGlass: View, Animatable {
 
 /// 同一組元件依版面擺放；三種尺寸只有位置、大小與不透明度不同。
 private struct FloatingWindowContent: View {
+    @Environment(\.appPalette) private var palette
     let model: AppModel
     let presentation: PresentationModel
     /// body 不讀它：時間相關的值不會發出觀察通知，`model` 與 `layout` 不變時 SwiftUI 會略過重算，
@@ -141,7 +142,7 @@ private struct FloatingWindowContent: View {
             timeText(status: status)
             EndCaption(model: model, status: status, isOvertime: model.isOvertime)
                 .font(.system(size: layout.end.fontSize, weight: .medium, design: .rounded))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(palette.secondary)
                 .fixedSize()
                 .opacity(layout.end.opacity)
             ProgressBar(progress: model.phaseProgress)
@@ -154,7 +155,7 @@ private struct FloatingWindowContent: View {
             )
             IslandIconButton("Close Floating Window", systemImage: "xmark", action: presentation.closeFloatingWindow)
         }
-        .foregroundStyle(.white)
+        .foregroundStyle(palette.primary)
         .environment(\.iconButtonMetrics, .floatingWindow)
     }
 
@@ -179,7 +180,7 @@ private struct FloatingWindowContent: View {
     private func ring(isPaused: Bool) -> some View {
         let line = layout.ringLineWidth
         return ZStack {
-            Circle().inset(by: line / 2).stroke(.tint.opacity(0.25), lineWidth: line)
+            Circle().inset(by: line / 2).stroke(palette.track, lineWidth: line)
             Circle().inset(by: line / 2)
                 .trim(from: 0, to: model.phaseProgress)
                 .stroke(.tint, style: StrokeStyle(lineWidth: line, lineCap: .round))
@@ -197,11 +198,11 @@ private struct FloatingWindowContent: View {
     /// 剩餘時間：三種尺寸共用這一個元件，只換字級與位置。
     private func timeText(status: TimerStatus) -> some View {
         Text(verbatim: model.timeText)
-            .overtimeStyle(model.isOvertime)
+            .foregroundStyle(model.isOvertime ? AnyShapeStyle(.tint)
+                             : AnyShapeStyle(status == .running ? palette.primary : palette.secondary))
             .font(.system(size: layout.time.fontSize, weight: .semibold, design: .rounded))
             .monospacedDigit()
             .fixedSize()
-            .opacity(status == .running ? 1 : 0.45)
     }
 
     @ViewBuilder

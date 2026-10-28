@@ -185,11 +185,12 @@ struct PhaseRing: View {
 
 /// 自繪 4pt 細條：系統 `ProgressView` 在黑底上偏粗，且 `ImageRenderer` 畫不出來（瀏海島原型）。
 struct ProgressBar: View {
+    @Environment(\.appPalette) private var palette
     let progress: Double
 
     var body: some View {
         Capsule()
-            .fill(.white.opacity(0.2))
+            .fill(palette.progressTrack)
             .overlay(alignment: .leading) {
                 GeometryReader { proxy in
                     Capsule().fill(.tint)
@@ -250,15 +251,16 @@ struct IslandIconButton: View {
 }
 
 private struct IslandIconButtonStyle: ButtonStyle {
+    @Environment(\.appPalette) private var palette
     let isHovering: Bool
     let metrics: IconButtonMetrics
 
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            // 瀏海島與懸浮窗都強制深色外觀，primary 即白色；照懸浮窗原型用 primary，日後有淺色版時跟著外觀變
-            .background(Circle().fill(Color.primary.opacity(
-                configuration.isPressed ? 0.3 : isHovering ? 0.22 : metrics.restingOpacity
-            )))
+            .background(Circle().fill(
+                configuration.isPressed ? palette.buttonPressed : isHovering ? palette.buttonHover
+                    : palette.button ?? Color.primary.opacity(metrics.restingOpacity)
+            ))
             .scaleEffect(configuration.isPressed ? metrics.pressedScale : 1)
             .animation(.easeOut(duration: 0.1), value: configuration.isPressed)
     }

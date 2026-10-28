@@ -66,7 +66,7 @@ The Statistics page shows today's focus count and minutes, plus a chart of the l
 | :--- | :--- |
 | Your rhythm | 25-minute focus, 5-minute short break, 15-minute long break after every 4 focuses. Adjust each length from 1–180 minutes and the long-break interval from 1–12. |
 | Quick control | <kbd>⌥</kbd><kbd>⌘</kbd><kbd>P</kbd> to start or pause from any app, or record your own shortcut. In the main window: <kbd>⌘</kbd><kbd>S</kbd> to skip or finish, <kbd>⌘</kbd><kbd>R</kbd> to reset. |
-| Make it yours | Adjustable glass opacity and blur, system reminder sounds or silence, optional auto-start and open at login, and 12- or 24-hour end times. |
+| Make it yours | Black, White, or Glass appearance; glass can follow the system or stay light or dark, with adjustable opacity and blur. System reminder sounds or silence, optional auto-start and open at login, and 12- or 24-hour end times. |
 | Always at hand | Three floating-window layouts, a notch island, and an optional menu bar countdown. |
 | A fresh start | The long-break count resets after two hours idle. |
 | Local and private | No account or network access. Focus history stays in `~/Library/Application Support/Ripen`. English and Traditional Chinese included. |
@@ -83,7 +83,6 @@ After that, Ripen opens normally.
 
 ## Roadmap
 
-- Light appearance that follows the system setting
 - Liquid Glass on macOS 26 and later
 - Shortcuts app support
 

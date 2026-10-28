@@ -9,6 +9,7 @@ struct RipenApp: App {
     /// 依形態顯示或隱藏主視窗與瀏海島（ADR-0003）。
     @State private var presenter: PresentationController
     @State private var hotkeys: GlobalHotkeyController
+    @State private var appearance: AppAppearanceController?
     @State private var loginItem = LoginItemController(service: MainAppLoginItem())
     #if DEBUG
     @State private var glassTuning = GlassTuning()
@@ -27,6 +28,7 @@ struct RipenApp: App {
         #endif
         let isolated = isTesting || validationDirectory != nil
         let settings = AppSettings(storage: isolated ? InMemorySettingsStorage() : UserDefaults.standard)
+        _appearance = State(initialValue: isTesting ? nil : AppAppearanceController(settings: settings))
         #if DEBUG
         if validationDirectory != nil {
             settings.focusMinutes = 1
