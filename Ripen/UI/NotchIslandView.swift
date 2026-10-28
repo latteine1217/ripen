@@ -78,6 +78,7 @@ struct NotchIslandView: View {
                     PhaseCaption(model: model)
                         .font(.system(size: 11, weight: .semibold, design: .rounded))
                         .foregroundStyle(.tint)
+                        .undoCapsuleOverlay(model, compact: true, alignment: .leading)
                 } else {
                     PhaseRing(progress: model.phaseProgress, isPaused: status == .paused)
                 }

@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// 主選單的「計時」選單：跳過（⌘S，超時中為完成）與重設（⌘R）。
+/// 主選單的「計時」選單：跳過（⌘S，超時中為完成）與重設（⌘R）；「編輯」選單的復原（⌘Z）。
 ///
 /// 只在主視窗是 key 時有效：模型經主視窗的 `focusedSceneValue` 提供，設定等其他視窗在前時
 /// 為 nil、項目停用，在那些視窗輸入時按 ⌘S／⌘R 不會誤跳過或重設。
@@ -19,6 +19,18 @@ struct TimerCommands: Commands {
             Button("Reset") { model?.reset() }
                 .keyboardShortcut("r")
                 .disabled(model == nil || isOvertime || model?.status == .idle)
+        }
+        // 主視窗沒有文字欄位，⌘Z 在那裡就是復原計時操作；其他視窗（設定）照常送給回應鏈復原文字
+        CommandGroup(replacing: .undoRedo) {
+            if let model, let offer = model.undoOffer {
+                Button(offer.action.undoTitle, action: model.undo)
+                    .keyboardShortcut("z")
+            } else {
+                Button("Undo") { NSApp.sendAction(Selector(("undo:")), to: nil, from: nil) }
+                    .keyboardShortcut("z")
+                Button("Redo") { NSApp.sendAction(Selector(("redo:")), to: nil, from: nil) }
+                    .keyboardShortcut("z", modifiers: [.command, .shift])
+            }
         }
     }
 }

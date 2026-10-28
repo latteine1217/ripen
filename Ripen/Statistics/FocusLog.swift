@@ -38,6 +38,8 @@ final class FocusLog {
     private static let logger = Logger(subsystem: "com.latteine.ripen", category: "FocusLog")
     private var saved: [StoredFocusRecord] = []
     private var pending: [StoredFocusRecord] = []
+    /// 還能復原的完成紀錄：計入統計，但復原期限過了才寫入（`commitStaged()`）。
+    private var staged: StoredFocusRecord?
     private var hasLoaded = false
     private(set) var issue: FocusLogIssue? {
         didSet { if issue != nil && issue != oldValue { onIssue?() } }
@@ -46,8 +48,9 @@ final class FocusLog {
     @ObservationIgnored var onIssue: (() -> Void)?
     @ObservationIgnored private let storage: (any FocusLogStorage)?
 
-    var records: [FocusRecord] { (saved + pending).map(\.record) }
-    var pendingCount: Int { pending.count }
+    var records: [FocusRecord] { (saved + pending).map(\.record) + (staged.map { [$0.record] } ?? []) }
+    /// 尚未寫入的紀錄，含還能復原的那一筆；退出前由 `AppModel` 先確立。
+    var pendingCount: Int { pending.count + (staged == nil ? 0 : 1) }
 
     init(storage: (any FocusLogStorage)? = nil) {
         self.storage = storage
@@ -59,6 +62,24 @@ final class FocusLog {
         guard storage != nil else { saved.append(entry); return }
         pending.append(entry)
         if hasLoaded { savePending() }
+    }
+
+    /// 暫存一筆還能復原的紀錄；之前暫存的先確立，同時只會有一筆。
+    func stage(_ record: FocusRecord) {
+        commitStaged()
+        staged = StoredFocusRecord(record: record)
+    }
+
+    /// 復原期限已過或有其他操作：暫存的紀錄照一般流程寫入。
+    func commitStaged() {
+        guard let entry = staged else { return }
+        staged = nil
+        append(entry.record)
+    }
+
+    /// 使用者復原了「完成」：暫存的紀錄從未寫入，直接捨棄。
+    func discardStaged() {
+        staged = nil
     }
 
     /// 先恢復歷史與辨認已提交的重試，再保存待處理紀錄，不能以空歷史覆蓋未知資料。

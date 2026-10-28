@@ -109,6 +109,11 @@ private struct MenuBarMenu: View {
         Button("Reset", action: model.reset)
             .keyboardShortcut("r")
             .disabled(model.isOvertime || model.status == .idle)
+        // 復原期限只有幾秒，選單打開時才看得到；選單開著時過期，點下也不會做任何事
+        if let offer = model.undoOffer {
+            Button(offer.action.undoTitle, action: model.undo)
+                .keyboardShortcut("z")
+        }
 
         Divider()
 

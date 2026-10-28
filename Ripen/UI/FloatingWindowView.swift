@@ -138,6 +138,8 @@ private struct FloatingWindowContent: View {
                 .font(.system(size: layout.caption.fontSize, weight: .semibold, design: .rounded))
                 .foregroundStyle(.tint)
                 .fixedSize()
+                .undoCapsuleOverlay(model, compact: true,
+                                    alignment: layout.caption.anchorX < 0.5 ? .leading : .center)
                 .opacity(layout.caption.opacity)
             timeText(status: status)
             EndCaption(model: model, status: status, isOvertime: model.isOvertime)

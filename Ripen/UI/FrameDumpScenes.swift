@@ -3,7 +3,7 @@ import SwiftUI
 
 extension FrameDump {
     /// `--render-frames` 輸出的所有場景；各 ticket 在這裡加自己的場景。
-    static var scenes: [Scene] { notchIslandScenes + pullOutScenes + collapseScenes + floatingWindowScenes + tearOffScenes + appearanceScenes }
+    static var scenes: [Scene] { notchIslandScenes + pullOutScenes + collapseScenes + floatingWindowScenes + tearOffScenes + appearanceScenes + undoScenes }
 
     /// 瀏海島的各個狀態，畫在本機實測的內建螢幕瀏海（179×32）上；灰底代表桌面。
     private static var notchIslandScenes: [Scene] {
