@@ -56,6 +56,8 @@ schemes:
       targets:
         - RipenTests
       gatherCoverageData: false
+      environmentVariables:
+        RIPEN_TESTING: "1"
       # 測試 host 遇到 Objective-C 例外立即終止，不讓 AppKit 吞掉後留下壞掉的 executor 狀態（見 TestHostTests）
       commandLineArguments:
         "-NSApplicationCrashOnExceptions YES": true

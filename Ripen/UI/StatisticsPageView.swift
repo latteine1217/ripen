@@ -11,20 +11,26 @@ struct StatisticsPageView: View {
     var body: some View {
         // 每分鐘重讀「現在」，跨過午夜時「今天」與 7 天的範圍跟著換
         TimelineView(.everyMinute) { context in
-            let statistics = FocusStatistics(records: focusLog.records, calendar: calendar)
-            let today = statistics.summary(on: context.date)
-            VStack(alignment: .leading, spacing: 24) {
-                HStack(spacing: 32) {
-                    figure(today.count, label: "Focuses Today")
-                    figure(today.minutes, label: "Minutes Today")
+            if focusLog.issue == .load {
+                Text("Focus history is unavailable. Retry loading to see your statistics.")
+                    .frame(width: 300, height: 240)
+                    .padding(32)
+            } else {
+                let statistics = FocusStatistics(records: focusLog.records, calendar: calendar)
+                let today = statistics.summary(on: context.date)
+                VStack(alignment: .leading, spacing: 24) {
+                    HStack(spacing: 32) {
+                        figure(today.count, label: "Focuses Today")
+                        figure(today.minutes, label: "Minutes Today")
+                    }
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Last 7 Days")
+                            .font(.headline)
+                        weekChart(statistics.lastSevenDays(endingOn: context.date))
+                    }
                 }
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Last 7 Days")
-                        .font(.headline)
-                    weekChart(statistics.lastSevenDays(endingOn: context.date))
-                }
+                .padding(32)
             }
-            .padding(32)
         }
     }
 

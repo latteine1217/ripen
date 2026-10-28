@@ -6,63 +6,93 @@ import os
 struct FocusRecord: Codable, Equatable, Sendable {
     let startedAt: Date
     let duration: TimeInterval
+
+    var isValid: Bool { startedAt.timeIntervalSinceReferenceDate.isFinite && duration.isFinite && duration >= 0 }
 }
 
-/// 完成的專注要存到哪裡。正式版是本機的 JSON 檔，測試注入記憶體內實作。
+/// 識別碼只供保存與重試使用；相同內容的兩次專注仍是兩筆不同紀錄。
+struct StoredFocusRecord: Equatable, Sendable {
+    let id: UUID
+    let record: FocusRecord
+
+    init(id: UUID = UUID(), record: FocusRecord) {
+        self.id = id
+        self.record = record
+    }
+}
+
 protocol FocusLogStorage {
-    func load() throws -> [FocusRecord]
-    func save(_ records: [FocusRecord]) throws
+    func load() throws -> [StoredFocusRecord]
+    func append(_ records: [StoredFocusRecord]) throws
 }
 
-/// 所有完成的專注，依完成順序排列；新增時立即寫入儲存。
+enum FocusLogIssue: Equatable {
+    case load
+    case save
+}
+
+/// 所有存取都經過同一入口；未確認保存的紀錄保持原識別碼，直到重試成功。
 @MainActor
 @Observable
 final class FocusLog {
     private static let logger = Logger(subsystem: "com.latteine.ripen", category: "FocusLog")
-
-    private(set) var records: [FocusRecord]
-    /// 為 nil 時只留在記憶體：未注入儲存，或讀取失敗（寫回會蓋掉讀不到的既有紀錄）。
+    private var saved: [StoredFocusRecord] = []
+    private var pending: [StoredFocusRecord] = []
+    private var hasLoaded = false
+    private(set) var issue: FocusLogIssue? {
+        didSet { if issue != nil && issue != oldValue { onIssue?() } }
+    }
+    /// 由 App 接上顯示主視窗，讓只有懸浮窗或瀏海島時也能看見錯誤。
+    @ObservationIgnored var onIssue: (() -> Void)?
     @ObservationIgnored private let storage: (any FocusLogStorage)?
 
+    var records: [FocusRecord] { (saved + pending).map(\.record) }
+    var pendingCount: Int { pending.count }
+
     init(storage: (any FocusLogStorage)? = nil) {
-        do {
-            records = try storage?.load() ?? []
-            self.storage = storage
-        } catch {
-            Self.logger.error("讀取專注紀錄失敗，本次執行不寫回：\(error)")
-            records = []
-            self.storage = nil
-        }
+        self.storage = storage
+        retry()
     }
 
     func append(_ record: FocusRecord) {
-        records.append(record)
+        let entry = StoredFocusRecord(record: record)
+        guard storage != nil else { saved.append(entry); return }
+        pending.append(entry)
+        if hasLoaded { savePending() }
+    }
+
+    /// 先恢復歷史與辨認已提交的重試，再保存待處理紀錄，不能以空歷史覆蓋未知資料。
+    func retry() {
+        guard let storage else { hasLoaded = true; return }
         do {
-            try storage?.save(records)
+            let loaded = try storage.load()
+            let byID = Dictionary(uniqueKeysWithValues: loaded.map { ($0.id, $0.record) })
+            for entry in pending {
+                if let record = byID[entry.id], record != entry.record { throw FocusStorageError.invalidData }
+            }
+            saved = loaded
+            pending.removeAll { byID[$0.id] != nil }
+            hasLoaded = true
+            issue = nil
         } catch {
-            Self.logger.error("寫入專注紀錄失敗：\(error)")
+            hasLoaded = false
+            issue = .load
+            Self.logger.error("讀取／遷移專注紀錄失敗，保留待保存紀錄：\(error)")
+            return
         }
-    }
-}
-
-/// 整份紀錄存成一個 JSON 檔；一天幾十筆的量，每次整檔重寫最單純可靠。
-struct JSONFileFocusLogStorage: FocusLogStorage {
-    let fileURL: URL
-
-    /// ~/Library/Application Support/Ripen/focus-log.json（無 sandbox）
-    static let standard = JSONFileFocusLogStorage(
-        fileURL: URL.applicationSupportDirectory.appending(path: "Ripen/focus-log.json")
-    )
-
-    func load() throws -> [FocusRecord] {
-        guard FileManager.default.fileExists(atPath: fileURL.path(percentEncoded: false)) else { return [] }
-        return try JSONDecoder().decode([FocusRecord].self, from: Data(contentsOf: fileURL))
+        savePending()
     }
 
-    func save(_ records: [FocusRecord]) throws {
-        try FileManager.default.createDirectory(
-            at: fileURL.deletingLastPathComponent(), withIntermediateDirectories: true
-        )
-        try JSONEncoder().encode(records).write(to: fileURL, options: .atomic)
+    private func savePending() {
+        guard let storage, !pending.isEmpty else { return }
+        do {
+            try storage.append(pending)
+            saved.append(contentsOf: pending)
+            pending.removeAll()
+            issue = nil
+        } catch {
+            issue = .save
+            Self.logger.error("寫入專注紀錄失敗，保留原識別碼供重試：\(error)")
+        }
     }
 }

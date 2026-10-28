@@ -1,6 +1,150 @@
 {
   "sourceLanguage": "en",
   "strings": {
+    "Focus history could not be loaded.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Focus history could not be loaded."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "無法載入專注紀錄。"
+          }
+        }
+      }
+    },
+    "Some focuses have not been saved.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Some focuses have not been saved."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "部分專注紀錄尚未儲存。"
+          }
+        }
+      }
+    },
+    "Your existing data is kept. You can keep using the timer and retry saving.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your existing data is kept. You can keep using the timer and retry saving."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "既有資料已保留。你可以繼續計時，並重試儲存。"
+          }
+        }
+      }
+    },
+    "Unsaved focuses: %lld": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unsaved focuses: %lld"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "尚未儲存的專注：%lld"
+          }
+        }
+      }
+    },
+    "Retry": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Retry"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "重試"
+          }
+        }
+      }
+    },
+    "Focus history is unavailable. Retry loading to see your statistics.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Focus history is unavailable. Retry loading to see your statistics."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "目前無法讀取專注紀錄。請重試載入以查看統計。"
+          }
+        }
+      }
+    },
+    "Quitting now will discard unsaved focuses. Keep Ripen open to retry, or quit without saving.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quitting now will discard unsaved focuses. Keep Ripen open to retry, or quit without saving."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "現在退出會失去尚未儲存的專注紀錄。請保持 Ripen 開啟並重試，或選擇不儲存就退出。"
+          }
+        }
+      }
+    },
+    "Keep Ripen Open": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Keep Ripen Open"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "保持 Ripen 開啟"
+          }
+        }
+      }
+    },
+    "Quit Without Saving": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quit Without Saving"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "不儲存並退出"
+          }
+        }
+      }
+    },
     "%@, %@": {
       "localizations": {
         "en": {

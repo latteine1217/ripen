@@ -18,9 +18,25 @@ struct RipenApp: App {
         #if DEBUG
         FrameDump.runIfRequested()
         #endif
+        // 測試 host 也會執行 App.init；必須在開啟儲存前隔離，避免測試遷移真正的使用者資料。
+        let isTesting = ProcessInfo.processInfo.environment["RIPEN_TESTING"] == "1"
+        #if DEBUG
+        let validationDirectory = ProcessInfo.processInfo.environment["RIPEN_DATA_DIRECTORY"].map { URL(fileURLWithPath: $0) }
+        #else
+        let validationDirectory: URL? = nil
+        #endif
+        let isolated = isTesting || validationDirectory != nil
+        let settings = AppSettings(storage: isolated ? InMemorySettingsStorage() : UserDefaults.standard)
+        #if DEBUG
+        if validationDirectory != nil {
+            settings.focusMinutes = 1
+            settings.completionSoundEnabled = false
+        }
+        #endif
+        let storage = validationDirectory.map { SQLiteFocusLogStorage(directory: $0) } ?? .standard
         let model = AppModel(
-            settings: AppSettings(storage: UserDefaults.standard),
-            focusLog: FocusLog(storage: JSONFileFocusLogStorage.standard),
+            settings: settings,
+            focusLog: isTesting ? FocusLog() : FocusLog(storage: storage),
             presence: SystemUserPresence(),
             reminderSound: SystemReminderSound(),
             alarm: TimerPhaseEndAlarm()
@@ -29,17 +45,23 @@ struct RipenApp: App {
             model.toggleStartPause()
         }
         // 啟動就註冊，主視窗沒開也能用熱鍵
-        hotkeys.activate()
+        if !isolated { hotkeys.activate() }
         let presentation = PresentationModel()
         let presenter = PresentationController(model: model, presentation: presentation)
         _model = State(initialValue: model)
         _presentation = State(initialValue: presentation)
         _presenter = State(initialValue: presenter)
         _hotkeys = State(initialValue: hotkeys)
+        model.focusLog.onIssue = { [weak presenter] in
+            presenter?.showMainWindow()
+        }
         // 在 init 接上：主視窗上次退出時是隱藏的就不會建立，接在 onWindowAttach 會漏掉
-        lifecycle.onTerminate = { model.prepareToQuit() }
+        lifecycle.onShouldTerminate = { FocusStorageQuitConfirmation.confirm(model: model) }
         lifecycle.onReopen = presenter.handleReopen
-        lifecycle.onLaunch = presenter.ensureInterfaceVisible
+        lifecycle.onLaunch = {
+            presenter.ensureInterfaceVisible()
+            if model.focusLog.issue != nil { presenter.showMainWindow() }
+        }
     }
 
     var body: some Scene {

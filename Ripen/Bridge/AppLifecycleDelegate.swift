@@ -7,8 +7,8 @@ final class AppLifecycleDelegate: NSObject, NSApplicationDelegate {
     var onReopen: (() -> Bool)?
     /// 啟動完成時呼叫；用來補建上次退出時隱藏、SwiftUI 不還原的主視窗（ADR-0001）。
     var onLaunch: (() -> Void)?
-    /// App 結束前（⌘Q、登出）同步呼叫；回傳後行程就會結束，裡面的工作必須同步完成。
-    var onTerminate: (() -> Void)?
+    /// 在仍可取消退出時保存並確認，不能等到 applicationWillTerminate 才詢問。
+    var onShouldTerminate: (() -> Bool)?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         onLaunch?()
@@ -20,7 +20,7 @@ final class AppLifecycleDelegate: NSObject, NSApplicationDelegate {
         onReopen?() ?? true
     }
 
-    func applicationWillTerminate(_ notification: Notification) {
-        onTerminate?()
+    func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
+        onShouldTerminate?() == false ? .terminateCancel : .terminateNow
     }
 }

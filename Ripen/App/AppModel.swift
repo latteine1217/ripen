@@ -282,10 +282,19 @@ final class AppModel {
 
     /// App 結束（⌘Q）前呼叫：超時中的專注已是完成的專注，以此刻的實際長度記錄（ADR-0006）。
     ///
-    /// 階段狀態不保存（ADR-0002），所以只記錄、不前進；寫檔是同步的，回傳時已存好。
-    func prepareToQuit() {
+    /// 取消退出時已完成的專注不重複記錄，停在下一段起點，不自動開始。
+    /// 回傳 false 表示仍有未保存紀錄，呼叫端必須先詢問是否放棄。
+    @discardableResult
+    func prepareToQuit() -> Bool {
+        if focusLog.issue != nil { focusLog.retry() }
         refresh()
-        if let completion = completion(at: clock.now()) { recordIfFocus(completion) }
+        if let completion = completion(at: clock.now()) {
+            recordIfFocus(completion)
+            cycle.advance(completed: true, longBreakInterval: configuration.longBreakInterval)
+            loadCurrentPhase()
+            updateIdleSince()
+        }
+        return focusLog.pendingCount == 0
     }
 
     /// 開始跑或在超時中就不是閒置，離開時自動暫停的超時除外；停下來的那一刻開始閒置。已在閒置中的操作不重新計時。

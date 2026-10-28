@@ -17,6 +17,7 @@ struct MainWindowView: View {
 
     var body: some View {
         VStack(spacing: 0) {
+            FocusStorageNotice(log: model.focusLog)
             Picker("Page", selection: $page) {
                 Text("Timer").tag(Page.timer)
                 Text("Statistics").tag(Page.statistics)
