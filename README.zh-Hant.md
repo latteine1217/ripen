@@ -21,7 +21,7 @@
 
 讓計時留在視線裡，把注意力留給手上的事。Ripen 跟著專注與休息的節奏走，記住你放的位置；需要多一點時間時，就繼續計時。專注紀錄只留在你的 Mac 上。
 
-> Ripen 仍在開發中，第一個版本會發佈在 [GitHub Releases](https://github.com/latteine1217/ripen/releases)。
+> 最新版本請到 [GitHub Releases](https://github.com/latteine1217/ripen/releases/latest) 下載。安裝後可從 Ripen 選單的「檢查更新…」安裝之後的新版本。
 
 ## 特色
 

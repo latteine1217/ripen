@@ -21,7 +21,7 @@ English · [繁體中文](README.zh-Hant.md)
 
 Keep your timer in view and your attention on your work. Ripen follows your focus-and-break rhythm, remembers where you put it, and keeps counting when you need a little longer. Your focus history stays on your Mac.
 
-> Ripen is in active development. The first release will be published on [GitHub Releases](https://github.com/latteine1217/ripen/releases).
+> Download the latest version from [GitHub Releases](https://github.com/latteine1217/ripen/releases/latest). Once installed, **Check for Updates…** in the Ripen menu installs newer versions for you.
 
 ## Highlights
 

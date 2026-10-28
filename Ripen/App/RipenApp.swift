@@ -85,6 +85,12 @@ struct RipenApp: App {
         .commands { MainWindowCommand(presenter: presenter) }
         .commands { TimerCommands() }
         .commands { UpdateCommands(updater: updater) }
+        // App 選單原本沒有「關於 Ripen」；補上標準的關於面板（圖示、名稱、版本）
+        .commands {
+            CommandGroup(replacing: .appInfo) {
+                Button("About Ripen") { NSApp.orderFrontStandardAboutPanel(nil) }
+            }
+        }
         #if DEBUG
         .commands { GlassTuningCommands() }
         #endif

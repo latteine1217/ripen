@@ -2063,6 +2063,22 @@
           }
         }
       }
+    },
+    "About Ripen": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "About Ripen"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "關於 Ripen"
+          }
+        }
+      }
     }
   },
   "version": "1.0"
