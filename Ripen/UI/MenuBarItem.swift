@@ -33,7 +33,8 @@ struct MenuBarItem: Scene {
 struct MenuBarLabel: View {
     let model: AppModel
 
-    private static let ticks = Timer.publish(every: 0.25, on: .main, in: .common).autoconnect()
+    /// 與主視窗、懸浮窗、瀏海島同一組刷新時刻，選單列的秒數和它們同時跳。
+    private static let ticks = CountdownTickSchedule.timerPublisher()
     /// 上次畫出的剩餘時間。剩餘時間由時鐘推導、不會發出變更通知，要靠寫入這裡讓標籤重讀；
     /// 只在文字真的變了才寫入：標籤每次失效都會連帶重建整個主選單，每 0.25 秒一次會吃掉大量 CPU。
     @State private var shownText: String?
