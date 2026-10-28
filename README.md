@@ -10,7 +10,6 @@ A native macOS Pomodoro timer with frosted glass, floating windows, and a home i
 
 [![macOS 14+](https://img.shields.io/badge/macOS-14%2B-000000?logo=apple&logoColor=white)](#install)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Ko-fi](https://img.shields.io/badge/Ko--fi-Support-FF5E5B?logo=ko-fi&logoColor=white)](https://ko-fi.com/latteine1217)
 
 English · [繁體中文](README.zh-Hant.md)
 
@@ -90,7 +89,11 @@ After that, Ripen opens normally.
 
 ## Support
 
-If Ripen helps you focus, you can support its development on [Ko-fi](https://ko-fi.com/latteine1217). Bug reports and ideas are welcome in [Issues](https://github.com/latteine1217/ripen/issues).
+If Ripen helps you focus, you can support its development on Ko-fi.
+
+<a href="https://ko-fi.com/latteine1217"><img src="https://storage.ko-fi.com/cdn/kofi5.png?v=6" height="48" alt="Support Ripen on Ko-fi"></a>
+
+Bug reports and ideas are welcome in [Issues](https://github.com/latteine1217/ripen/issues).
 
 ## Development
 

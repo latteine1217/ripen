@@ -10,7 +10,6 @@
 
 [![macOS 14+](https://img.shields.io/badge/macOS-14%2B-000000?logo=apple&logoColor=white)](#安裝)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Ko-fi](https://img.shields.io/badge/Ko--fi-Support-FF5E5B?logo=ko-fi&logoColor=white)](https://ko-fi.com/latteine1217)
 
 [English](README.md) · 繁體中文
 
@@ -90,7 +89,11 @@
 
 ## 支持
 
-如果 Ripen 幫助你專注，歡迎到 [Ko-fi](https://ko-fi.com/latteine1217) 支持開發。問題回報與建議請到 [Issues](https://github.com/latteine1217/ripen/issues)。
+如果 Ripen 幫助你專注，歡迎透過 Ko-fi 支持開發。
+
+<a href="https://ko-fi.com/latteine1217"><img src="https://storage.ko-fi.com/cdn/kofi5.png?v=6" height="48" alt="在 Ko-fi 支持 Ripen"></a>
+
+問題回報與建議請到 [Issues](https://github.com/latteine1217/ripen/issues)。
 
 ## 開發
 
