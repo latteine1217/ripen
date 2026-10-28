@@ -45,7 +45,6 @@ struct TimerPageView: View {
             // 倒數到 0 只是推導出的狀態；每次刷新時送出提醒，畫面隨即進入超時
             .onChange(of: context.date) { model.refresh() }
         }
-        .onSystemWake { model.refresh() }
     }
 
     /// 只在倒數中顯示；暫停或停在起點時沒有結束時刻，保留位置讓版面不跳動。
