@@ -46,8 +46,19 @@ struct PullGeometry: Equatable, Sendable {
         isReleased = pull >= threshold
     }
 
-    /// 拉出後主視窗的位置：水平置中於瀏海、上緣在選單列下方 40pt（瀏海島原型），
-    /// 放不下時貼齊可用區域的下緣。全域座標（左下原點）。
+    /// 拖曳拉出後主視窗的位置：上緣中點對齊放開時的游標，再夾回 `visibleFrame`（不壓選單列與 Dock）。
+    /// 全域座標（左下原點）。
+    ///
+    /// 對齊上緣而非中心：水珠上緣就在游標附近，`DropMorph` 讓上緣與尺寸同步插值，
+    /// 視窗從水珠的位置往下攤開，長大過程連續。比可用區域還高時保留上緣，標題列拉得到。
+    static func windowFrame(size: CGSize, cursor: CGPoint, visibleFrame: CGRect) -> CGRect {
+        let x = max(min(cursor.x - size.width / 2, visibleFrame.maxX - size.width), visibleFrame.minX)
+        let y = min(max(cursor.y - size.height, visibleFrame.minY), visibleFrame.maxY - size.height)
+        return CGRect(x: x, y: y, width: size.width, height: size.height)
+    }
+
+    /// 非拖曳的叫回（「展開」、Dock、選單列）後主視窗的位置：水平置中於瀏海、上緣在選單列下方 40pt
+    /// （瀏海島原型），放不下時貼齊可用區域的下緣。全域座標（左下原點）。
     static func windowFrame(size: CGSize, notch: NotchFrame, visibleFrame: CGRect) -> CGRect {
         let top = visibleFrame.maxY - 40
         return CGRect(
