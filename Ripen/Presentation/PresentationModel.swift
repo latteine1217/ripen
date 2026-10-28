@@ -13,6 +13,9 @@ final class PresentationModel {
     /// 畫面上有哪些介面。
     var presentation: Presentation { change.presentation }
 
+    /// 目前形態下做得到這個操作（轉換表中有這一格）；拖曳手勢在放開前用它決定要不要提示或觸發。
+    func allows(_ action: PresentationAction) -> Bool { presentation.applying(action) != nil }
+
     /// 主視窗的紅色按鈕（ADR-0001）。
     func closeMainWindow() { apply(.closeMainWindow) }
 

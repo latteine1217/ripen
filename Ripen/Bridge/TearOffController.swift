@@ -87,7 +87,7 @@ final class TearOffController {
 
     private func begin(offsetFromRingCenter offset: CGSize, ringRadius: CGFloat) {
         guard !isActive, let window = mainWindow.window, window.isVisible,
-              presentation.presentation.applying(.tearOffTimerRing) != nil else { return }
+              presentation.allows(.tearOffTimerRing) else { return }
         let mouse = NSEvent.mouseLocation
         // 全域座標 y 向上，SwiftUI 的位移 y 向下
         let center = CGPoint(x: mouse.x - offset.width, y: mouse.y + offset.height)
@@ -160,7 +160,7 @@ final class TearOffController {
         keyMonitor = nil
         // 回到圓環上時 hover 會再換成手掌
         NSCursor.arrow.set()
-        guard !cancelled, drag.isPastThreshold, presentation.presentation.applying(.tearOffTimerRing) != nil else {
+        guard !cancelled, drag.isPastThreshold, presentation.allows(.tearOffTimerRing) else {
             snapBack()
             return
         }

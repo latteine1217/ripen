@@ -46,7 +46,7 @@ final class MainWindowDragTracker {
     private func windowWillMove(_ window: NSWindow?) {
         // willMove 也會在程式設定 frame 時送出；只在按住滑鼠時才算使用者拖曳
         guard let window, window === mainWindow.window, timer == nil, NSEvent.pressedMouseButtons & 1 != 0,
-              presentation.presentation.applying(.collapseIntoNotch) != nil else { return }
+              presentation.allows(.collapseIntoNotch) else { return }
         releaseScreen = nil
         let timer = Timer(timeInterval: Self.pollInterval, repeats: true) { [weak self] _ in
             MainActor.assumeIsolated { self?.tick() }
@@ -69,7 +69,7 @@ final class MainWindowDragTracker {
         timer?.invalidate()
         timer = nil
         hideHint()
-        guard let target, presentation.presentation.applying(.collapseIntoNotch) != nil else { return }
+        guard let target, presentation.allows(.collapseIntoNotch) else { return }
         releaseScreen = screens[target]
         presentation.collapseIntoNotch()
     }

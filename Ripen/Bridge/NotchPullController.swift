@@ -73,7 +73,7 @@ final class NotchPullController {
         guard NSEvent.pressedMouseButtons & 1 == 0 else { return }
         stopTracking()
         guard drag.isDragging else { return }
-        if drag.isReleased, presentation.presentation.applying(.expandNotchIsland) != nil {
+        if drag.isReleased, presentation.allows(.expandNotchIsland) {
             // 液體留在畫面上，由 pullOut 接著長成主視窗；主視窗擺在放開處（使用者 2026-10-28 決定）
             releasePoint = NSEvent.mouseLocation
             presentation.expandNotchIsland()

@@ -8,7 +8,7 @@ import os
 @MainActor
 final class PresentationController {
     let mainWindow = MainWindowBridge()
-    private let presentation: PresentationModel
+    private let presentationModel: PresentationModel
     private let island: NotchIslandController
     private let floating: FloatingWindowController
     /// 拖曳主視窗到瀏海附近放開就收進瀏海（#13）。
@@ -21,7 +21,7 @@ final class PresentationController {
 
     /// - Parameter model: 計時；只轉交給各介面顯示時間與階段色，形態不依賴它。
     init(model: AppModel, presentation: PresentationModel) {
-        self.presentation = presentation
+        self.presentationModel = presentation
         island = NotchIslandController(model: model, presentation: presentation)
         floating = FloatingWindowController(model: model, presentation: presentation)
         dragTracker = MainWindowDragTracker(model: model, presentation: presentation, mainWindow: mainWindow)
@@ -34,7 +34,7 @@ final class PresentationController {
     /// 點 Dock 圖示：經形態狀態機叫回主視窗。一律不交給系統：主視窗還沒建立時，
     /// SwiftUI 的預設處理會自己開出視窗、繞過形態。
     func handleReopen() -> Bool {
-        logger.debug("Dock reopen in \(String(describing: self.presentation.presentation), privacy: .public)")
+        logger.debug("Dock reopen in \(String(describing: self.presentationModel.presentation), privacy: .public)")
         showMainWindow()
         return false
     }
@@ -42,17 +42,17 @@ final class PresentationController {
     /// 點 Dock 圖示、選單列與「視窗」選單的「顯示主視窗」：主視窗不在畫面上時經形態狀態機叫回；
     /// 已在畫面上時狀態機不動作，直接帶到最前面。視窗還沒建立時由 `MainWindowBridge` 補建。
     func showMainWindow() {
-        if presentation.presentation.showsMainWindow {
+        if presentationModel.presentation.showsMainWindow {
             mainWindow.show()
         } else {
-            presentation.showMainWindow()
+            presentationModel.showMainWindow()
         }
     }
 
     /// 啟動時保證至少一個介面可見（ADR-0001）：上次退出時主視窗是隱藏的，SwiftUI 不會還原它，
     /// 形態卻從「只有主視窗」開始。SwiftUI 正要自己建立時再要求一次也無妨（單一實例的 `Window`）。
     func ensureInterfaceVisible() {
-        guard presentation.presentation.showsMainWindow, mainWindow.window == nil else { return }
+        guard presentationModel.presentation.showsMainWindow, mainWindow.window == nil else { return }
         applyOnceMainWindowExists()
     }
 
@@ -66,7 +66,7 @@ final class PresentationController {
     private func observe() {
         withObservationTracking {
             // 再拖出一次時形態不變，序號仍會變（#16）
-            _ = presentation.change
+            _ = presentationModel.change
         } onChange: { [weak self] in
             // onChange 在值改變之前呼叫；下一輪再讀新值並重新訂閱
             Task { @MainActor in
@@ -78,7 +78,7 @@ final class PresentationController {
 
     /// 讀出畫面實況、選過場（`PresentationTransition.choose`）、照選到的過場執行。
     private func apply() {
-        let change = presentation.change
+        let change = presentationModel.change
         let next = change.presentation
         let transition = PresentationTransition.choose(from: applied, to: next, action: change.action, facts: facts())
         logger.debug("apply \(String(describing: next), privacy: .public): \(String(describing: transition), privacy: .public)")
