@@ -16,8 +16,10 @@ struct PhaseReminder: Equatable, Sendable {
 @MainActor
 protocol UserPresence: AnyObject {
     var isAway: Bool { get }
-    /// 由在場轉為離開時呼叫一次。
-    var onLeave: (@MainActor () -> Void)? { get set }
+    /// 由在場轉為離開時呼叫一次，帶入使用者實際離開距今多久（不小於 0）。
+    ///
+    /// 螢幕睡眠與螢幕保護程式在閒置逾時後才觸發，使用者早在最後一次輸入時就離開了。
+    var onLeave: (@MainActor (_ leftAgo: TimeInterval) -> Void)? { get set }
     /// 由離開轉為在場時呼叫一次。
     var onReturn: (@MainActor () -> Void)? { get set }
 }
@@ -40,7 +42,7 @@ protocol PhaseEndAlarm: AnyObject {
 
 final class AlwaysPresent: UserPresence {
     var isAway: Bool { false }
-    var onLeave: (@MainActor () -> Void)?
+    var onLeave: (@MainActor (TimeInterval) -> Void)?
     var onReturn: (@MainActor () -> Void)?
 }
 

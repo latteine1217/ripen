@@ -70,7 +70,7 @@ final class AppModel {
         self.alarm = alarm
         engine = TimerEngine(phase: .focus, duration: settings.cycleConfiguration.duration(for: .focus))
         idleSince = clock.now()
-        presence.onLeave = { [weak self] in self?.userDidLeave() }
+        presence.onLeave = { [weak self] leftAgo in self?.userDidLeave(leftAgo: leftAgo) }
         presence.onReturn = { [weak self] in self?.userDidReturn() }
         alarm.onFire = { [weak self] in self?.alarmDidFire() }
     }
@@ -148,8 +148,9 @@ final class AppModel {
     }
 
     /// 鎖定、睡眠或螢幕關閉：記下離開的時刻；已在超時中就立即暫停。
-    private func userDidLeave() {
-        awaySince = clock.now()
+    /// 螢幕睡眠與螢幕保護程式的通知較晚送達，離開時刻回推 `leftAgo`。
+    private func userDidLeave(leftAgo: TimeInterval) {
+        awaySince = clock.now() - leftAgo
         refresh()
     }
 
