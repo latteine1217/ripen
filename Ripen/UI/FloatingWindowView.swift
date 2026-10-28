@@ -105,7 +105,7 @@ struct FloatingWindowGlass: View, Animatable {
             )
             // 熱區在移動手勢之外，拖角落不會被當成移動
             .overlay {
-                ResizeHandles(cornerRadius: layout.cornerRadius, grip: grip,
+                ResizeHandles(size: size, layout: layout, grip: grip,
                               keepsCursor: keepsResizeCursor, onResize: onResize)
             }
             .overlay { PhaseRipple(shape: shape, reminderID: model.lastReminder?.id, tint: model.displayTint) }
@@ -256,42 +256,59 @@ private struct PlacedLayout: Layout {
 /// 四個角的調整大小熱區，游標移上去換成對角調整游標。hover 時只在朝螢幕中央的一角（`grip`）畫把手：
 /// 四角都畫太吵，全不畫又找不到能放大的地方（使用者回饋；spec #1 user story 43、懸浮窗原型）。
 private struct ResizeHandles: View {
-    let cornerRadius: CGFloat
+    let size: CGSize
+    let layout: FloatingWindowLayout
+    /// 平常畫把手的角（朝螢幕中央）；游標不在玻璃上或正在調整大小時為 nil，四角都不畫。
     let grip: ResizeCorner?
     let keepsCursor: Bool
     let onResize: (ResizeCorner?) -> Void
-
-    /// 熱區是貼著角、兩股 28pt 的三角形：面積與按鈕相近，斜邊離小尺寸最靠角的 32pt 按鈕仍有約 4pt。
-    static let hitSize = FloatingWindowLayout.resizeHandle
+    /// 游標所在熱區的角：把手移到這一角，標示永遠出現在拉得動的地方。
+    @State private var hovered: ResizeCorner?
 
     var body: some View {
-        ZStack {
+        // 按鈕的圓：小尺寸的角緊貼按鈕，熱區與按鈕重疊時讓給按鈕
+        let buttons = [layout.startPause, layout.skip, layout.expand, layout.close]
+        ZStack(alignment: .topLeading) {
             ForEach(ResizeCorner.allCases, id: \.self) { corner in
-                // 圓角的弧在 45° 處離兩邊約 0.29r：把手畫在弧內側
-                CornerHandle(corner: corner, gripInset: cornerRadius * 0.3 + 3, showsGrip: grip == corner,
-                             keepsCursor: keepsCursor, onResize: onResize)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: corner.alignment)
+                let resizeGrip = ResizeGrip(corner, cornerRadius: layout.cornerRadius, in: size)
+                CornerHandle(
+                    grip: resizeGrip, buttons: buttons, showsGrip: grip != nil && (hovered ?? grip) == corner,
+                    keepsCursor: keepsCursor, onResize: onResize,
+                    onHover: { inside in
+                        if inside {
+                            hovered = corner
+                        } else if hovered == corner {
+                            hovered = nil
+                        }
+                    }
+                )
+                .position(resizeGrip.center)
             }
         }
+        .frame(width: size.width, height: size.height)
     }
 }
 
 private struct CornerHandle: View {
-    let corner: ResizeCorner
-    let gripInset: CGFloat
+    let grip: ResizeGrip
+    /// 按鈕中心（玻璃座標）；熱區扣掉這些按鈕的圓。
+    let buttons: [CGPoint]
     let showsGrip: Bool
     let keepsCursor: Bool
     let onResize: (ResizeCorner?) -> Void
+    let onHover: (Bool) -> Void
     @State private var cursorPushed = false
 
     var body: some View {
-        // 把手換角（移動或貼邊後）時舊角淡出、新角淡入
-        Grip(corner: corner, inset: gripInset)
+        let diameter = 2 * ResizeGrip.hitRadius
+        // 把手換角（移動、貼邊或游標移到別的角）時舊角淡出、新角淡入
+        Grip(corner: grip.corner)
             .opacity(showsGrip ? 0.6 : 0)
             .animation(.easeOut(duration: 0.15), value: showsGrip)
-            .frame(width: ResizeHandles.hitSize, height: ResizeHandles.hitSize)
-            .contentShape(CornerTriangle(corner: corner))
+            .frame(width: diameter, height: diameter)
+            .contentShape(GripHitShape(grip: grip, buttons: buttons))
             .onHover { inside in
+                onHover(inside)
                 // 不搶焦點的 panel 在 App 非作用中時游標可能換不了；實機驗收
                 if inside, !cursorPushed {
                     resizeCursor.push()
@@ -303,7 +320,7 @@ private struct CornerHandle: View {
             // 開始與放開由 controller 以 60Hz 輪詢游標追蹤；手勢只負責告知從哪個角開始
             .gesture(
                 DragGesture(minimumDistance: 1, coordinateSpace: .global)
-                    .onChanged { _ in onResize(corner) }
+                    .onChanged { _ in onResize(grip.corner) }
                     .onEnded { _ in onResize(nil) }
             )
             // 懸浮窗收起時游標還在角上：onHover(false) 不會來，要自己把游標還回去
@@ -320,7 +337,7 @@ private struct CornerHandle: View {
 
     private var resizeCursor: NSCursor {
         if #available(macOS 15, *) {
-            let position: NSCursor.FrameResizePosition = switch corner {
+            let position: NSCursor.FrameResizePosition = switch grip.corner {
             case .topLeft: .topLeft
             case .topRight: .topRight
             case .bottomLeft: .bottomLeft
@@ -332,32 +349,32 @@ private struct CornerHandle: View {
     }
 }
 
-/// 貼著 `corner` 的直角三角形。
-private struct CornerTriangle: Shape {
-    let corner: ResizeCorner
+/// 熱區：以把手為圓心的圓，扣掉與按鈕重疊的部分。`rect` 是以把手為中心、直徑 `2 × hitRadius` 的方框。
+private struct GripHitShape: Shape {
+    let grip: ResizeGrip
+    let buttons: [CGPoint]
 
     func path(in rect: CGRect) -> Path {
-        // SwiftUI 座標往下為正：上方的角在 minY
-        let x = corner.isRight ? rect.maxX : rect.minX
-        let y = corner.isTop ? rect.minY : rect.maxY
-        var path = Path()
-        path.move(to: CGPoint(x: x, y: y))
-        path.addLine(to: CGPoint(x: corner.isRight ? rect.minX : rect.maxX, y: y))
-        path.addLine(to: CGPoint(x: x, y: corner.isTop ? rect.maxY : rect.minY))
-        path.closeSubpath()
-        return path
+        let circle = Path(ellipseIn: rect)
+        // 玻璃座標換成這個方框的座標
+        let offset = CGPoint(x: rect.midX - grip.center.x, y: rect.midY - grip.center.y)
+        let r = FloatingWindowLayout.button / 2
+        return buttons.reduce(circle) { area, button in
+            let center = CGPoint(x: button.x + offset.x, y: button.y + offset.y)
+            return area.subtracting(Path(ellipseIn: CGRect(x: center.x - r, y: center.y - r, width: 2 * r, height: 2 * r)))
+        }
     }
 }
 
-/// 角落的兩條斜線把手：畫在右下角，其他角翻轉。
+/// 把手：兩條斜線，置中在熱區裡、朝向所在的角（畫成右下，其他角翻轉）。
 private struct Grip: View {
     let corner: ResizeCorner
-    let inset: CGFloat
 
     var body: some View {
         Canvas { context, size in
             var path = Path()
-            let x = size.width - inset, y = size.height - inset
+            // 兩條線的中點約在 (x − 3, y − 3)：往外推 3pt，整組把手落在方框正中
+            let x = size.width / 2 + 3, y = size.height / 2 + 3
             for k in [4.0, 8.0] {
                 path.move(to: CGPoint(x: x - k, y: y))
                 path.addLine(to: CGPoint(x: x, y: y - k))
@@ -366,17 +383,6 @@ private struct Grip: View {
         }
         .scaleEffect(x: corner.isRight ? 1 : -1, y: corner.isTop ? -1 : 1)
         .allowsHitTesting(false)
-    }
-}
-
-private extension ResizeCorner {
-    var alignment: Alignment {
-        switch self {
-        case .topLeft: .topLeading
-        case .topRight: .topTrailing
-        case .bottomLeft: .bottomLeading
-        case .bottomRight: .bottomTrailing
-        }
     }
 }
 

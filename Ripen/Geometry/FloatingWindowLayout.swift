@@ -16,8 +16,6 @@ struct FloatingWindowLayout: Equatable, Sendable {
 
     /// 按鈕直徑：懸浮窗原型把點擊目標從瀏海島的 28 加大到 32（原型 FINDINGS §6）。
     static let button: CGFloat = 32
-    /// 角落調整大小熱區：貼著角、兩股這麼長的直角三角形；按鈕不能伸進去。
-    static let resizeHandle: CGFloat = 28
 
     var cornerRadius: CGFloat
     var ringCenter: CGPoint
