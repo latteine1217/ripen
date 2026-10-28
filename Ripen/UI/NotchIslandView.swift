@@ -31,7 +31,7 @@ struct NotchIslandView: View {
     static func cornerRadius(expanded: Bool) -> CGFloat { expanded ? 22 : 12 }
 
     var body: some View {
-        TimelineView(.periodic(from: .now, by: 0.25)) { context in
+        TimelineView(.countdownTick) { context in
             island
                 // 主視窗不在畫面上時由島刷新，倒數到 0 後隨即送出提醒、進入超時
                 .onChange(of: context.date) { model.refresh() }

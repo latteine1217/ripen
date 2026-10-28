@@ -40,7 +40,7 @@ struct FloatingWindowView: View {
     var onResize: (ResizeCorner?) -> Void = { _ in }
 
     var body: some View {
-        TimelineView(.periodic(from: .now, by: 0.25)) { context in
+        TimelineView(.countdownTick) { context in
             FloatingWindowGlass(
                 model: model, now: context.date, blend: FloatingWindowSizeBlend(state.size), frame: state.glassFrame,
                 widensLeftward: state.widensLeftward,

@@ -11,7 +11,7 @@ struct TimerPageView: View {
     private static let ringDiameter: CGFloat = 220
 
     var body: some View {
-        TimelineView(.periodic(from: .now, by: 0.25)) { context in
+        TimelineView(.countdownTick) { context in
             let status = model.status
             let phase = model.phase
             let isOvertime = model.isOvertime
