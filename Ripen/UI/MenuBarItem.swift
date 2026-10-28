@@ -86,7 +86,7 @@ struct MenuBarLabel: View {
     }
 }
 
-/// 選單列項目的選單：開始／暫停、跳過（超時中為完成）、顯示主視窗、設定、退出。
+/// 選單列項目的選單：開始／暫停、跳過（超時中為完成）、重設、顯示主視窗、設定、結束。
 private struct MenuBarMenu: View {
     let model: AppModel
     let mainWindow: MainWindowBridge
@@ -97,11 +97,18 @@ private struct MenuBarMenu: View {
         // 超時由時鐘推導、不會通知；讀 `reachedZero` 讓選單在跨過 0 時重建（開著時也會換成「完成」）。
         // 畫面仍可能落後，所以「跳過」點下時若已超時就改為完成
         let _ = model.reachedZero
+        // ⌘S／⌘R 與主選單「計時」選單相同；這裡只在選單打開時有效
         if model.isOvertime {
             Button("Done", action: model.finish)
+                .keyboardShortcut("s")
         } else {
             Button("Skip", action: model.skipOrFinish)
+                .keyboardShortcut("s")
         }
+        // 超時中重設沒有作用（ADR-0006）
+        Button("Reset", action: model.reset)
+            .keyboardShortcut("r")
+            .disabled(model.isOvertime || model.status == .idle)
 
         Divider()
 

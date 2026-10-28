@@ -87,9 +87,19 @@ final class NotchIslandController {
     /// 瀏海島 → 主視窗的拉出過場（#12）。拖曳放開時從手上的水珠接續，否則（「展開」按鈕、
     /// Dock、選單列）先自動拉成水珠；減少動態效果時島淡出、真視窗淡入。
     ///
+    /// 主視窗先擺到 `NotchPullController.destination`：拖曳放開時在放開處，否則在瀏海正下方。
+    /// 放開處在另一台螢幕時也改成淡入淡出：overlay 只蓋瀏海那台螢幕，水珠長不過去。
+    ///
     /// - Parameter reveal: 讓主視窗以給定長度淡入。
     func pullOut(into window: NSWindow, reveal: @escaping @MainActor (TimeInterval) -> Void) {
-        guard let panel, panel.isVisible, let screen = currentScreen,
+        let screen = currentScreen
+        var crossesScreens = false
+        if let screen {
+            let destination = puller.destination(size: window.frame.size, notchScreen: screen)
+            window.setFrame(destination.frame, display: false)
+            crossesScreens = destination.screen.displayID != screen.displayID
+        }
+        guard let panel, panel.isVisible, let screen, !crossesScreens,
               !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion else {
             puller.fadeAway(duration: PresentationFade.duration)
             hide()

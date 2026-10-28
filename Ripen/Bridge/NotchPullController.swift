@@ -31,6 +31,8 @@ final class NotchPullController {
     /// 拖曳中的島 panel 與所在螢幕；只在追蹤期間有值。
     private weak var trackingPanel: NSPanel?
     private var trackingScreen: NSScreen?
+    /// 拖曳放開（已脫離）時的游標，全域座標；`destination` 依它擺主視窗後取走。非拖曳的叫回為 nil。
+    private var releasePoint: CGPoint?
 
     /// 正在拖曳，或液體還在畫面上（彈回、過場中）；這段期間島的 hover 不插手。
     var isActive: Bool { drag?.isDragging == true || overlay != nil }
@@ -45,6 +47,7 @@ final class NotchPullController {
     /// 在島上按下滑鼠：開始輪詢游標；超過拖曳門檻才真的開始拉。
     func mouseDown(panel: NSPanel, screen: NSScreen) {
         guard timer == nil, overlay == nil else { return }
+        releasePoint = nil
         drag = PullDrag(start: NSEvent.mouseLocation)
         trackingPanel = panel
         trackingScreen = screen
@@ -71,7 +74,8 @@ final class NotchPullController {
         stopTracking()
         guard drag.isDragging else { return }
         if drag.isReleased, model.presentation.applying(.expandNotchIsland) != nil {
-            // 液體留在畫面上，由 pullOut 接著長成主視窗
+            // 液體留在畫面上，由 pullOut 接著長成主視窗；主視窗擺在放開處（使用者 2026-10-28 決定）
+            releasePoint = NSEvent.mouseLocation
             model.expandNotchIsland()
         } else {
             snapBack()
@@ -125,6 +129,7 @@ final class NotchPullController {
 
     /// 停止拖曳並撤掉液體，不播動畫（島重新顯示時）。
     func cancel() {
+        releasePoint = nil
         stopTracking()
         endPull()
     }
@@ -139,7 +144,21 @@ final class NotchPullController {
 
     // MARK: - 過場
 
+    /// 拉出後主視窗的位置與所在螢幕，並取走放開處：拖曳放開時以游標為基準、夾回游標所在螢幕，
+    /// 否則（「展開」按鈕、Dock、選單列）在瀏海正下方。
+    func destination(size: CGSize, notchScreen: NSScreen) -> (frame: CGRect, screen: NSScreen) {
+        defer { releasePoint = nil }
+        guard let point = releasePoint else {
+            return (PullGeometry.windowFrame(size: size, notch: state.notch, visibleFrame: notchScreen.visibleFrame),
+                    notchScreen)
+        }
+        // 游標在螢幕最上緣時 y 可能等於 frame.maxY、不在任何 frame 內；那時就是瀏海所在的螢幕
+        let screen = NSScreen.screens.first { $0.frame.contains(point) } ?? notchScreen
+        return (PullGeometry.windowFrame(size: size, cursor: point, visibleFrame: screen.visibleFrame), screen)
+    }
+
     /// 瀏海島 → 主視窗：水珠（或自動拉成的水珠）在 overlay 中長成主視窗，最後與真視窗交叉淡化。
+    /// 主視窗須已由呼叫端擺到 `destination` 的位置、且在 `screen` 上；過場長到它目前的 frame。
     ///
     /// - Parameters:
     ///   - removeIsland: overlay 已蓋住水珠、可以直接撤掉島的 panel 時呼叫。
@@ -153,9 +172,7 @@ final class NotchPullController {
         // 取代彈回等尚未完成的動畫
         session += 1
         let current = session
-        let target = PullGeometry.windowFrame(size: window.frame.size, notch: state.notch,
-                                              visibleFrame: screen.visibleFrame)
-        window.setFrame(target, display: false)
+        let target = window.frame
         let snapshot = window.themeFrameSnapshot()
 
         let overlay: TransitionOverlay

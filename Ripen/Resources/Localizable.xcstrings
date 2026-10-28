@@ -269,22 +269,6 @@
         }
       }
     },
-    "Reset the current phase": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Reset the current phase"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "重設目前階段"
-          }
-        }
-      }
-    },
     "Resume": {
       "localizations": {
         "en": {
@@ -955,7 +939,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "退出 Ripen"
+            "value": "結束 Ripen"
           }
         }
       }
@@ -1100,6 +1084,70 @@
           "stringUnit": {
             "state": "translated",
             "value": "按完成後自動開始下一段"
+          }
+        }
+      }
+    },
+    "Reset the current phase (⌘R)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reset the current phase (⌘R)"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "重設目前階段（⌘R）"
+          }
+        }
+      }
+    },
+    "Skip to the next phase (⌘S)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Skip to the next phase (⌘S)"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "跳到下一段（⌘S）"
+          }
+        }
+      }
+    },
+    "Finish this phase and move to the next (⌘S)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Finish this phase and move to the next (⌘S)"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "結束這一段並進入下一段（⌘S）"
+          }
+        }
+      }
+    },
+    "Reminder Sound": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reminder Sound"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "提示音"
           }
         }
       }
