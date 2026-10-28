@@ -102,6 +102,8 @@ struct NotchIslandView: View {
                     // 把手：暗示整條島可以往下拉
                     Capsule().fill(.secondary.opacity(0.6)).frame(width: 28, height: 4)
                         .accessibilityHidden(true)
+                        .oneTimeHint(.notchPullOut, "Pull down to open the main window", settings: model.settings)
+                        .font(.system(size: 11, weight: .medium, design: .rounded))
                 }
                 .padding(.horizontal, 18)
                 .padding(.bottom, 8)

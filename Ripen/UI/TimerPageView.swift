@@ -34,6 +34,8 @@ struct TimerPageView: View {
                 )
 
                 endTime(model.endDate, isOvertime: isOvertime)
+                    .oneTimeHint(.overtimeDone, "Press Done to finish and record this phase",
+                                 settings: model.settings, isActive: isOvertime)
                     // 跳過、重設、完成後暫時換成復原膠囊；這一列在新階段起點本來就是空的
                     .undoCapsuleOverlay(model)
 

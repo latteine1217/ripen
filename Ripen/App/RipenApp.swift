@@ -95,7 +95,7 @@ struct RipenApp: App {
         #endif
 
         Settings {
-            SettingsView(settings: model.settings)
+            SettingsView(settings: model.settings, showMainWindow: presenter.showMainWindow)
                 .environment(hotkeys)
                 .environment(loginItem)
         }

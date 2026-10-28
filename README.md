@@ -69,6 +69,7 @@ The Statistics page shows today's focus count and minutes, plus a chart of the l
 | Make it yours | Black, White, or Glass appearance; glass can follow the system or stay light or dark, with adjustable opacity and blur. System reminder sounds or silence, optional auto-start and open at login, and 12- or 24-hour end times. |
 | Always at hand | Three floating-window layouts, a notch island, and an optional menu bar countdown. |
 | A fresh start | The long-break count resets after two hours idle. |
+| Easy to learn | A short intro shows the tear-off, notch and resize gestures on first launch, with one-time tips where they apply. Replay it from Settings. |
 | Local and private | No account or network access. Focus history stays in `~/Library/Application Support/Ripen`. English and Traditional Chinese included. |
 
 ## Install

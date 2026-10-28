@@ -89,9 +89,11 @@ xcodebuild test -project Ripen.xcodeproj -scheme Ripen -destination 'platform=ma
 
 Debug App 加 `--render-frames <輸出資料夾> appearance-` 可輸出四種配色的計時、統計與三尺寸懸浮窗，以及石墨黑／暖瓷白三個階段的暫停與超時，共 32 張版面圖。模糊層不在 ImageRenderer 的擷取範圍，輸出時關閉模糊；設定 Form 亦無法以此驗收。這些圖只能核對配色與版面，不能代替實機材質與即時切換驗收。
 
-## 復原
+## 復原與手勢引導
 
 跳過、重設、完成之後，`AppModel` 記下操作前的計時狀態並提供 `undoOffer`，5 秒內 `undo()` 換回；期限在 `refresh()` 中檢查，任何其他意圖也會結束它。完成的專注先由 `FocusLog.stage` 暫存（計入統計、不寫檔），期限過後或退出前才寫入，所以復原不必刪除資料庫紀錄。復原膠囊（`UndoCapsule`）在主視窗蓋住結束時刻列，在懸浮窗與瀏海島蓋住階段說明；主視窗另有 ⌘Z，選單列選單在期限內多一個復原項目。
+
+手勢介紹（`GestureIntroView`）在 `gestureIntroSeen` 為 false 時蓋在主視窗上；情境提示（`oneTimeHint`）各以一個 `hintSeen.*` 設定記錄是否看過。設定「關於」區塊的「再看一次」重設這些值。
 
 Debug App 加 `--render-frames <輸出資料夾> undo-` 可輸出復原膠囊在主視窗、三尺寸懸浮窗與瀏海島上的版面。
 

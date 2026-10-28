@@ -90,6 +90,14 @@ _Avoid_: 水滴, Blob
 選單列上的圖示與選單，可在設定中開關。
 _Avoid_: Status item, Tray icon
 
+**手勢介紹 (Gesture Intro)**：
+第一次開啟時蓋在主視窗上的三頁介紹：拖出、收進瀏海、調整懸浮窗尺寸；可略過，設定中可再看一次。
+_Avoid_: Onboarding, 教學
+
+**情境提示 (Hint)**：
+第一次碰到某個情境時暫時取代一行文字的提示，幾秒後收起，之後不再出現。
+_Avoid_: Tooltip, Coach mark
+
 **開始／暫停快速鍵 (Start/Pause Shortcut)**：
 在任何 App 中開始或暫停目前階段的全域按鍵，預設 ⌥⌘P，可在設定中更改。主視窗在前時另有 ⌘S 跳過（超時中為完成）、⌘R 重設、⌘Z 復原。
 _Avoid_: 熱鍵, Hotkey

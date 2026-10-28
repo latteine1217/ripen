@@ -138,6 +138,8 @@ private struct FloatingWindowContent: View {
                 .font(.system(size: layout.caption.fontSize, weight: .semibold, design: .rounded))
                 .foregroundStyle(.tint)
                 .fixedSize()
+                .oneTimeHint(.floatingResize, "Drag a corner to resize", settings: model.settings,
+                             alignment: layout.caption.anchorX < 0.5 ? .leading : .center)
                 .undoCapsuleOverlay(model, compact: true,
                                     alignment: layout.caption.anchorX < 0.5 ? .leading : .center)
                 .opacity(layout.caption.opacity)
