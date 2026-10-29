@@ -27,8 +27,9 @@ extension FrameDump {
                 let frame = CGRect(origin: CGPoint(x: 40, y: 40), size: size.defaultSize)
                 scenes.append(Scene(name: "undo-\(name)-floating-\(size)",
                                     size: CGSize(width: frame.width + 80, height: frame.height + 80)) { _ in
-                    AnyView(FloatingWindowGlass(
-                        model: skippedModel(settings), presentation: PresentationModel(), now: Date(),
+                    let model = skippedModel(settings)
+                    return AnyView(FloatingWindowGlass(
+                        model: model, presentation: PresentationModel(), display: model.display,
                         blend: FloatingWindowSizeBlend(size), frame: frame
                     ).environment(\.colorScheme, scheme).background(desktop))
                 })

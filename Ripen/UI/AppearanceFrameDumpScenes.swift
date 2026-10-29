@@ -37,7 +37,7 @@ extension FrameDump {
                 scenes.append(Scene(name: "appearance-\(name)-floating-\(size)",
                                     size: CGSize(width: frame.width + 80, height: frame.height + 80)) { _ in
                     AnyView(FloatingWindowGlass(
-                        model: model, presentation: PresentationModel(), now: clock.current,
+                        model: model, presentation: PresentationModel(), display: model.display,
                         blend: FloatingWindowSizeBlend(size), frame: frame
                     ).environment(\.colorScheme, scheme).background(desktop))
                 })

@@ -4,7 +4,7 @@ import Observation
 /// 計時的可觀察狀態根：對外只暴露操作意圖與可觀察狀態。形態（畫面上有哪些介面）另由 `PresentationModel` 持有。
 ///
 /// 時間相關的值（`status`、`remaining`、`isOvertime`、`overtime`）每次讀取都向注入的時鐘取「現在」，
-/// 本身不會因時間流逝而發出變更通知；UI 需以 `TimelineView` 定期重讀。
+/// 本身不會因時間流逝而發出變更通知；UI 需以 `TimelineView` 定期取用 `display`。
 ///
 /// 倒數到 0 只是由時間推導出的超時（ADR-0006）：`refresh()` 發現時送出提醒，階段不前進；
 /// 使用者按「完成」（`finish()`）才確立完成、記錄並前進到下一段。
@@ -85,7 +85,19 @@ final class AppModel {
         alarm.onFire = { [weak self] in self?.alarmDidFire() }
     }
 
+    /// 只讀取一次注入時鐘；不呼叫 refresh，不發出提醒或確立完成。
+    var display: PhaseDisplay {
+        let now = clock.now()
+        return PhaseDisplay(
+            phase: engine.phase, status: engine.status(at: now), remaining: engine.remaining(at: now),
+            isOvertime: engine.isOvertime(at: now), overtime: engine.overtime(at: now),
+            phaseDuration: engine.duration, endDate: engine.endDate,
+            completedFocusesInCycle: cycle.completedFocuses, longBreakInterval: configuration.longBreakInterval
+        )
+    }
+
     var phase: Phase { engine.phase }
+
     var status: TimerStatus { engine.status(at: clock.now()) }
     var remaining: TimeInterval { engine.remaining(at: clock.now()) }
     /// 倒數到 0 之後（含暫停中）；此時「跳過」「重設」由「完成」取代。

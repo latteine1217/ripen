@@ -92,7 +92,7 @@ extension FrameDump {
                 }
                 return AnyView(
                     FloatingWindowGlass(
-                        model: model, presentation: PresentationModel(), blend: FloatingWindowSizeBlend(FloatingWindowSize(height: item.size.height)),
+                        model: model, presentation: PresentationModel(), display: model.display, blend: FloatingWindowSizeBlend(FloatingWindowSize(height: item.size.height)),
                         frame: CGRect(origin: CGPoint(x: margin, y: margin), size: item.size), grip: .bottomLeft
                     )
                     .background(Color(white: 0.3))
@@ -120,9 +120,10 @@ extension FrameDump {
             let frames = resizeFrames(from: item.from, to: item.to, drag: item.drag, fps: fps, count: frameCount)
             return Scene(name: item.name, size: stage, frameCount: frameCount) { t in
                 let frame = frames[Int((t * Double(frameCount - 1)).rounded())]
+                let model = sampleModel()
                 return AnyView(
                     FloatingWindowGlass(
-                        model: sampleModel(), presentation: PresentationModel(), blend: frame.blend,
+                        model: model, presentation: PresentationModel(), display: model.display, blend: frame.blend,
                         frame: CGRect(origin: CGPoint(x: margin, y: margin), size: frame.size)
                     )
                     .frame(width: stage.width, height: stage.height)

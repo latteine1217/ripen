@@ -13,8 +13,7 @@ final class NotchIslandController {
     private static let announceDuration: Duration = .seconds(3)
     /// 收回動畫播完才把 panel 縮回收合的大小；太早縮會切掉還在收的島。
     private static let shrinkDelay: Duration = .milliseconds(500)
-    /// 真島接手後內容淡入、再撤掉 overlay 前的等待（瀏海島原型）。
-    private static let handOffDelay: Duration = .milliseconds(33)
+    /// 島的內容淡入後才撤掉 overlay，期間由實心島墊住黑底。
     private static let overlayLinger: Duration = .milliseconds(150)
 
     private let model: AppModel
@@ -22,9 +21,9 @@ final class NotchIslandController {
     private let state: NotchIslandState
     /// 往下拉成水珠與拉出過場（#12）。
     private let puller: NotchPullController
-    /// 收進瀏海的過場正在播放的 overlay，與它結尾的交接工作（#13）。
-    private var collapsing: TransitionOverlay?
-    private var handOffWork: Task<Void, Never>?
+    private let transitions: PresentationTransitions
+    private var collapseOperation: PresentationTransitions.Operation?
+    var pullOperation: PresentationTransitions.Operation? { puller.operation }
     private var panel: NotchIslandPanel?
     private var displayID: CGDirectDisplayID?
     private var mouseMonitors: [Any] = []
@@ -41,13 +40,14 @@ final class NotchIslandController {
 
     var isVisible: Bool { panel?.isVisible == true }
 
-    init(model: AppModel, presentation: PresentationModel) {
+    init(model: AppModel, presentation: PresentationModel, transitions: PresentationTransitions = PresentationTransitions()) {
+        self.transitions = transitions
         self.model = model
         self.presentation = presentation
         // App 啟動時可能還拿不到螢幕；真正的瀏海在 show(on:) 依所在螢幕算出
         let state = NotchIslandState(notch: NotchFrame(rect: .zero, isSimulated: true))
         self.state = state
-        puller = NotchPullController(presentation: presentation, state: state)
+        puller = NotchPullController(presentation: presentation, state: state, transitions: transitions)
         observeReminders()
     }
 
@@ -68,6 +68,8 @@ final class NotchIslandController {
 
     func hide() {
         cancelCollapse()
+        // 拉出途中島可能已隱藏，仍須取消液體與舊回呼，避免稍後重新顯示主視窗。
+        puller.cancel()
         guard let panel, panel.isVisible else { return }
         generation += 1
         let current = generation
@@ -110,11 +112,10 @@ final class NotchIslandController {
         }
         cancelCollapse()
         generation += 1
-        let current = generation
         removeMonitors()
         cancelWork()
         puller.pullOut(into: window, panel: panel, screen: screen, removeIsland: { [weak self] in
-            guard let self, self.generation == current else { return }
+            guard let self else { return }
             panel.orderOut(nil)
             self.state.isHovering = false
             self.setExpanded(false, animated: false)
@@ -140,13 +141,19 @@ final class NotchIslandController {
         }
         cancelCollapse()
         generation += 1
-        let current = generation
         let panel = prepare(on: screen)
         // 真島出現時先不畫黑底與內容，由 overlay 的實心島墊在下面；交接後才換回來
         withTransaction(Self.instant) { state.isPulling = true }
 
         let overlay = TransitionOverlay(screen: screen)
-        collapsing = overlay
+        let operation = transitions.begin()
+        collapseOperation = operation
+        operation.use(overlay)
+        operation.onEnd { [weak self] in
+            guard let self else { return }
+            self.collapseOperation = nil
+            withTransaction(Self.instant) { self.state.isPulling = false }
+        }
         let from = overlay.local(frame ?? window.frame)
         let notch = overlay.local(state.notch.rect)
         let islandSize = NotchGeometry.islandSize(notch: state.notch, expanded: false)
@@ -159,39 +166,29 @@ final class NotchIslandController {
         // overlay 第一格就是視窗快照，真視窗在它下面淡出
         dismiss(NotchPullController.crossFadeDuration)
         let c = CollapseMorph.curve
-        overlay.play(.timingCurve(c.x1, c.y1, c.x2, c.y2, duration: CollapseMorph.duration)) { [weak self] in
-            guard let self, self.generation == current else { return }
-            self.handOff(from: overlay, to: panel, generation: current)
+        operation.play(.timingCurve(c.x1, c.y1, c.x2, c.y2, duration: CollapseMorph.duration)) { [weak self] in
+            self?.handOff(to: panel, operation: operation)
         }
     }
 
     /// overlay 最後一格就是實心島：真島（透明底、無內容）先排到上層，下一格換回黑底並淡入內容，
     /// 黑底畫出來之後才撤 overlay，交接時不會露出空白。
-    private func handOff(from overlay: TransitionOverlay, to panel: NotchIslandPanel, generation current: Int) {
+    private func handOff(to panel: NotchIslandPanel, operation: PresentationTransitions.Operation) {
         panel.alphaValue = 1
         panel.orderFrontRegardless()
         installMonitors()
-        handOffWork = Task { [weak self] in
-            try? await Task.sleep(for: Self.handOffDelay)
-            guard !Task.isCancelled, let self, self.generation == current else { return }
+        // 先讓透明底的首格完成排版與繪製，再觸發內容淡入；不以固定延遲猜測畫面何時就緒。
+        operation.nextTurn { [weak self] in
+            guard let self else { return }
+            panel.contentView?.layoutSubtreeIfNeeded()
+            panel.displayIfNeeded()
             self.state.isPulling = false
-            try? await Task.sleep(for: Self.overlayLinger)
-            guard !Task.isCancelled, self.generation == current else { return }
-            overlay.close()
-            self.collapsing = nil
+            operation.after(Self.overlayLinger) { operation.cancel() }
         }
     }
 
-    /// 撤掉播到一半的收進過場（被其他形態變化取代時）。呼叫端之後才記下新的 `generation`：
-    /// 這裡加一讓 overlay 動畫完成的回呼失效，`close()` 本身停不了它。
     private func cancelCollapse() {
-        handOffWork?.cancel()
-        handOffWork = nil
-        guard let collapsing else { return }
-        generation += 1
-        collapsing.close()
-        self.collapsing = nil
-        withTransaction(Self.instant) { state.isPulling = false }
+        collapseOperation?.cancel()
     }
 
     /// 島回到收合、hover 未解除的起點，panel 擺到 `screen` 的瀏海；不顯示。

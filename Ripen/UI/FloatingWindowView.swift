@@ -5,6 +5,8 @@ import SwiftUI
 @MainActor
 @Observable
 final class FloatingWindowState {
+    /// 預備中的隱藏視窗不能提前消耗首次提示。
+    var isPresented = false
     /// 目前的尺寸；controller 換尺寸時包在彈簧動畫裡，版面隨之變形。
     var size = FloatingWindowSize.medium
     /// 玻璃本體在 panel 內的框（左上原點）。調整大小期間 panel 撐滿螢幕，這個框跟著游標，
@@ -43,14 +45,14 @@ struct FloatingWindowView: View {
     var body: some View {
         TimelineView(.countdownTick) { context in
             FloatingWindowGlass(
-                model: model, presentation: presentation, now: context.date, blend: FloatingWindowSizeBlend(state.size), frame: state.glassFrame,
+                model: model, presentation: presentation, display: model.display, blend: FloatingWindowSizeBlend(state.size), frame: state.glassFrame,
                 widensLeftward: state.widensLeftward,
                 grip: state.isHovering && !state.isResizing ? state.gripCorner : nil,
                 keepsResizeCursor: state.isHovering || state.isResizing,
-                isDismissing: state.isDismissing, onDrag: onDrag, onResize: onResize
+                isDismissing: state.isDismissing, showsHints: state.isPresented, onDrag: onDrag, onResize: onResize
             )
-            // 主視窗不在畫面上時也要有人刷新，倒數到 0 後畫面隨即換到下一段起點。
-            // 與主視窗並存時重複刷新無妨：每段的完成只確立一次
+            // 主視窗不在畫面上時也要有人刷新，倒數到 0 後送出提醒並進入超時。
+            // 與主視窗並存時重複刷新無妨：每段只提醒一次
             .onChange(of: context.date) { model.refresh() }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
@@ -62,8 +64,7 @@ struct FloatingWindowView: View {
 struct FloatingWindowGlass: View, Animatable {
     let model: AppModel
     let presentation: PresentationModel
-    /// 這一刻（`TimelineView` 的日期）；只為讓內容每次刷新都重算，見 `FloatingWindowContent.now`。
-    var now = Date.now
+    let display: PhaseDisplay
     var blend: FloatingWindowSizeBlend
     /// 玻璃在父 view 內的框（左上原點）；寬度不足這一刻的最小寬度時往 `widensLeftward` 那邊撐開。
     let frame: CGRect
@@ -73,6 +74,7 @@ struct FloatingWindowGlass: View, Animatable {
     /// 游標在玻璃上或正在調整大小；變成 false 時（例如懸浮窗收起）把換掉的游標還回去。
     var keepsResizeCursor = true
     var isDismissing = false
+    var showsHints = true
     var onDrag: (FloatingWindowDrag) -> Void = { _ in }
     var onResize: (ResizeCorner?) -> Void = { _ in }
 
@@ -90,10 +92,10 @@ struct FloatingWindowGlass: View, Animatable {
         let size = CGSize(width: width, height: frame.height)
         let layout = blend.layout(in: size)
         let shape = RoundedRectangle(cornerRadius: layout.cornerRadius, style: .continuous)
-        FloatingWindowContent(model: model, presentation: presentation, now: now, layout: layout)
+        FloatingWindowContent(model: model, presentation: presentation, display: display, layout: layout, showsHints: showsHints)
             .frame(width: size.width, height: size.height)
             // 提醒在倒數到 0 時播出，閃的是該階段的超時色；鋪在內容底下、玻璃之上，裁成玻璃的形狀
-            .reminderFlash(model.lastReminder, tint: model.displayTint)
+            .reminderFlash(model.lastReminder, tint: display.displayTint)
             .clipShape(shape)
             .ripenGlass(in: shape, settings: model.settings)
             .contentShape(shape)
@@ -108,9 +110,9 @@ struct FloatingWindowGlass: View, Animatable {
                 ResizeHandles(size: size, layout: layout, grip: grip,
                               keepsCursor: keepsResizeCursor, onResize: onResize)
             }
-            .overlay { PhaseRipple(shape: shape, reminderID: model.lastReminder?.id, tint: model.displayTint) }
+            .overlay { PhaseRipple(shape: shape, reminderID: model.lastReminder?.id, tint: display.displayTint) }
             // 超時色是時間推導的值；這個 view 在 TimelineView 裡，每次刷新都重讀
-            .tint(model.displayTint)
+            .tint(display.displayTint)
             .scaleEffect(isDismissing && !reduceMotion ? 0.85 : 1)
             .opacity(isDismissing ? 0 : 1)
             .accessibilityElement(children: .contain)
@@ -124,35 +126,35 @@ private struct FloatingWindowContent: View {
     @Environment(\.appPalette) private var palette
     let model: AppModel
     let presentation: PresentationModel
-    /// body 不讀它：時間相關的值不會發出觀察通知，`model` 與 `layout` 不變時 SwiftUI 會略過重算，
-    /// 每次刷新都換一個值才會重讀剩餘時間（不然只有調整大小或開始／暫停時數字才動）。
-    let now: Date
+    let display: PhaseDisplay
     let layout: FloatingWindowLayout
+    let showsHints: Bool
 
     var body: some View {
-        let status = model.status
+        let status = display.status
         let isPaused = status == .paused
         PlacedLayout(placements: placements) {
             ring(isPaused: isPaused)
-            PhaseCaption(model: model)
+            PhaseCaption(display: display)
                 .font(.system(size: layout.caption.fontSize, weight: .semibold, design: .rounded))
                 .foregroundStyle(.tint)
                 .fixedSize()
                 .oneTimeHint(.floatingResize, "Drag a corner to resize", settings: model.settings,
+                             isActive: showsHints,
                              alignment: layout.caption.anchorX < 0.5 ? .leading : .center)
                 .undoCapsuleOverlay(model, compact: true,
                                     alignment: layout.caption.anchorX < 0.5 ? .leading : .center)
                 .opacity(layout.caption.opacity)
             timeText(status: status)
-            EndCaption(model: model, status: status, isOvertime: model.isOvertime)
+            EndCaption(display: display, clockFormat: model.settings.clockFormat)
                 .font(.system(size: layout.end.fontSize, weight: .medium, design: .rounded))
                 .foregroundStyle(palette.secondary)
                 .fixedSize()
                 .opacity(layout.end.opacity)
-            ProgressBar(progress: model.phaseProgress)
+            ProgressBar(progress: display.phaseProgress)
                 .opacity(layout.barOpacity)
             startPauseButton(status: status)
-            SkipOrDoneButton(model: model, isOvertime: model.isOvertime)
+            SkipOrDoneButton(model: model, isOvertime: display.isOvertime)
             IslandIconButton(
                 "Expand into Main Window", systemImage: "arrow.up.left.and.arrow.down.right",
                 action: presentation.expandFloatingWindow
@@ -186,7 +188,7 @@ private struct FloatingWindowContent: View {
         return ZStack {
             Circle().inset(by: line / 2).stroke(palette.track, lineWidth: line)
             Circle().inset(by: line / 2)
-                .trim(from: 0, to: model.phaseProgress)
+                .trim(from: 0, to: display.phaseProgress)
                 .stroke(.tint, style: StrokeStyle(lineWidth: line, lineCap: .round))
                 .rotationEffect(.degrees(-90))
             Image(systemName: "pause.fill")
@@ -201,8 +203,8 @@ private struct FloatingWindowContent: View {
 
     /// 剩餘時間：三種尺寸共用這一個元件，只換字級與位置。
     private func timeText(status: TimerStatus) -> some View {
-        Text(verbatim: model.timeText)
-            .foregroundStyle(model.isOvertime ? AnyShapeStyle(.tint)
+        Text(verbatim: display.timeText)
+            .foregroundStyle(display.isOvertime ? AnyShapeStyle(.tint)
                              : AnyShapeStyle(status == .running ? palette.primary : palette.secondary))
             .font(.system(size: layout.time.fontSize, weight: .semibold, design: .rounded))
             .monospacedDigit()

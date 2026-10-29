@@ -41,8 +41,9 @@ struct MenuBarLabel: View {
 
     var body: some View {
         let _ = shownText
-        let text = Self.remainingText(for: model)
-        Image(nsImage: Self.render(text, overtimeTint: model.isOvertime ? model.phase.overtimeTint : nil))
+        let display = model.display
+        let text = Self.remainingText(for: display)
+        Image(nsImage: Self.render(text, overtimeTint: display.isOvertime ? display.phase.overtimeTint : nil))
             .onReceive(Self.ticks) { _ in
                 model.refresh()
                 let latest = Self.remainingText(for: model)
@@ -79,8 +80,12 @@ struct MenuBarLabel: View {
 
     /// 只有在跑或暫停時才顯示時間（超時中為 `+mm:ss`）；停在起點時只顯示圖示。
     static func remainingText(for model: AppModel) -> String? {
-        switch model.status {
-        case .running, .paused: model.timeText
+        remainingText(for: model.display)
+    }
+
+    static func remainingText(for display: PhaseDisplay) -> String? {
+        switch display.status {
+        case .running, .paused: display.timeText
         case .idle: nil
         }
     }
@@ -93,12 +98,13 @@ private struct MenuBarMenu: View {
 
     var body: some View {
         // 標題依狀態變，動作與全域熱鍵共用同一個意圖
-        Button(primaryTitle(for: model.status), action: model.toggleStartPause)
+        let display = model.display
+        Button(primaryTitle(for: display.status), action: model.toggleStartPause)
         // 超時由時鐘推導、不會通知；讀 `reachedZero` 讓選單在跨過 0 時重建（開著時也會換成「完成」）。
         // 畫面仍可能落後，所以「跳過」點下時若已超時就改為完成
         let _ = model.reachedZero
         // ⌘S／⌘R 與主選單「計時」選單相同；這裡只在選單打開時有效
-        if model.isOvertime {
+        if display.isOvertime {
             Button("Done", action: model.finish)
                 .keyboardShortcut("s")
         } else {
@@ -108,7 +114,7 @@ private struct MenuBarMenu: View {
         // 超時中重設沒有作用（ADR-0006）
         Button("Reset", action: model.reset)
             .keyboardShortcut("r")
-            .disabled(model.isOvertime || model.status == .idle)
+            .disabled(display.isOvertime || display.status == .idle)
         // 復原期限只有幾秒，選單打開時才看得到；選單開著時過期，點下也不會做任何事
         if let offer = model.undoOffer {
             Button(offer.action.undoTitle, action: model.undo)

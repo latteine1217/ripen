@@ -27,7 +27,9 @@ final class TearOffController {
     @ObservationIgnored private let floating: FloatingWindowController
     @ObservationIgnored private let ghost = TearOffGhostState()
     @ObservationIgnored private var drag: TearOffDrag?
-    @ObservationIgnored private var overlay: TransitionOverlay?
+    @ObservationIgnored private let transitions: PresentationTransitions
+    @ObservationIgnored private(set) var operation: PresentationTransitions.Operation?
+    private var overlay: TransitionOverlay? { operation?.overlay }
     @ObservationIgnored private var timer: Timer?
     @ObservationIgnored private var keyMonitor: Any?
     /// 目前這次手勢的起點。
@@ -36,12 +38,12 @@ final class TearOffController {
     @ObservationIgnored private var cancelledGestureStart: CGPoint?
     /// 放開處的懸浮窗（玻璃本體）；`PresentationController` 套用拖出時取走。
     @ObservationIgnored private var landing: CGRect?
-    /// 每次開始或結束加一；舊的動畫完成回呼若已被取代就不再動作。
-    @ObservationIgnored private var session = 0
 
     init(
-        model: AppModel, presentation: PresentationModel, mainWindow: MainWindowBridge, floating: FloatingWindowController
+        model: AppModel, presentation: PresentationModel, mainWindow: MainWindowBridge, floating: FloatingWindowController,
+        transitions: PresentationTransitions = PresentationTransitions()
     ) {
+        self.transitions = transitions
         self.model = model
         self.presentation = presentation
         self.mainWindow = mainWindow
@@ -92,7 +94,9 @@ final class TearOffController {
         // 全域座標 y 向上，SwiftUI 的位移 y 向下
         let center = CGPoint(x: mouse.x - offset.width, y: mouse.y + offset.height)
         drag = TearOffDrag(ringCenter: center, ringRadius: ringRadius, cursor: mouse)
-        session += 1
+        let operation = transitions.begin()
+        self.operation = operation
+        operation.onEnd { [weak self] in self?.end() }
         ghost.reset(panelSize: floating.panelSize)
         isActive = true
         moveOverlay(to: mouse)
@@ -139,10 +143,9 @@ final class TearOffController {
     private func moveOverlay(to mouse: CGPoint) {
         if let overlay, overlay.screenFrame.contains(mouse) { return }
         guard let screen = NSScreen.screens.first(where: { $0.frame.contains(mouse) }) ?? NSScreen.main else { return }
-        overlay?.close()
         let overlay = TransitionOverlay(screen: screen)
+        operation?.use(overlay)
         overlay.show(TearOffView(state: ghost, tint: model.displayTint, face: floating.makeGhost()))
-        self.overlay = overlay
     }
 
     private func cancelByEscape() {
@@ -172,7 +175,7 @@ final class TearOffController {
 
     /// 沒過門檻放開或按 Esc：分身飛回圓環並在最後 40% 淡出；減少動態效果時原地淡出（懸浮窗原型）。
     private func snapBack() {
-        let current = session
+        guard let operation else { return }
         ghost.settling = true
         let reduceMotion = NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
         if !reduceMotion {
@@ -182,12 +185,9 @@ final class TearOffController {
             }
         }
         let fadeDelay = reduceMotion ? 0 : Self.snapBackResponse * 0.6
-        withAnimation(.easeIn(duration: PresentationFade.duration).delay(fadeDelay)) {
+        operation.animate(.easeIn(duration: PresentationFade.duration).delay(fadeDelay), changes: {
             ghost.opacity = 0
-        } completion: { [weak self] in
-            guard let self, self.session == current else { return }
-            self.end()
-        }
+        }, completion: { operation.cancel() })
     }
 
     /// 套用拖出後由 `PresentationController` 呼叫：分身滑到懸浮窗的最終位置（玻璃本體 `frame`），
@@ -197,27 +197,29 @@ final class TearOffController {
             reveal()
             return
         }
-        let current = session
+        let operation = transitions.begin(continuing: operation)
         let target = Self.local(CGPoint(x: frame.midX, y: frame.midY), in: overlay.screenFrame)
         let duration = NSWorkspace.shared.accessibilityDisplayShouldReduceMotion ? 0 : Self.landDuration
-        withAnimation(.easeOut(duration: duration)) {
+        operation.animate(.easeOut(duration: duration), changes: {
             ghost.settling = true
             ghost.cursor = target
             ghost.progress = 1
-        } completion: { [weak self] in
-            guard let self, self.session == current else { return }
+        }, completion: {
             reveal()
-            overlay.fadeOut(duration: NotchPullController.crossFadeDuration) { [weak self] in
-                guard let self, self.session == current else { return }
-                self.end()
-            }
-        }
+            operation.finish(fadeDuration: NotchPullController.crossFadeDuration)
+        })
     }
 
     private func end() {
-        session += 1
-        overlay?.close()
-        overlay = nil
+        if drag != nil { cancelledGestureStart = gestureStart }
+        drag = nil
+        landing = nil
+        timer?.invalidate()
+        timer = nil
+        if let keyMonitor { NSEvent.removeMonitor(keyMonitor) }
+        keyMonitor = nil
+        NSCursor.arrow.set()
+        operation = nil
         withAnimation(NSWorkspace.shared.accessibilityDisplayShouldReduceMotion ? nil : .easeOut(duration: 0.15)) {
             isActive = false
         }

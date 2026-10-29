@@ -32,9 +32,13 @@ extension Phase {
     }
 }
 
-extension AppModel {
-    /// 介面目前該用的顏色：超時中是這個階段的超時色，否則是階段色。時間推導的值，需在 `TimelineView` 裡讀。
+extension PhaseDisplay {
+    /// 介面目前該用的顏色：超時中是這個階段的超時色，否則是階段色。由同一次顯示取樣決定。
     var displayTint: Color { isOvertime ? phase.overtimeTint : phase.tint }
+}
+
+extension AppModel {
+    var displayTint: Color { display.displayTint }
 }
 
 extension Text {

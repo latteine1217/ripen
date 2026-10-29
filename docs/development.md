@@ -13,7 +13,7 @@ xcodebuild test -project Ripen.xcodeproj -scheme Ripen -destination 'platform=ma
 
 只跑單一測試檔：在 `xcodebuild test` 後加上 `-only-testing:RipenTests/AppModelFocusTests`。
 
-畫面與過場不寫單元測試，改用 Debug 建置的逐格輸出檢查：`Ripen.app/Contents/MacOS/Ripen --render-frames <輸出資料夾> [名稱前綴]` 會把 `Ripen/UI/FrameDumpScenes.swift` 列出的場景輸出成 PNG 後結束。
+畫面外觀與過場幾何用 Debug 建置的逐格輸出檢查；操作取消、視窗可見性與 overlay 清理則以真實 AppKit 整合測試驗證：`Ripen.app/Contents/MacOS/Ripen --render-frames <輸出資料夾> [名稱前綴]` 會把 `Ripen/UI/FrameDumpScenes.swift` 列出的場景輸出成 PNG 後結束。
 
 ## 打包與發佈
 
@@ -102,9 +102,23 @@ xcodebuild test -project Ripen.xcodeproj -scheme Ripen -destination 'platform=ma
 
 升級備份不是日常備份，也不保證降版相容。還原之前須先保留現行資料及升級後的新紀錄，不能直接覆蓋；目前不提供自動還原或部分壞資料復原介面。
 
+## 計時顯示
+
+計時頁、懸浮窗、瀏海島與選單列在各自更新時讀取一次 `AppModel.display`，取得不可變的 `PhaseDisplay`；時間文字、進度、超時色、階段說明與按鈕狀態使用同一次注入時鐘取樣。子畫面接收真正使用的顯示資料，不傳遞只為強迫重算的日期。不同視窗各自取樣，沒有共用顯示快取或新增排程。
+
+`display` 只讀資料，不呼叫 `refresh()`、不送提醒、不完成階段。各畫面保留原有的 `CountdownTickSchedule` 與刷新方式；`TimelineView` 的日期只觸發刷新，顯示時間仍取自 model 的 `TimeSource`。選單列仍只在顯示文字改變時寫入 `shownText`，不以每 250 ms 更新整份可觀察顯示值。操作意圖仍依按下當刻的時鐘判斷，不使用較早的畫面取樣。
+
+`PhaseDisplayTests` 驗證跨零期間的取樣一致性、暫停、無副作用的讀取與操作使用當下時間；`PhaseDisplayRefreshTests` 使用真實 SwiftUI／AppKit 畫面，確認 model 不變、只有假時鐘前進時，主視窗、懸浮窗與瀏海島仍會更新。外觀以固定時鐘的逐格輸出比對。
+
 ## 外觀
 
 設定的「外觀」提供黑、白、玻璃。黑與白是實色背景並固定深淺色；玻璃可跟隨系統或指定深淺色，保留既有透明度與模糊設定。未選擇時仍為深色玻璃。主視窗、統計、懸浮窗、設定與標題列一致；瀏海島與水珠保持純黑。規則見 [ADR-0008](adr/0008-app-appearance.md)。
+
+形態切換在主視窗建立後，先暖機整窗快照與懸浮窗的建立、排版及首次繪製，減少第一次切換時的同步準備。懸浮窗以透明 panel 完成預備後立即隱藏，不註冊滑鼠監聽、不保存位置；首次提示等真正顯示後才啟用。快照不保留，實際切換仍擷取當下內容，解析度、液體與淡入動畫的曲線及時長不變；系統開啟「減少動態效果」時略過此暖機。`FloatingWindowPreparationTests` 檢查隱藏預備、首次提示、位置設定、重用 panel 與同步建立主視窗的可見性。
+
+收進瀏海的交接在下一輪完成真島的排版與必要繪製後，才啟動內容淡入，取代固定等待 33 ms 的做法；實心 overlay 仍保留 150 ms，供原有的 120 ms 內容淡入完成。切換被取消時，`PresentationTransitions` 統一使過期交接回呼失效並撤除 overlay。`NotchIslandHandoffTests` 檢查正常交接與取消後不再出現；overlay 的生命週期測試只追蹤本次建立的 panel，避免其他並行視窗影響斷言。
+
+`PresentationController` 共用一個 `PresentationTransitions` 管理形態操作：新操作取代舊操作，取消涵蓋拖曳、彈回、落地、變形與吸入交接；拉出與拖出接續同一手勢時，保留原 overlay，但使上一階段的回呼失效。操作持有舞台、待執行工作與結束清理；真視窗接手後，淡出中的 overlay 仍可被下一個操作撤除。各 controller 保留滑鼠追蹤、幾何、曲線與時長，panel 局部淡出與尺寸調整仍各自管理，`PresentationModel` 仍是形態唯一真實來源。`PresentationTransitionsTests` 驗證接續、首格前取消、延後交接與淡出清理；`PresentationInterruptionTests` 穿過形態意圖，檢查拉出、拖出與收進瀏海被打斷後的真實視窗狀態。非同步測試必須持有 presenter 到驗收及清理結束。
 
 `AppAppearanceController` 統一 AppKit 外觀；共用背景依 `AppSettings.appearanceColorMode` 解析 SwiftUI 外觀。黑與白採石墨黑／暖瓷白的微弱漸層，`AppPalette` 統一數字、次要文字、軌道與按鈕，配色集中於 Asset Catalog；`TimerButtonStyle` 明確控制主按鈕文字。淺色玻璃參數在 `GlassStyle.light`，深色維持 `GlassStyle.standard`；Debug 玻璃調整面板目前調整深色參數。階段與超時配色在 Asset Catalog，深淺各有對應的低飽和配色。
 

@@ -9,6 +9,7 @@ import os
 final class PresentationController {
     let mainWindow = MainWindowBridge()
     private let presentationModel: PresentationModel
+    private let transitions = PresentationTransitions()
     private let island: NotchIslandController
     private let floating: FloatingWindowController
     /// 拖曳主視窗到瀏海附近放開就收進瀏海（#13）。
@@ -22,10 +23,10 @@ final class PresentationController {
     /// - Parameter model: 計時；只轉交給各介面顯示時間與階段色，形態不依賴它。
     init(model: AppModel, presentation: PresentationModel) {
         self.presentationModel = presentation
-        island = NotchIslandController(model: model, presentation: presentation)
-        floating = FloatingWindowController(model: model, presentation: presentation)
+        island = NotchIslandController(model: model, presentation: presentation, transitions: transitions)
+        floating = FloatingWindowController(model: model, presentation: presentation, transitions: transitions)
         dragTracker = MainWindowDragTracker(model: model, presentation: presentation, mainWindow: mainWindow)
-        tearOff = TearOffController(model: model, presentation: presentation, mainWindow: mainWindow, floating: floating)
+        tearOff = TearOffController(model: model, presentation: presentation, mainWindow: mainWindow, floating: floating, transitions: transitions)
         mainWindow.onClose = { [weak presentation] in presentation?.closeMainWindow() }
         mainWindow.onMiniaturize = { [weak presentation] in presentation?.minimizeMainWindow() }
         observe()
@@ -52,8 +53,16 @@ final class PresentationController {
     /// 啟動時保證至少一個介面可見（ADR-0001）：上次退出時主視窗是隱藏的，SwiftUI 不會還原它，
     /// 形態卻從「只有主視窗」開始。SwiftUI 正要自己建立時再要求一次也無妨（單一實例的 `Window`）。
     func ensureInterfaceVisible() {
-        guard presentationModel.presentation.showsMainWindow, mainWindow.window == nil else { return }
-        applyOnceMainWindowExists()
+        guard presentationModel.presentation.showsMainWindow else { return }
+        if mainWindow.window == nil { applyOnceMainWindowExists() }
+        // 等主視窗先完成建立，再準備隱藏的懸浮窗，不把首次切換的建置成本留到按鈕按下時。
+        mainWindow.withWindow { [weak self] in
+            DispatchQueue.main.async { [weak self] in
+                guard let self, !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion else { return }
+                _ = self.mainWindow.window?.themeFrameSnapshot()
+                self.floating.prepare()
+            }
+        }
     }
 
     /// 主視窗建立並 attach 後再套用形態，過場才拿得到視窗；排到下一輪，讓 SwiftUI 先定好視窗的 frame。
@@ -82,6 +91,12 @@ final class PresentationController {
         let next = change.presentation
         let transition = PresentationTransition.choose(from: applied, to: next, action: change.action, facts: facts())
         logger.debug("apply \(String(describing: next), privacy: .public): \(String(describing: transition), privacy: .public)")
+        // 放開後接續手上的舞台；其他形態操作連拖曳與彈回一起取代。
+        switch transition {
+        case .pullOut: transitions.cancel(except: island.pullOperation)
+        case .tearOffLanding: transitions.cancel(except: tearOff.operation)
+        default: transitions.cancel()
+        }
         if transition == .waitForMainWindow { return applyOnceMainWindowExists() }
         applied = next
         // 每次都取走：沒用到（例如島還在淡出）時不留到之後無關的收進

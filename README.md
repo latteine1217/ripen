@@ -108,7 +108,7 @@ Bug reports and ideas are welcome in [Issues](https://github.com/latteine1217/ri
 
 ## Development
 
-Building, testing, packaging, and the project layout are covered in [docs/development.md](docs/development.md). See [CONTRIBUTING.md](CONTRIBUTING.md) before opening a pull request.
+Building, testing, packaging, the project layout, and architecture notes on presentation transitions and timer display sampling are covered in [docs/development.md](docs/development.md). See [CONTRIBUTING.md](CONTRIBUTING.md) before opening a pull request.
 
 ## License
 

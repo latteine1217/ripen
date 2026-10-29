@@ -4,13 +4,13 @@ import SwiftUI
 
 /// 目前階段；專注時加上這是長休息間隔中的第幾次，例如「專注 · 2/4」。
 struct PhaseCaption: View {
-    let model: AppModel
+    let display: PhaseDisplay
 
     var body: some View {
-        let phase = model.phase
+        let phase = display.phase
         if phase == .focus {
-            let interval = model.longBreakInterval
-            Text("\(Text(phase.title)) · \(min(model.completedFocusesInCycle + 1, interval))/\(interval)")
+            let interval = display.longBreakInterval
+            Text("\(Text(phase.title)) · \(min(display.completedFocusesInCycle + 1, interval))/\(interval)")
         } else {
             Text(phase.title)
         }
@@ -19,23 +19,20 @@ struct PhaseCaption: View {
 
 /// 倒數中顯示結束時刻、暫停時顯示「已暫停」、超時中顯示「超時」；停在起點時沒有結束時刻，保留位置。
 struct EndCaption: View {
-    let model: AppModel
-    let status: TimerStatus
-    /// 由呼叫端在刷新時讀好傳入：超時是時間推導的值，不會發出觀察通知，
-    /// 自己讀的話跨過 0 時輸入不變、SwiftUI 不重算，要等下一次狀態改變才換成「超時」。
-    let isOvertime: Bool
+    let display: PhaseDisplay
+    let clockFormat: ClockFormat
 
     var body: some View {
-        let endTime = model.endDate.map {
+        let endTime = display.endDate.map {
             EndTimeFormat.string(
-                $0, clockFormat: model.settings.clockFormat,
+                $0, clockFormat: clockFormat,
                 language: EndTimeFormat.appLanguage, systemUses24Hour: EndTimeFormat.systemUses24Hour
             )
         }
         Group {
-            if status == .paused {
+            if display.status == .paused {
                 Text("Paused")
-            } else if isOvertime {
+            } else if display.isOvertime {
                 Text("Overtime")
             } else {
                 Text("Ends at \(endTime ?? "--:--")")
@@ -48,5 +45,5 @@ struct EndCaption: View {
 
 extension AppModel {
     /// 目前階段已過的比例 0…1；進度圈與進度條共用。
-    var phaseProgress: Double { 1 - remaining / phaseDuration }
+    var phaseProgress: Double { display.phaseProgress }
 }

@@ -13,14 +13,15 @@ struct TimerPageView: View {
 
     var body: some View {
         TimelineView(.countdownTick) { context in
-            let status = model.status
-            let phase = model.phase
-            let isOvertime = model.isOvertime
+            let display = model.display
+            let status = display.status
+            let phase = display.phase
+            let isOvertime = display.isOvertime
             VStack(spacing: 20) {
                 // 超時中剩餘時間為 0，圓環維持滿圈、以超時色標示
                 TimerRingView(
-                    progress: model.phaseProgress,
-                    timeText: model.timeText,
+                    progress: display.phaseProgress,
+                    timeText: display.timeText,
                     phaseTitle: phase.title,
                     isPaused: status == .paused,
                     isOvertime: isOvertime
@@ -29,11 +30,11 @@ struct TimerPageView: View {
                 .modifier(TearOffRing(tearOff: tearOff, diameter: Self.ringDiameter))
 
                 CycleProgressView(
-                    completed: model.completedFocusesInCycle,
-                    interval: model.longBreakInterval
+                    completed: display.completedFocusesInCycle,
+                    interval: display.longBreakInterval
                 )
 
-                endTime(model.endDate, isOvertime: isOvertime)
+                endTime(display.endDate, isOvertime: isOvertime)
                     .oneTimeHint(.overtimeDone, "Press Done to finish and record this phase",
                                  settings: model.settings, isActive: isOvertime)
                     // 跳過、重設、完成後暫時換成復原膠囊；這一列在新階段起點本來就是空的
@@ -42,7 +43,7 @@ struct TimerPageView: View {
                 controls(for: status, isOvertime: isOvertime)
             }
             .padding(32)
-            .tint(model.displayTint)
+            .tint(display.displayTint)
             // 減少動態效果時直接切換，不做過場
             .animation(reduceMotion ? nil : .easeInOut(duration: 0.2), value: status)
             .animation(reduceMotion ? nil : .easeInOut(duration: 0.35), value: phase)

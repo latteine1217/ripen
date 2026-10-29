@@ -33,32 +33,32 @@ struct NotchIslandView: View {
 
     var body: some View {
         TimelineView(.countdownTick) { context in
-            island
+            island(model.display)
                 // 主視窗不在畫面上時由島刷新，倒數到 0 後隨即送出提醒、進入超時
                 .onChange(of: context.date) { model.refresh() }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
     }
 
-    private var island: some View {
+    private func island(_ display: PhaseDisplay) -> some View {
         let expanded = state.isExpanded
         let pulling = state.isPulling
         let size = NotchGeometry.islandSize(notch: state.notch, expanded: expanded)
         let sag = state.isHovering && !pulling ? NotchGeometry.hoverSag : 0
         let radius = Self.cornerRadius(expanded: expanded)
         let shape = UnevenRoundedRectangle(bottomLeadingRadius: radius, bottomTrailingRadius: radius, style: .continuous)
-        return content(expanded: expanded)
+        return content(expanded: expanded, display: display)
             // 拉動時內容原地淡出、不跟著水珠走（瀏海島原型）
             .opacity(pulling ? 0 : 1)
             .animation(.easeOut(duration: 0.12), value: pulling)
             .frame(width: size.width, height: size.height + sag, alignment: .top)
             // 提醒在倒數到 0 時播出，閃的是該階段的超時色；鋪在內容底下、黑底之上，裁成島的形狀
-            .reminderFlash(model.lastReminder, tint: model.displayTint)
+            .reminderFlash(model.lastReminder, tint: display.displayTint)
             .background(shape.fill(.black.opacity(pulling ? 0 : 1)))
             .clipShape(shape)
             .contentShape(shape)
             .environment(\.colorScheme, .dark)
-            .tint(model.displayTint)
+            .tint(display.displayTint)
             // 減少動態效果時改為短暫的淡入淡出；下垂是位移，直接切換
             .animation(
                 reduceMotion ? .easeInOut(duration: 0.18) : .spring(response: 0.35, dampingFraction: 0.82),
@@ -67,28 +67,28 @@ struct NotchIslandView: View {
             .animation(reduceMotion ? nil : .spring(response: 0.3, dampingFraction: 0.7), value: sag)
     }
 
-    private func content(expanded: Bool) -> some View {
-        let status = model.status
+    private func content(expanded: Bool, display: PhaseDisplay) -> some View {
+        let status = display.status
         let isRunning = status == .running
-        let time = model.timeText
+        let time = display.timeText
         return VStack(spacing: 0) {
             // 上排落在瀏海兩翼：收合時是進度圈與時間，展開時是階段說明與結束時刻
             HStack {
                 if expanded {
-                    PhaseCaption(model: model)
+                    PhaseCaption(display: display)
                         .font(.system(size: 11, weight: .semibold, design: .rounded))
                         .foregroundStyle(.tint)
                         .undoCapsuleOverlay(model, compact: true, alignment: .leading)
                 } else {
-                    PhaseRing(progress: model.phaseProgress, isPaused: status == .paused)
+                    PhaseRing(progress: display.phaseProgress, isPaused: status == .paused)
                 }
                 Spacer(minLength: state.notch.rect.width)
                 if expanded {
-                    EndCaption(model: model, status: status, isOvertime: model.isOvertime)
+                    EndCaption(display: display, clockFormat: model.settings.clockFormat)
                         .font(.system(size: 11, weight: .medium, design: .rounded))
                         .foregroundStyle(.secondary)
                 } else {
-                    timeText(time, size: 14, dimmed: !isRunning, isOvertime: model.isOvertime)
+                    timeText(time, size: 14, dimmed: !isRunning, isOvertime: display.isOvertime)
                 }
             }
             .padding(.horizontal, expanded ? 16 : 12)
@@ -96,9 +96,9 @@ struct NotchIslandView: View {
 
             if expanded {
                 VStack(spacing: 10) {
-                    timeText(time, size: 34, dimmed: !isRunning, isOvertime: model.isOvertime)
-                    ProgressBar(progress: model.phaseProgress)
-                    controls(status: status, isOvertime: model.isOvertime)
+                    timeText(time, size: 34, dimmed: !isRunning, isOvertime: display.isOvertime)
+                    ProgressBar(progress: display.phaseProgress)
+                    controls(status: status, isOvertime: display.isOvertime)
                     // 把手：暗示整條島可以往下拉
                     Capsule().fill(.secondary.opacity(0.6)).frame(width: 28, height: 4)
                         .accessibilityHidden(true)
@@ -114,8 +114,8 @@ struct NotchIslandView: View {
         .accessibilityElement(children: expanded ? .contain : .ignore)
         .accessibilityLabel(Text("Notch Island"))
         .accessibilityValue(status == .paused
-            ? Text("\(Text(model.phase.title)), paused, \(time)")
-            : Text("\(Text(model.phase.title)), \(time)"))
+            ? Text("\(Text(display.phase.title)), paused, \(time)")
+            : Text("\(Text(display.phase.title)), \(time)"))
     }
 
     private func timeText(_ time: String, size: CGFloat, dimmed: Bool, isOvertime: Bool) -> some View {

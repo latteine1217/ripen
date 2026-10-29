@@ -22,12 +22,12 @@ final class NotchPullController {
     private let state: NotchIslandState
     private var timer: Timer?
     private var drag: PullDrag?
-    private var overlay: TransitionOverlay?
+    private let transitions: PresentationTransitions
+    private(set) var operation: PresentationTransitions.Operation?
+    private var overlay: TransitionOverlay? { operation?.overlay }
     private let amount = PullAmount()
     /// 被拉的島的尺寸與下緣圓角，在液體出現時記下；拉動中島若被換階段展開，水珠形狀也不會跳。
     private var pulledIsland = (size: CGSize.zero, radius: CGFloat(0))
-    /// 每次結束或取消加一；舊的動畫完成回呼若已被取代就不再動作。
-    private var session = 0
     /// 拖曳中的島 panel 與所在螢幕；只在追蹤期間有值。
     private weak var trackingPanel: NSPanel?
     private var trackingScreen: NSScreen?
@@ -37,9 +37,24 @@ final class NotchPullController {
     /// 正在拖曳，或液體還在畫面上（彈回、過場中）；這段期間島的 hover 不插手。
     var isActive: Bool { drag?.isDragging == true || overlay != nil }
 
-    init(presentation: PresentationModel, state: NotchIslandState) {
+    init(presentation: PresentationModel, state: NotchIslandState, transitions: PresentationTransitions) {
+        self.transitions = transitions
         self.presentation = presentation
         self.state = state
+    }
+
+    @discardableResult
+    private func beginOperation(continuing previous: PresentationTransitions.Operation? = nil) -> PresentationTransitions.Operation {
+        let operation = transitions.begin(continuing: previous)
+        if self.operation !== operation {
+            self.operation = operation
+            operation.onEnd { [weak self] in
+                self?.releasePoint = nil
+                self?.stopTracking()
+                self?.endPull()
+            }
+        }
+        return operation
     }
 
     // MARK: - 拖曳
@@ -47,6 +62,7 @@ final class NotchPullController {
     /// 在島上按下滑鼠：開始輪詢游標；超過拖曳門檻才真的開始拉。
     func mouseDown(panel: NSPanel, screen: NSScreen) {
         guard timer == nil, overlay == nil else { return }
+        beginOperation()
         releasePoint = nil
         drag = PullDrag(start: NSEvent.mouseLocation)
         trackingPanel = panel
@@ -72,7 +88,10 @@ final class NotchPullController {
         }
         guard NSEvent.pressedMouseButtons & 1 == 0 else { return }
         stopTracking()
-        guard drag.isDragging else { return }
+        guard drag.isDragging else {
+            operation?.cancel()
+            return
+        }
         if drag.isReleased, presentation.allows(.expandNotchIsland) {
             // 液體留在畫面上，由 pullOut 接著長成主視窗；主視窗擺在放開處（使用者 2026-10-28 決定）
             releasePoint = NSEvent.mouseLocation
@@ -93,7 +112,7 @@ final class NotchPullController {
     /// 島的黑底與內容讓給液體：overlay 排在島的 panel 下方，內容在液體之上淡出、不跟著走。
     private func beginPull(panel: NSPanel, screen: NSScreen) {
         let overlay = TransitionOverlay(screen: screen)
-        self.overlay = overlay
+        operation?.use(overlay)
         amount.value = 0
         overlay.show(liquid(in: overlay), below: panel)
         state.isPulling = true
@@ -108,38 +127,31 @@ final class NotchPullController {
 
     /// 還沒變成正圓就放開：吸回瀏海。阻尼偏高，收得乾脆、不來回晃（瀏海島原型）。
     private func snapBack() {
-        let current = session
+        guard let operation else { return }
         let animation: Animation = NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
             ? .easeOut(duration: 0.15) : .spring(response: 0.32, dampingFraction: 0.78)
-        withAnimation(animation, completionCriteria: .logicallyComplete) {
+        operation.animate(animation, changes: {
             amount.value = 0
-        } completion: { [weak self] in
-            guard let self, self.session == current else { return }
-            self.endPull()
-        }
+        }, completion: { operation.cancel() })
     }
 
     /// 島的黑底先回來，再撤 overlay：島的 panel 在上層，交接時不會露出空白。
     private func endPull() {
-        session += 1
         state.isPulling = false
-        overlay?.close()
-        overlay = nil
+        operation = nil
     }
 
     /// 停止拖曳並撤掉液體，不播動畫（島重新顯示時）。
     func cancel() {
-        releasePoint = nil
-        stopTracking()
-        endPull()
+        operation?.cancel()
     }
 
     /// 減少動態效果時的拉出：液體淡出，島維持拉動中的樣子直到 panel 淡出，不再閃回原樣。
     func fadeAway(duration: TimeInterval) {
         stopTracking()
-        session += 1
-        overlay?.fadeOut(duration: duration)
-        overlay = nil
+        let operation = operation
+        self.operation = nil
+        operation?.finish(fadeDuration: duration)
     }
 
     // MARK: - 過場
@@ -169,9 +181,7 @@ final class NotchPullController {
         reveal: @escaping @MainActor (TimeInterval) -> Void
     ) {
         stopTracking()
-        // 取代彈回等尚未完成的動畫
-        session += 1
-        let current = session
+        let operation = beginOperation(continuing: operation)
         let target = window.frame
         let snapshot = window.themeFrameSnapshot()
 
@@ -180,24 +190,22 @@ final class NotchPullController {
             overlay = existing
         } else {
             overlay = TransitionOverlay(screen: screen)
-            self.overlay = overlay
+            operation.use(overlay)
             amount.value = 0
             overlay.show(liquid(in: overlay), below: panel)
             state.isPulling = true
         }
-        let morph = { [weak self] in
-            guard let self, self.session == current else { return }
+        let morph = operation.callback { [weak self] in
+            guard let self else { return }
             self.morph(overlay: overlay, into: target, snapshot: snapshot, removeIsland: removeIsland, reveal: reveal)
         }
         guard amount.value < PullGeometry.threshold else { return morph() }
         // 「展開」按鈕、Dock 與選單列：自動播一次拉成水珠，看一次就學會可以往下拉
-        overlay.afterFirstFrame { [weak self] in
-            guard let self, self.session == current else { return }
-            withAnimation(.easeIn(duration: Self.autoPullDuration), completionCriteria: .logicallyComplete) {
+        operation.afterFirstFrame { [weak self] in
+            guard let self else { return }
+            operation.animate(.easeIn(duration: Self.autoPullDuration), changes: {
                 amount.value = PullGeometry.threshold * Self.autoPullOvershoot
-            } completion: {
-                morph()
-            }
+            }, completion: morph)
         }
     }
 
@@ -206,7 +214,7 @@ final class NotchPullController {
         removeIsland: @escaping @MainActor () -> Void,
         reveal: @escaping @MainActor (TimeInterval) -> Void
     ) {
-        let current = session
+        guard let operation else { return }
         let notch = overlay.local(state.notch.rect)
         let g = PullGeometry(pull: amount.value, islandSize: pulledIsland.size, baseRadius: pulledIsland.radius,
                              notchWidth: notch.width)
@@ -219,12 +227,9 @@ final class NotchPullController {
         // overlay 第一格已畫出同一顆水珠，島的 panel 可以直接撤掉
         removeIsland()
         state.isPulling = false
-        overlay.play(.timingCurve(0.2, 0.9, 0.3, 1, duration: Self.morphDuration)) { [weak self] in
-            guard let self, self.session == current else { return }
+        operation.play(.timingCurve(0.2, 0.9, 0.3, 1, duration: Self.morphDuration)) {
             reveal(Self.crossFadeDuration)
-            self.overlay = nil
-            self.session += 1
-            overlay.fadeOut(duration: Self.crossFadeDuration)
+            operation.finish(fadeDuration: Self.crossFadeDuration)
         }
     }
 }

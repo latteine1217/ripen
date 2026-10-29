@@ -23,9 +23,11 @@ final class FloatingWindowController {
     private let presentation: PresentationModel
     private let state = FloatingWindowState()
     private var panel: FloatingWindowPanel?
-    /// 正在播放的主視窗 ⇄ 懸浮窗過場。
-    private var morphing: TransitionOverlay?
-    /// 每次顯示、隱藏或過場加一；舊的動畫結束時若已被新的操作取代，就不再動 panel。
+    private let transitions: PresentationTransitions
+    /// 主視窗 ⇄ 懸浮窗的操作，包含結尾交叉淡化。
+    private var operation: PresentationTransitions.Operation?
+    private var morphing: Bool { operation?.isActive == true }
+    /// panel 顯示、隱藏與尺寸調整的局部序號；跨視窗過場由 transitions 管理。
     private var generation = 0
     private var dragStart: (mouse: CGPoint, origin: CGPoint)?
     /// 拖角落：拖的角、按下時的游標與玻璃；panel 此時撐滿 `screenFrame`。
@@ -38,7 +40,8 @@ final class FloatingWindowController {
     /// 玻璃本體的全域座標（左下原點）。
     private(set) var glassFrame: CGRect = .zero
 
-    init(model: AppModel, presentation: PresentationModel) {
+    init(model: AppModel, presentation: PresentationModel, transitions: PresentationTransitions = PresentationTransitions()) {
+        self.transitions = transitions
         self.model = model
         self.presentation = presentation
     }
@@ -55,6 +58,21 @@ final class FloatingWindowController {
 
     // MARK: - 顯示與隱藏
 
+    /// 主視窗出現後先準備隱藏的懸浮窗，避免第一次按黃色按鈕時才建立與排版。
+    /// 不顯示、不註冊滑鼠監聽，也不寫入尚未使用的位置。
+    func prepare() {
+        guard panel == nil else { return }
+        let panel = makePanel()
+        let size = rememberedSize
+        withoutAnimation {
+            state.size = FloatingWindowSize(height: size.height)
+            state.glassFrame = CGRect(origin: CGPoint(x: Self.margin, y: Self.margin), size: size)
+        }
+        panel.setFrame(Self.panelFrame(for: CGRect(origin: .zero, size: size)), display: false)
+        // 以透明視窗先完成首張快照，暖機繪圖管線；不保留會隨計時變舊的畫面。
+        _ = glassSnapshot(of: panel)
+    }
+
     /// 在記住的位置（沒有就在主視窗右上角附近）淡入；已在畫面上時不動。
     func show(near mainWindowFrame: CGRect?) {
         stopResizing()
@@ -62,6 +80,7 @@ final class FloatingWindowController {
         generation += 1
         let panel = self.panel ?? makePanel()
         resetDismissal()
+        state.isPresented = true
         installMouseMonitors()
         if !panel.isVisible {
             place(targetFrame(near: mainWindowFrame))
@@ -90,6 +109,7 @@ final class FloatingWindowController {
         } completion: { [weak self] in
             guard let self, self.generation == current else { return }
             panel.orderOut(nil)
+            self.state.isPresented = false
             self.removeMouseMonitors()
             self.resetDismissal()
         }
@@ -109,6 +129,7 @@ final class FloatingWindowController {
             MainActor.assumeIsolated {
                 guard let self, self.generation == current else { return }
                 panel.orderOut(nil)
+                self.state.isPresented = false
                 panel.alphaValue = 1
                 self.removeMouseMonitors()
             }
@@ -150,6 +171,7 @@ final class FloatingWindowController {
         generation += 1
         let panel = self.panel ?? makePanel()
         resetDismissal()
+        state.isPresented = true
         installMouseMonitors()
         place(frame)
         panel.alphaValue = 1
@@ -167,7 +189,6 @@ final class FloatingWindowController {
         let existing = isVisible && !state.isDismissing
         cancelMorph()
         generation += 1
-        let current = generation
         let panel = self.panel ?? makePanel()
         installMouseMonitors()
         if !existing {
@@ -183,7 +204,10 @@ final class FloatingWindowController {
             return
         }
         let overlay = TransitionOverlay(screen: screen)
-        morphing = overlay
+        let operation = transitions.begin()
+        self.operation = operation
+        operation.use(overlay)
+        operation.onEnd { [weak self] in self?.operation = nil }
         let from = overlay.local(window.frame)
         let to = overlay.local(glassFrame)
         let windowSnapshot = window.themeFrameSnapshot()
@@ -200,12 +224,13 @@ final class FloatingWindowController {
         // overlay 第一格就是主視窗快照，真視窗在它下面淡出
         dismissMain(NotchPullController.crossFadeDuration)
         let c = FloatingMorph.curve
-        overlay.play(.timingCurve(c.x1, c.y1, c.x2, c.y2, duration: FloatingMorph.duration)) { [weak self] in
-            guard let self, self.generation == current else { return }
+        operation.play(.timingCurve(c.x1, c.y1, c.x2, c.y2, duration: FloatingMorph.duration)) { [weak self] in
+            guard let self else { return }
             // 真懸浮窗排到 overlay 下方，overlay 淡出即交叉淡化
             panel.alphaValue = 1
             panel.orderFrontRegardless()
-            self.finishMorph(overlay)
+            self.state.isPresented = true
+            operation.finish(fadeDuration: NotchPullController.crossFadeDuration)
         }
     }
 
@@ -224,9 +249,11 @@ final class FloatingWindowController {
             return
         }
         generation += 1
-        let current = generation
         let overlay = TransitionOverlay(screen: screen)
-        morphing = overlay
+        let operation = transitions.begin()
+        self.operation = operation
+        operation.use(overlay)
+        operation.onEnd { [weak self] in self?.operation = nil }
         let from = overlay.local(window.frame)
         let to = overlay.local(glassFrame)
         // 主視窗隱藏中時快照可能是舊畫面；結尾與真視窗交叉淡化會蓋過
@@ -242,12 +269,12 @@ final class FloatingWindowController {
         })
         // overlay 第一格已畫出同一個懸浮窗，直接撤掉真的
         panel.orderOut(nil)
+        state.isPresented = false
         removeMouseMonitors()
         let c = FloatingMorph.expandCurve
-        overlay.play(.timingCurve(c.x1, c.y1, c.x2, c.y2, duration: FloatingMorph.expandDuration)) { [weak self] in
-            guard let self, self.generation == current else { return }
+        operation.play(.timingCurve(c.x1, c.y1, c.x2, c.y2, duration: FloatingMorph.expandDuration)) {
             reveal(NotchPullController.crossFadeDuration)
-            self.finishMorph(overlay)
+            operation.finish(fadeDuration: NotchPullController.crossFadeDuration)
         }
     }
 
@@ -263,18 +290,8 @@ final class FloatingWindowController {
         return panel.snapshot(of: glassFrame)
     }
 
-    private func finishMorph(_ overlay: TransitionOverlay) {
-        overlay.fadeOut(duration: NotchPullController.crossFadeDuration) { [weak self] in
-            if self?.morphing === overlay { self?.morphing = nil }
-        }
-    }
-
-    /// 撤掉播到一半的過場（被其他形態變化取代時）；呼叫端之後才記下新的 `generation`。
     private func cancelMorph() {
-        guard let morphing else { return }
-        generation += 1
-        morphing.close()
-        self.morphing = nil
+        operation?.cancel()
     }
 
     // MARK: - 拖曳與貼邊
@@ -286,7 +303,7 @@ final class FloatingWindowController {
         case .changed:
             let mouse = NSEvent.mouseLocation
             if dragStart == nil {
-                guard panel.isVisible, morphing == nil, resizing == nil, !state.isDismissing else { return }
+                guard panel.isVisible, !morphing, resizing == nil, !state.isDismissing else { return }
                 // 剛放開角落、panel 還撐滿螢幕時就開始移動：先縮回，移動才以玻璃加 margin 計算
                 if state.isResizing {
                     generation += 1
@@ -391,7 +408,7 @@ final class FloatingWindowController {
             if resizing != nil { endResizing() }
             return
         }
-        guard resizing == nil, !ignoresCornerUntilRelease, let panel, panel.isVisible, morphing == nil,
+        guard resizing == nil, !ignoresCornerUntilRelease, let panel, panel.isVisible, !morphing,
               dragStart == nil, !state.isDismissing,
               let area = FloatingWindowPlacement.screen(for: glassFrame, in: Self.screenAreas) else { return }
         generation += 1
