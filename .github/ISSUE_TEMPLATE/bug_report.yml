@@ -1,0 +1,82 @@
+name: Bug report
+description: Something in Ripen doesn't work as expected.
+labels: [bug, needs-triage]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report this. English or 繁體中文 are both fine.
+  - type: input
+    id: version
+    attributes:
+      label: Ripen version
+      description: Ripen menu › About Ripen.
+      placeholder: "0.1.0"
+    validations:
+      required: true
+  - type: input
+    id: macos
+    attributes:
+      label: macOS version
+      description:  › About This Mac.
+      placeholder: "macOS 15.1"
+    validations:
+      required: true
+  - type: dropdown
+    id: mac
+    attributes:
+      label: Display
+      description: Where Ripen was running when this happened.
+      options:
+        - Built-in display with a notch
+        - Built-in display without a notch
+        - External display
+    validations:
+      required: true
+  - type: dropdown
+    id: presentation
+    attributes:
+      label: Where in Ripen
+      multiple: true
+      options:
+        - Main window
+        - Floating window
+        - Notch island
+        - Menu bar
+        - Settings
+        - Statistics
+        - Check for Updates
+        - Other
+    validations:
+      required: true
+  - type: dropdown
+    id: appearance
+    attributes:
+      label: Appearance
+      options:
+        - Glass
+        - Black
+        - White
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Start a focus
+        2. Drag the timer ring out of the main window
+        3. ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: What happened instead
+      description: Screenshots or a short screen recording help a lot.
+    validations:
+      required: true

@@ -8,7 +8,9 @@
 
 原生 macOS 番茄鐘，以磨砂玻璃呈現，放在主視窗、懸浮窗，或你的螢幕瀏海。
 
+[![Latest release](https://img.shields.io/github/v/release/latteine1217/ripen?color=da443b)](https://github.com/latteine1217/ripen/releases/latest)
 [![macOS 14+](https://img.shields.io/badge/macOS-14%2B-000000?logo=apple&logoColor=white)](#安裝)
+[![CI](https://github.com/latteine1217/ripen/actions/workflows/ci.yml/badge.svg)](https://github.com/latteine1217/ripen/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 [English](README.md) · 繁體中文
@@ -76,13 +78,20 @@
 
 ## 安裝
 
-1. 從 [GitHub Releases](https://github.com/latteine1217/ripen/releases) 下載 `Ripen-<version>.dmg`（需要 macOS 14 Sonoma 以上）。
-2. 打開 dmg，把 **Ripen** 拖到 **Applications** 捷徑上。
-3. Ripen 只有 ad-hoc 簽章、未經 Apple 公證，第一次打開會被 Gatekeeper 擋下：
+需要 macOS 14 Sonoma 以上。
+
+1. 以 [Homebrew](https://brew.sh) 安裝：
+
+   ```sh
+   brew install --cask latteine1217/tap/ripen
+   ```
+
+   或從 [GitHub Releases](https://github.com/latteine1217/ripen/releases) 下載 `Ripen-<version>.dmg`，打開後把 **Ripen** 拖到 **Applications** 捷徑上。
+2. Ripen 只有 ad-hoc 簽章、未經 Apple 公證，第一次打開會被 Gatekeeper 擋下：
    - **macOS 14**：在「應用程式」資料夾對 Ripen 按右鍵（或 Control 點按）選「打開」，再於對話框按「打開」。
    - **macOS 15 以上**：先雙擊 Ripen 讓系統擋下，再到「系統設定 › 隱私權與安全性」，在下方找到 Ripen 按「強制打開」並確認。
 
-之後就能正常雙擊打開。
+之後就能正常雙擊打開。各版本的更新內容見 [更新紀錄](CHANGELOG.md)。
 
 ## 接下來
 
@@ -95,11 +104,11 @@
 
 <a href="https://ko-fi.com/latteine1217"><img src="https://storage.ko-fi.com/cdn/kofi5.png?v=6" height="48" alt="在 Ko-fi 支持 Ripen"></a>
 
-問題回報與建議請到 [Issues](https://github.com/latteine1217/ripen/issues)。
+問題回報與建議請到 [Issues](https://github.com/latteine1217/ripen/issues)。安全性問題請依 [SECURITY.md](SECURITY.md) 私下回報。
 
 ## 開發
 
-建置、測試、打包與專案結構見 [docs/development.md](docs/development.md)。
+建置、測試、打包與專案結構見 [docs/development.md](docs/development.md)。送出 pull request 前請先看 [CONTRIBUTING.md](CONTRIBUTING.md)。
 
 ## 授權
 

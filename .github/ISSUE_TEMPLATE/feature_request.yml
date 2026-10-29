@@ -1,0 +1,27 @@
+name: Feature request
+description: Suggest an idea or an improvement for Ripen.
+labels: [enhancement, needs-triage]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Check the [Roadmap](https://github.com/latteine1217/ripen#roadmap) and existing issues first. English or 繁體中文 are both fine.
+  - type: textarea
+    id: problem
+    attributes:
+      label: What are you trying to do?
+      description: Describe the situation or the problem, not only the solution.
+      placeholder: When I switch between two displays, I want ...
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: Your idea
+      description: How you imagine Ripen could help. Sketches or mockups are welcome.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Workarounds you use today

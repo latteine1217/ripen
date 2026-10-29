@@ -25,11 +25,15 @@ xcodebuild test -project Ripen.xcodeproj -scheme Ripen -destination 'platform=ma
 
 腳本會以 Release 設定建置 universal（arm64 + x86_64）的 `Ripen.app`，產生 `dist/Ripen-<version>.dmg`，內含拖到 `Applications` 的捷徑。安裝視窗的排版（600×400 背景、圖示位置、上方的安裝說明）由 `dmgbuild` 依 `scripts/dmg-settings.py` 直接寫入，不操作 Finder；腳本以 `uv` 取得固定版本的 dmgbuild。背景改動時執行 `swift scripts/generate-dmg-background.swift` 重建 `scripts/dmg/` 的 1x／2x 圖，圖示座標須與設定檔一致。上傳前重新掛載 dmg 核對版本與簽章，並比對 SHA-256，`dist/` 裡的檔案可能在安裝測試時被 Finder 改動。中間產物在 `build/release/`，`build/` 與 `dist/` 都不進 git。
 
-腳本不會上傳。發佈時手動建立 GitHub Release 並附上 dmg，例如：
+腳本不會上傳。發佈前先在 `CHANGELOG.md` 加上新版本的段落，再手動建立 GitHub Release 並附上 dmg，release notes 取自該段落，例如：
 
 ```sh
 gh release create v0.1.0 dist/Ripen-0.1.0.dmg --title "Ripen 0.1.0" --notes "..."
 ```
+
+Release 發佈後更新 [latteine1217/homebrew-tap](https://github.com/latteine1217/homebrew-tap) 的 `Casks/ripen.rb`：把 `version` 改成新版本，`sha256` 改成 GitHub 為 dmg 算出的雜湊（`gh api repos/latteine1217/ripen/releases/latest --jq '.assets[].digest'`），以 `brew style` 與 `brew audit --cask --online latteine1217/tap/ripen` 檢查後推上。Cask 設定 `auto_updates true`，使用者也可以在 App 內更新。
+
+每次 push 與 pull request 由 `.github/workflows/ci.yml` 在 macOS runner 上產生專案並執行完整測試；只改 `website/`、`docs/` 或 Markdown 時不觸發。失敗時 xcresult 會上傳為 `test-results` artifact。
 
 App 內的「檢查更新…」依賴這個格式（ADR-0009）：標籤為 `v<版本>`、不是 draft 或 prerelease，且附件名稱必須是 `Ripen-<版本>.dmg`，dmg 根目錄有 `Ripen.app`，其 bundle id 與 `CFBundleShortVersionString` 與標籤一致。安裝前以 GitHub 為附件算出的 SHA-256（API 的 `digest` 欄位）核對下載內容；缺少雜湊或任何一項不符時不自動安裝，設定裡改提供下載頁連結。
 
@@ -58,6 +62,14 @@ swift scripts/generate-brand-assets.swift
 ```
 
 腳本產生 `AppIcon.appiconset` 的 16–1024 像素圖標與兩種語言的 `showcase.png`。展示圖使用各語言目錄中的 `main.jpg`、`floating-medium.jpg` 與 `notch.jpg` 原始截圖；圖上標題與標籤統一使用英文。圖標首次加入或資產位置改動後，重新執行 `xcodegen generate` 再建置。
+
+GitHub 分享預覽圖 `docs/images/brand/social-preview.png`（1280×640）由 `scripts/social-preview.html` 以 headless Chrome 截圖產生，更新後須在 repo 的 Settings › Social preview 手動上傳：
+
+```sh
+"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --headless=new --hide-scrollbars \
+  --force-device-scale-factor=1 --window-size=1280,640 --allow-file-access-from-files \
+  --screenshot="$PWD/docs/images/brand/social-preview.png" "file://$PWD/scripts/social-preview.html"
+```
 
 產品截圖採用使用者確認的彩色漸層背景，中英文各九張：玻璃及暖瓷白主視窗、三尺寸懸浮窗、瀏海島收合／展開、超時及統計。`docs/images/en/` 與 `zh-Hant/` 保存供 README 使用的 JPEG，`website/assets/` 使用同一批繁中素材；網站首屏採暖瓷白，形態展示保留玻璃。原始 PNG、拍攝副本與工具保留於 `build/screenshots-20261029/`。
 
@@ -124,4 +136,5 @@ uv run python -m http.server 4173 --bind 127.0.0.1 --directory website
 
 - [GLOSSARY.md](../GLOSSARY.md)：領域用詞
 - [docs/adr/](adr/)：設計決策紀錄
-- [STATUS.md](../STATUS.md)：進度與待辦
+- [CHANGELOG.md](../CHANGELOG.md)：各版本的使用者可見變更
+- [CONTRIBUTING.md](../CONTRIBUTING.md)：回報問題與送出 pull request 的方式

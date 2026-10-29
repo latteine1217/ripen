@@ -1,0 +1,44 @@
+<!doctype html>
+<!-- GitHub social preview（1280×640）。重建方式見 docs/development.md「圖標與產品展示」。 -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<style>
+  :root { --paper: #f7f8f2; --ink: #253d33; --muted: #607068; --coral: #da443b; --mint: #bbd9ca; }
+  html, body { margin: 0; width: 1280px; height: 640px; overflow: hidden; }
+  body {
+    background: radial-gradient(circle at 78% 55%, #e3ede4 0, var(--paper) 62%);
+    color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang TC", sans-serif;
+    font-synthesis: none;
+    display: flex; align-items: center;
+  }
+  .copy { width: 460px; padding-left: 88px; flex: none; }
+  .icon { width: 112px; height: 112px; border-radius: 26px; box-shadow: 0 10px 30px rgba(37, 61, 51, .16); }
+  h1 { font-size: 84px; letter-spacing: -2px; margin: 26px 0 6px; line-height: 1; }
+  .tagline { font-size: 34px; font-weight: 600; margin: 0 0 22px; }
+  .detail { font-size: 22px; line-height: 1.45; color: var(--muted); margin: 0 0 30px; }
+  .pill {
+    display: inline-block; font-size: 18px; font-weight: 600; color: #fff; background: var(--coral);
+    padding: 9px 18px; border-radius: 999px;
+  }
+  .shots { position: relative; flex: none; width: 820px; height: 640px; }
+  .shots img { position: absolute; border-radius: 22px; box-shadow: 0 20px 44px rgba(37, 61, 51, .22); }
+  .main { height: 540px; top: 50px; left: 230px; }
+  .floating { width: 340px; top: 320px; left: 40px; }
+</style>
+</head>
+<body>
+  <div class="copy">
+    <img class="icon" src="../docs/images/brand/app-icon.png" alt="">
+    <h1>Ripen</h1>
+    <p class="tagline">A little space for focus.</p>
+    <p class="detail">A native macOS Pomodoro timer with frosted glass, a floating window, and a home in your notch.</p>
+    <span class="pill">Free for macOS 14+</span>
+  </div>
+  <div class="shots">
+    <img class="main" src="../docs/images/en/main.jpg" alt="">
+    <img class="floating" src="../docs/images/en/floating-medium.jpg" alt="">
+  </div>
+</body>
+</html>

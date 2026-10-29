@@ -8,7 +8,9 @@
 
 A native macOS Pomodoro timer with frosted glass, floating windows, and a home in your notch.
 
+[![Latest release](https://img.shields.io/github/v/release/latteine1217/ripen?color=da443b)](https://github.com/latteine1217/ripen/releases/latest)
 [![macOS 14+](https://img.shields.io/badge/macOS-14%2B-000000?logo=apple&logoColor=white)](#install)
+[![CI](https://github.com/latteine1217/ripen/actions/workflows/ci.yml/badge.svg)](https://github.com/latteine1217/ripen/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 English · [繁體中文](README.zh-Hant.md)
@@ -76,13 +78,20 @@ The Statistics page shows today's focus count and minutes, plus a chart of the l
 
 ## Install
 
-1. Download `Ripen-<version>.dmg` from [GitHub Releases](https://github.com/latteine1217/ripen/releases). Ripen requires macOS 14 Sonoma or later.
-2. Open the dmg and drag **Ripen** onto the **Applications** shortcut.
-3. Ripen is ad-hoc signed and not notarized by Apple, so Gatekeeper blocks the first launch:
+Ripen requires macOS 14 Sonoma or later.
+
+1. Install with [Homebrew](https://brew.sh):
+
+   ```sh
+   brew install --cask latteine1217/tap/ripen
+   ```
+
+   Or download `Ripen-<version>.dmg` from [GitHub Releases](https://github.com/latteine1217/ripen/releases), open it, and drag **Ripen** onto the **Applications** shortcut.
+2. Ripen is ad-hoc signed and not notarized by Apple, so Gatekeeper blocks the first launch:
    - **macOS 14**: in the Applications folder, right-click (or Control-click) Ripen, choose **Open**, then click **Open** in the dialog.
    - **macOS 15 and later**: double-click Ripen so macOS blocks it, then open **System Settings › Privacy & Security**, find Ripen near the bottom, click **Open Anyway**, and confirm.
 
-After that, Ripen opens normally.
+After that, Ripen opens normally. Release notes for every version are in the [changelog](CHANGELOG.md).
 
 ## Roadmap
 
@@ -95,11 +104,11 @@ If Ripen helps you focus, you can support its development on Ko-fi.
 
 <a href="https://ko-fi.com/latteine1217"><img src="https://storage.ko-fi.com/cdn/kofi5.png?v=6" height="48" alt="Support Ripen on Ko-fi"></a>
 
-Bug reports and ideas are welcome in [Issues](https://github.com/latteine1217/ripen/issues).
+Bug reports and ideas are welcome in [Issues](https://github.com/latteine1217/ripen/issues). Please report security issues privately, as described in [SECURITY.md](SECURITY.md).
 
 ## Development
 
-Building, testing, packaging, and the project layout are covered in [docs/development.md](docs/development.md).
+Building, testing, packaging, and the project layout are covered in [docs/development.md](docs/development.md). See [CONTRIBUTING.md](CONTRIBUTING.md) before opening a pull request.
 
 ## License
 

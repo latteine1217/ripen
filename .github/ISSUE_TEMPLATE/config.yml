@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Report a security vulnerability
+    url: https://github.com/latteine1217/ripen/security/advisories/new
+    about: Please report security issues privately instead of opening a public issue.
+  - name: Ripen website
+    url: https://latteine1217.github.io/ripen/
+    about: Features, screenshots and the latest download.
