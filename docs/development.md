@@ -71,7 +71,7 @@ GitHub 分享預覽圖 `docs/images/brand/social-preview.png`（1280×640）由 
   --screenshot="$PWD/docs/images/brand/social-preview.png" "file://$PWD/scripts/social-preview.html"
 ```
 
-產品截圖採用使用者確認的彩色漸層背景，中英文各九張：玻璃及暖瓷白主視窗、三尺寸懸浮窗、瀏海島收合／展開、超時及統計。`docs/images/en/` 與 `zh-Hant/` 保存供 README 使用的 JPEG，`website/assets/` 使用同一批繁中素材；網站首屏採暖瓷白，形態展示保留玻璃。原始 PNG、拍攝副本與工具保留於 `build/screenshots-20261029/`。
+產品截圖採用彩色漸層背景，中英文各九張：玻璃及暖瓷白主視窗、三尺寸懸浮窗、瀏海島收合／展開、超時及統計。`docs/images/en/` 與 `zh-Hant/` 保存供 README 使用的 JPEG，`website/assets/` 使用同一批繁中素材；網站首屏採暖瓷白，形態展示保留玻璃。原始 PNG、拍攝副本與工具保留於 `build/screenshots-20261029/`。
 
 拍攝採不同 bundle id、隔離設定與記憶體專注紀錄。只在 `staged/` 副本設定固定時鐘、隱藏首次引導、停用提示音與全域快速鍵；倒數固定為 18:42，超時固定為 +03:17。`backdrop.swift` 開啟不接收滑鼠的彩色背景，不改系統桌布；`capture-all.py` 以 `screencapture` 擷取真實視窗及陰影，完成後結束拍攝 App、背景與保持喚醒程序。統計的七日次數為展示資料 `[5,7,4,8,6,3,4]`，每次 25 分鐘，僅存在拍攝副本的記憶體；README 在圖片旁明示其用途。
 
