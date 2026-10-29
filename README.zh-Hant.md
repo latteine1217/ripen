@@ -13,7 +13,7 @@
 
 [English](README.md) · 繁體中文
 
-[產品介紹](https://latteine1217.github.io/ripen/) · [安裝方式](#安裝) · [完整功能](#功能) · [版本下載](https://github.com/latteine1217/ripen/releases) · [問題回報](https://github.com/latteine1217/ripen/issues)
+[產品介紹（繁體中文 / English）](https://latteine1217.github.io/ripen/) · [安裝方式](#安裝) · [完整功能](#功能) · [版本下載](https://github.com/latteine1217/ripen/releases) · [問題回報](https://github.com/latteine1217/ripen/issues)
 
 <img src="docs/images/zh-Hant/showcase.png" width="1000" alt="Ripen 的三種呈現：主視窗計時、瀏海島，以及永遠置頂的懸浮窗">
 

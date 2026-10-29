@@ -13,7 +13,7 @@ A native macOS Pomodoro timer with frosted glass, floating windows, and a home i
 
 English · [繁體中文](README.zh-Hant.md)
 
-[Website](https://latteine1217.github.io/ripen/) · [Installation](#install) · [Features](#features) · [Releases](https://github.com/latteine1217/ripen/releases) · [Report an issue](https://github.com/latteine1217/ripen/issues)
+[Website (繁體中文 / English)](https://latteine1217.github.io/ripen/) · [Installation](#install) · [Features](#features) · [Releases](https://github.com/latteine1217/ripen/releases) · [Report an issue](https://github.com/latteine1217/ripen/issues)
 
 <img src="docs/images/en/showcase.png" width="1000" alt="Ripen in three presentations: the main timer window, the notch island, and an always-on-top floating window">
 

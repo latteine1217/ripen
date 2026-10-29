@@ -18,6 +18,7 @@
       <a href="#experience">看看 Ripen</a>
       <a href="#questions">常見問題</a>
       <a class="nav-support" href="https://ko-fi.com/latteine1217" target="_blank" rel="noopener noreferrer">支持開發<span class="sr-only">（另開分頁）</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h12v7a6 6 0 0 1-12 0V7Zm12 1h1a3 3 0 1 1 0 6h-1M4 21h14"/></svg></a>
+      <label class="language-picker" hidden><span class="sr-only">語言</span><select id="language-select" aria-label="語言"><option value="zh-Hant" lang="zh-Hant">繁體中文</option><option value="en" lang="en">English</option></select></label>
     </nav>
   </header>
 
@@ -31,7 +32,7 @@
         <p class="hero-note">macOS 14 以上・不需要帳號<br><span>免費使用，自願支持開發</span></p>
       </div>
       <div class="hero-scene" aria-label="Ripen 暖瓷白主視窗實際截圖">
-        <img class="hero-app" src="assets/main-white.jpg" width="960" height="1200" alt="Ripen 暖瓷白主視窗：圓環顯示剩餘專注時間，可暫停與切換階段" fetchpriority="high">
+        <img class="hero-app" src="assets/main-white.jpg" data-src-en="assets/en/main-white.jpg" width="960" height="1200" alt="Ripen 暖瓷白主視窗：圓環顯示剩餘專注時間，可暫停與切換階段" fetchpriority="high">
       </div>
     </section>
 
@@ -51,9 +52,9 @@
           <button class="mode-tab" id="tab-notch" type="button" role="tab" aria-selected="false" aria-controls="panel-notch" tabindex="-1"><span class="mode-symbol" aria-hidden="true"><svg viewBox="0 0 28 28"><path d="M3 5h22M6 5v8a4 4 0 0 0 4 4h8a4 4 0 0 0 4-4V5"/><path d="M11 10h6"/></svg></span><span><strong>瀏海島</strong><small>收進螢幕頂端，抬眼就看見。</small></span><span class="tab-dot" aria-hidden="true"></span></button>
         </div>
         <div class="mode-stage">
-          <div class="mode-panel" id="panel-main" role="tabpanel" aria-labelledby="tab-main" tabindex="0"><img src="assets/main.jpg" alt="Main window：主視窗圓環計時與暫停按鈕" width="960" height="1200" loading="lazy"><p>完整控制，安靜地陪你開始。</p></div>
-          <div class="mode-panel" id="panel-floating" role="tabpanel" aria-labelledby="tab-floating" tabindex="0" hidden><img src="assets/floating.jpg" alt="Floating window：置頂懸浮窗顯示時間、進度與操作按鈕" width="880" height="640" loading="lazy"><p>永遠置頂，三種尺寸，記得你放的位置。</p></div>
-          <div class="mode-panel" id="panel-notch" role="tabpanel" aria-labelledby="tab-notch" tabindex="0" hidden><img src="assets/notch.jpg" alt="Notch island：滑鼠移入後展開的瀏海島與計時控制" width="1600" height="440" loading="lazy"><p>移入展開控制，往下拉回主視窗。沒有瀏海也能用。</p></div>
+          <div class="mode-panel" id="panel-main" role="tabpanel" aria-labelledby="tab-main" tabindex="0"><img src="assets/main.jpg" data-src-en="assets/en/main.jpg" alt="Main window：主視窗圓環計時與暫停按鈕" width="960" height="1200" loading="lazy"><p>完整控制，安靜地陪你開始。</p></div>
+          <div class="mode-panel" id="panel-floating" role="tabpanel" aria-labelledby="tab-floating" tabindex="0" hidden><img src="assets/floating.jpg" data-src-en="assets/en/floating.jpg" alt="Floating window：置頂懸浮窗顯示時間、進度與操作按鈕" width="880" height="640" loading="lazy"><p>永遠置頂，三種尺寸，記得你放的位置。</p></div>
+          <div class="mode-panel" id="panel-notch" role="tabpanel" aria-labelledby="tab-notch" tabindex="0" hidden><img src="assets/notch.jpg" data-src-en="assets/en/notch.jpg" alt="Notch island：滑鼠移入後展開的瀏海島與計時控制" width="1600" height="440" loading="lazy"><p>移入展開控制，往下拉回主視窗。沒有瀏海也能用。</p></div>
           <span class="stage-label">App 實際截圖</span>
         </div>
       </div>
@@ -61,7 +62,7 @@
 
     <section class="overtime-section" aria-labelledby="overtime-title">
       <div class="overtime-layout wrap">
-        <div class="overtime-art"><img src="assets/overtime.jpg" width="960" height="1200" alt="Overtime：專注到點後，以青綠色 +03:17 繼續計時" loading="lazy"></div>
+        <div class="overtime-art"><img src="assets/overtime.jpg" data-src-en="assets/en/overtime.jpg" width="960" height="1200" alt="Overtime：專注到點後，以青綠色 +03:17 繼續計時" loading="lazy"></div>
         <div class="overtime-copy"><p class="small-note">給還沒寫完的那一句。</p><h2 id="overtime-title">到點了，<br>也不必急著結束。</h2><p>提示音響起後，Ripen 會換個顏色，繼續往上計時。把這個想法寫完，準備好了，再按「完成」。</p><p>專注紀錄會算進超時的長度；鎖定或睡眠期間的超時不會持續累加。</p><div class="overtime-example" aria-label="倒數到零後進入超時"><span>00:00</span><svg viewBox="0 0 40 16" aria-hidden="true"><path d="M1 8h36m-7-6 7 6-7 6"/></svg><span>+03:17</span></div></div>
       </div>
     </section>
