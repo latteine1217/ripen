@@ -69,7 +69,7 @@ The Statistics page shows today's focus count and minutes, plus a chart of the l
 | Feature | Details |
 | :--- | :--- |
 | Your rhythm | 25-minute focus, 5-minute short break, 15-minute long break after every 4 focuses. Adjust each length from 1–180 minutes and the long-break interval from 1–12. |
-| Quick control | <kbd>⌥</kbd><kbd>⌘</kbd><kbd>P</kbd> to start or pause from any app, or record your own shortcut. In the main window: <kbd>⌘</kbd><kbd>S</kbd> to skip or finish, <kbd>⌘</kbd><kbd>R</kbd> to reset. Skip, reset and Done can be undone for 5 seconds from the countdown capsule or <kbd>⌘</kbd><kbd>Z</kbd>. |
+| Quick control | <kbd>⌥</kbd><kbd>⌘</kbd><kbd>P</kbd> to start or pause from any app, or record your own shortcut. In the main window: <kbd>⌘</kbd><kbd>S</kbd> to skip or finish, <kbd>⌘</kbd><kbd>R</kbd> to reset, <kbd>⌘</kbd><kbd>1</kbd> / <kbd>⌘</kbd><kbd>2</kbd> to switch between Timer and Statistics. Skip, reset and Done can be undone for 5 seconds from the countdown capsule or <kbd>⌘</kbd><kbd>Z</kbd>. |
 | Make it yours | Black, White, or Glass appearance; glass can follow the system or stay light or dark, with adjustable opacity and blur. System reminder sounds or silence, optional auto-start and open at login, and 12- or 24-hour end times. |
 | Projects | Pick a project from the menu above the timer ring, or add one by typing its name; each gets a color from a preset palette. Before you start, the project's total time and focus count show below the menu. Start uncategorized if you like, and change the project mid-focus to move the whole focus; a choice made during a break applies to the next focus. |
 | Always at hand | Three floating-window layouts, a notch island, and an optional menu bar countdown. |

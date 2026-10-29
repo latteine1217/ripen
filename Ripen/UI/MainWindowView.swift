@@ -1,18 +1,13 @@
 import SwiftUI
 
-/// 主視窗：頂部分段控制在計時頁與統計頁之間切換。
+/// 主視窗：頂部膠囊式切換在計時頁與統計頁之間切換。
 ///
 /// 兩頁都留在畫面樹中、只切換可見性：計時頁的刷新（確立完成）在看統計頁時不中斷，
 /// 視窗大小也不會因換頁而跳動。
 struct MainWindowView: View {
     let model: AppModel
 
-    private enum Page: Hashable {
-        case timer
-        case statistics
-    }
-
-    @State private var page = Page.timer
+    @State private var page = MainWindowPage.timer
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
@@ -20,14 +15,9 @@ struct MainWindowView: View {
         let showsIntro = !model.settings.gestureIntroSeen
         VStack(spacing: 0) {
             FocusStorageNotice(log: model.focusLog)
-            Picker("Page", selection: $page) {
-                Text("Timer").tag(Page.timer)
-                Text("Statistics").tag(Page.statistics)
-            }
-            .pickerStyle(.segmented)
-            .labelsHidden()
-            .fixedSize()
-            .padding(.top, 16)
+            PageSwitcher(selection: $page)
+                .fixedSize()
+                .padding(.top, 16)
             .visible(!showsIntro)
 
             ZStack {

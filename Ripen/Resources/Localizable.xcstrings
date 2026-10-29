@@ -317,22 +317,6 @@
         }
       }
     },
-    "Page": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Page"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "頁面"
-          }
-        }
-      }
-    },
     "Pause": {
       "localizations": {
         "en": {
@@ -2248,6 +2232,38 @@
           "stringUnit": {
             "state": "translated",
             "value": "現在退出會捨棄尚未儲存的專注紀錄或分類。可以保持 Ripen 開啟以重試，或不儲存直接退出。"
+          }
+        }
+      }
+    },
+    "Show the timer (⌘1)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Show the timer (⌘1)"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "顯示計時（⌘1）"
+          }
+        }
+      }
+    },
+    "Show statistics (⌘2)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Show statistics (⌘2)"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "顯示統計（⌘2）"
           }
         }
       }
