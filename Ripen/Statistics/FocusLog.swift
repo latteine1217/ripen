@@ -34,6 +34,7 @@ protocol FocusLogStorage {
     func append(_ records: [StoredFocusRecord]) throws
     func loadProjects() throws -> [FocusProject]
     func appendProjects(_ projects: [FocusProject]) throws
+    func updateProjectColors(_ colors: [UUID: ProjectColor]) throws
 }
 
 enum FocusLogIssue: Equatable {
@@ -50,6 +51,9 @@ final class FocusLog {
     private var pending: [StoredFocusRecord] = []
     private var savedProjects: [FocusProject] = []
     private var pendingProjects: [FocusProject] = []
+    /// 尚未寫入的換色，覆蓋在分類上呈現；分類本身保留建立時的顏色，
+    /// 已提交但未確認的分類重試時才會與資料庫一致，換色另外寫入。
+    private var pendingColors: [UUID: ProjectColor] = [:]
     /// 還能復原的完成紀錄：計入統計，但復原期限過了才寫入（`commitStaged()`）。
     private var staged: StoredFocusRecord?
     private var hasLoaded = false
@@ -64,9 +68,13 @@ final class FocusLog {
     /// 尚未寫入的紀錄，含還能復原的那一筆；退出前由 `AppModel` 先確立。
     var pendingCount: Int { pending.count + (staged == nil ? 0 : 1) }
     /// 依建立順序；尚未保存的分類也可選取，與紀錄一起重試。
-    var projects: [FocusProject] { savedProjects + pendingProjects }
+    var projects: [FocusProject] {
+        (savedProjects + pendingProjects).map { project in
+            pendingColors[project.id].map { FocusProject(id: project.id, name: project.name, color: $0) } ?? project
+        }
+    }
     /// 退出前必須為空，否則會失去尚未保存的紀錄或分類。
-    var hasUnsavedChanges: Bool { pendingCount > 0 || !pendingProjects.isEmpty }
+    var hasUnsavedChanges: Bool { pendingCount > 0 || !pendingProjects.isEmpty || !pendingColors.isEmpty }
 
     /// 不存在的識別碼（例如已失效的上次選擇）視為未分類。
     func project(withID id: UUID?) -> FocusProject? {
@@ -94,6 +102,17 @@ final class FocusLog {
         pendingProjects.append(project)
         if hasLoaded { savePending() }
         return project
+    }
+
+    /// 從預設色盤更換代表色；識別碼與名稱不變，所有紀錄仍屬同一分類。
+    func setColor(_ color: ProjectColor, forProject id: UUID) {
+        guard project(withID: id) != nil else { return }
+        guard storage != nil else {
+            savedProjects = savedProjects.map { $0.id == id ? FocusProject(id: id, name: $0.name, color: color) : $0 }
+            return
+        }
+        pendingColors[id] = color
+        if hasLoaded { savePending() }
     }
 
     /// 暫存一筆還能復原的紀錄；之前暫存的先確立，同時只會有一筆。
@@ -130,6 +149,9 @@ final class FocusLog {
             }
             saved = loaded
             savedProjects = loadedProjects
+            // 換色對象既不在資料庫也不待建立，就沒有可改的分類
+            let known = Set(loadedProjects.map(\.id) + pendingProjects.map(\.id))
+            pendingColors = pendingColors.filter { known.contains($0.key) }
             pending.removeAll { byID[$0.id] != nil }
             pendingProjects.removeAll { projectsByID[$0.id] != nil }
             hasLoaded = true
@@ -149,9 +171,10 @@ final class FocusLog {
         return FocusRecord(startedAt: record.startedAt, duration: record.duration)
     }
 
-    /// 分類先於紀錄保存，讓已保存的紀錄不會指向尚未保存的分類。
+    /// 分類先於紀錄保存，讓已保存的紀錄不會指向尚未保存的分類；換色最後寫入，失敗不擋住紀錄。
     private func savePending() {
-        guard let storage, !pending.isEmpty || !pendingProjects.isEmpty else { return }
+        // 還能復原的暫存紀錄不在此寫入
+        guard let storage, !pending.isEmpty || !pendingProjects.isEmpty || !pendingColors.isEmpty else { return }
         // 歷史載入前加入的紀錄，到此才能確認所屬分類是否存在
         pending = pending.map { StoredFocusRecord(id: $0.id, record: resolvingProject($0.record)) }
         do {
@@ -164,6 +187,12 @@ final class FocusLog {
                 try storage.append(pending)
                 saved.append(contentsOf: pending)
                 pending.removeAll()
+            }
+            if !pendingColors.isEmpty {
+                try storage.updateProjectColors(pendingColors)
+                // 此時待建立的分類都已寫入，`projects` 就是套用換色後的已保存分類
+                savedProjects = projects
+                pendingColors.removeAll()
             }
             issue = nil
         } catch {

@@ -56,7 +56,7 @@ When the countdown reaches zero, Ripen plays a sound and keeps counting as `+mm:
 
 ### See your week
 
-The Statistics page shows today's focus count and minutes, plus a chart of the last seven days. Everything is stored locally on your Mac.
+The Statistics page shows today's focus count and minutes, a seven-day chart stacked by project color, and each project's total time. Open a project to see its totals, its last seven days and every completed focus, and to pick its color from the preset palette. Everything is stored locally on your Mac.
 
 <p align="center">
   <img src="docs/images/en/stats.jpg" width="380" alt="Statistics page with today's totals and a seven-day chart; demonstration data">

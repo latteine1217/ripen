@@ -85,7 +85,7 @@ GitHub 分享預覽圖 `docs/images/brand/social-preview.png`（1280×640）由 
 - `focus-log.pre-upgrade.sqlite`：最近一次成功結構升級前的完整備份。正常啟動與新增紀錄不另做備份。
 - `focus-log.pending-backup.sqlite`：升級交易的待提交備份；提交後中斷時，下次開啟完成提升。
 
-資料版本 2 新增 `projects` 資料表（UUID 識別碼、建立順序、名稱、色盤原始值）與 `focus_records.project_id`（可為 NULL，即未分類），舊紀錄升級後一律為未分類。未知的色盤值以第一個顏色顯示、不改寫資料；分類身分只看識別碼，不依名稱或顏色。
+資料版本 2 新增 `projects` 資料表（UUID 識別碼、建立順序、名稱、色盤原始值）與 `focus_records.project_id`（可為 NULL，即未分類），舊紀錄升級後一律為未分類。未知的色盤值以第一個顏色顯示、不改寫資料；分類身分只看識別碼，不依名稱或顏色。更換代表色只改寫該分類的 `color`，不改資料結構或版本；寫入失敗時沿用尚未儲存的提示、重試與退出保護。
 
 未來結構變更只能新增欄位、資料表與索引；既有欄位的名稱、型別、時間基準及語意固定。依序追加 `SQLiteFocusLogStorage.schemaUpgrades` 的遷移步驟，不改寫已發佈步驟；資料版本獨立於 App 版本，新增欄位須允許空值或有合理預設值。初始格式固定為 UUID、完成順序、2001-01-01 UTC 起算的 Double 秒數，以及 Double 秒數時長。
 

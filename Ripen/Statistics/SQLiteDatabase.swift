@@ -135,6 +135,21 @@ final class SQLiteDatabase {
         }
     }
 
+    /// 只改既有分類的顏色；找不到分類代表資料不一致，整批回滾。
+    func updateColors(_ colors: [UUID: ProjectColor]) throws {
+        let query = try statement("UPDATE projects SET color = ? WHERE id = ?")
+        defer { sqlite3_finalize(query) }
+        for (id, color) in colors {
+            sqlite3_reset(query)
+            sqlite3_clear_bindings(query)
+            guard bind(color.rawValue, to: query, at: 1) == SQLITE_OK,
+                  bind(id.uuidString, to: query, at: 2) == SQLITE_OK,
+                  sqlite3_step(query) == SQLITE_DONE
+            else { throw error }
+            guard sqlite3_changes(handle) == 1 else { throw FocusStorageError.invalidData }
+        }
+    }
+
     private func bind(_ text: String, to query: OpaquePointer, at index: Int32) -> Int32 {
         text.withCString { sqlite3_bind_text(query, index, $0, -1, unsafeBitCast(-1, to: sqlite3_destructor_type.self)) }
     }

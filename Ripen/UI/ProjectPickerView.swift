@@ -70,9 +70,7 @@ struct ProjectPickerView: View {
     private func total(for project: FocusProject?) -> some View {
         if showsTotal {
             let total = FocusStatistics(records: model.focusLog.records.belonging(to: project?.id), calendar: .current).total
-            let time = Duration.seconds(total.minutes * 60)
-                .formatted(.units(allowed: [.hours, .minutes], width: .abbreviated))
-            Text("\(time) · \(total.count) focuses")
+            Text("\(total.timeText) · \(total.count) focuses")
                 .font(.caption)
                 .monospacedDigit()
                 .foregroundStyle(palette.secondary)
@@ -115,11 +113,6 @@ private struct NewProjectForm: View {
         .frame(width: 240)
         .onAppear { isFocused = true }
     }
-}
-
-extension ProjectColor {
-    /// 色值在 Asset Catalog（`Project<名稱>`），深淺外觀各一組；只用於分類標記，不取代階段色。
-    var color: Color { Color("Project" + rawValue.prefix(1).uppercased() + rawValue.dropFirst()) }
 }
 
 /// 原生選單會把 SF Symbol 畫成單色範本，色點改用非範本圖片。

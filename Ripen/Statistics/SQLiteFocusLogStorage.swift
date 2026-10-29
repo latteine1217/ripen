@@ -51,6 +51,11 @@ struct SQLiteFocusLogStorage: FocusLogStorage {
         try database.transaction { try database.insert(projects) }
     }
 
+    func updateProjectColors(_ colors: [UUID: ProjectColor]) throws {
+        let database = try open()
+        try database.transaction { try database.updateColors(colors) }
+    }
+
     private func open() throws -> SQLiteDatabase {
         let files = FileManager.default
         try files.createDirectory(at: directory, withIntermediateDirectories: true)
