@@ -51,6 +51,8 @@ final class AppModel {
     private(set) var undoOffer: UndoOffer?
     /// 復原時要換回的狀態，與 `undoOffer` 同生同滅。
     @ObservationIgnored private var undoSnapshot: Snapshot?
+    /// 進行中專注的歸屬；開始專注時取自下次選擇，途中更正時一併改寫（ADR-0010）。
+    private var focusProjectID: UUID?
 
     /// 操作前的計時狀態。引擎記的是結束時刻，換回後時間照牆上時鐘接著走（ADR-0002）。
     private struct Snapshot {
@@ -110,6 +112,31 @@ final class AppModel {
     /// 距離上次長休息已完成的專注次數。
     var completedFocusesInCycle: Int { cycle.completedFocuses }
     var longBreakInterval: Int { configuration.longBreakInterval }
+
+    // MARK: - 分類
+
+    /// 已開始（含暫停與超時）的專注；此時選分類是更正當次歸屬，其餘時候只影響下一次。
+    var isFocusInProgress: Bool { engine.phase == .focus && engine.startedAt != nil }
+
+    /// 分類選單目前呈現的歸屬：進行中的專注顯示當次分類，否則是下一次的選擇。nil 是未分類。
+    var currentProject: FocusProject? {
+        focusLog.project(withID: isFocusInProgress ? focusProjectID : settings.lastProjectID)
+    }
+
+    /// 選擇分類（nil 為未分類）。專注進行中時整次專注改歸這個分類，不拆分時間；
+    /// 休息或尚未開始時只改下一次。不是計時操作，不結束復原機會，也不改動暫存的完成紀錄。
+    func selectProject(_ id: UUID?) {
+        settings.lastProjectID = id
+        if isFocusInProgress { focusProjectID = id }
+    }
+
+    /// 新增並直接選取分類；空白名稱不建立，回傳 nil。
+    @discardableResult
+    func createProject(named name: String) -> FocusProject? {
+        guard let project = focusLog.addProject(named: name) else { return nil }
+        selectProject(project.id)
+        return project
+    }
     /// 只在設定寫入後重算：UI 每 0.25 秒刷新，每次都從 UserDefaults 讀多個 key 太浪費。
     private var configuration: CycleConfiguration {
         if let cached = cachedConfiguration, cached.revision == settings.revision { return cached.value }
@@ -165,7 +192,7 @@ final class AppModel {
     /// 按「完成」時先暫存（還能復原），⌘Q 時直接寫檔。
     private func recordIfFocus(_ completion: PhaseCompletion, undoable: Bool) {
         guard completion.phase == .focus else { return }
-        let record = FocusRecord(startedAt: completion.startedAt, duration: completion.duration)
+        let record = FocusRecord(startedAt: completion.startedAt, duration: completion.duration, projectID: focusProjectID)
         if undoable { focusLog.stage(record) } else { focusLog.append(record) }
     }
 
@@ -257,7 +284,7 @@ final class AppModel {
     /// 「自動開始下一段」開啟時，按完成的那一刻就開始下一段（ADR-0006）。
     private func startNextPhaseAutomatically(now: Date) {
         guard settings.autoStartNextPhase else { return }
-        engine.start(at: now)
+        startEngine(at: now)
     }
 
     /// 改階段長度從下一段生效；停在起點、還沒開始的階段不算在跑，直接換成新長度。
@@ -308,8 +335,17 @@ final class AppModel {
     // 以下是已刷新過的意圖本體，讓 toggleStartPause() 只刷新一次。
 
     private func startRefreshed() {
-        engine.start(at: clock.now())
+        startEngine(at: clock.now())
         updateIdleSince()
+    }
+
+    /// 專注從起點開始時確定當次歸屬。選擇是否已失效由 `FocusLog` 在歷史載入後判定，
+    /// 載入失敗時不能把仍有效的選擇當成未分類。
+    private func startEngine(at now: Date) {
+        if engine.phase == .focus, engine.status(at: now) == .idle {
+            focusProjectID = settings.lastProjectID
+        }
+        engine.start(at: now)
     }
 
     private func pauseRefreshed() {
@@ -379,7 +415,7 @@ final class AppModel {
             loadCurrentPhase()
             updateIdleSince()
         }
-        return focusLog.pendingCount == 0
+        return !focusLog.hasUnsavedChanges
     }
 
     /// 開始跑或在超時中就不是閒置，離開時自動暫停的超時除外；停下來的那一刻開始閒置。已在閒置中的操作不重新計時。

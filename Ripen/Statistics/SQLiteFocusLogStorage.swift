@@ -6,7 +6,18 @@ struct SQLiteFocusLogStorage: FocusLogStorage {
     let directory: URL
     /// 索引 0 對應版本 1 → 2，依序追加；已發佈步驟不得改寫。
     private let upgrades: [String]
-    private static let schemaUpgrades: [String] = []
+    static let schemaUpgrades: [String] = [
+        // 版本 2：分類（ADR-0010）。舊紀錄的 project_id 為 NULL，即未分類。
+        """
+        CREATE TABLE projects (
+            sequence INTEGER PRIMARY KEY,
+            id TEXT NOT NULL UNIQUE,
+            name TEXT NOT NULL,
+            color TEXT NOT NULL
+        );
+        ALTER TABLE focus_records ADD COLUMN project_id TEXT;
+        """,
+    ]
     var databaseURL: URL { directory.appending(path: "focus-log.sqlite") }
     private var stateURL: URL { directory.appending(path: "focus-log.state") }
     private var legacyURL: URL { directory.appending(path: "focus-log.json") }
@@ -29,6 +40,15 @@ struct SQLiteFocusLogStorage: FocusLogStorage {
     func append(_ records: [StoredFocusRecord]) throws {
         let database = try open()
         try database.transaction { try database.insert(records) }
+    }
+
+    func loadProjects() throws -> [FocusProject] {
+        try open().projects()
+    }
+
+    func appendProjects(_ projects: [FocusProject]) throws {
+        let database = try open()
+        try database.transaction { try database.insert(projects) }
     }
 
     private func open() throws -> SQLiteDatabase {

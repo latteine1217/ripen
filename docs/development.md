@@ -79,11 +79,13 @@ GitHub 分享預覽圖 `docs/images/brand/social-preview.png`（1280×640）由 
 
 ## 資料相容性與升級
 
-完成的專注存於 `~/Library/Application Support/Ripen/focus-log.sqlite`；設定維持原有 `UserDefaults` 命名空間。首次啟動自動處理舊 `focus-log.json`，不要求手動匯入；原始 JSON 留存，不再作為現行資料來源。設計契約見 [ADR-0007](adr/0007-compatible-data-upgrades.md)。
+完成的專注與分類存於 `~/Library/Application Support/Ripen/focus-log.sqlite`；設定維持原有 `UserDefaults` 命名空間，上次選擇的分類以識別碼存在 `lastProjectID`。首次啟動自動處理舊 `focus-log.json`，不要求手動匯入；原始 JSON 留存，不再作為現行資料來源。設計契約見 [ADR-0007](adr/0007-compatible-data-upgrades.md)。
 
 - `focus-log.state`：初始化中或已啟用的狀態；不能單獨刪除以繞過資料庫遺失的保護。
 - `focus-log.pre-upgrade.sqlite`：最近一次成功結構升級前的完整備份。正常啟動與新增紀錄不另做備份。
 - `focus-log.pending-backup.sqlite`：升級交易的待提交備份；提交後中斷時，下次開啟完成提升。
+
+資料版本 2 新增 `projects` 資料表（UUID 識別碼、建立順序、名稱、色盤原始值）與 `focus_records.project_id`（可為 NULL，即未分類），舊紀錄升級後一律為未分類。未知的色盤值以第一個顏色顯示、不改寫資料；分類身分只看識別碼，不依名稱或顏色。
 
 未來結構變更只能新增欄位、資料表與索引；既有欄位的名稱、型別、時間基準及語意固定。依序追加 `SQLiteFocusLogStorage.schemaUpgrades` 的遷移步驟，不改寫已發佈步驟；資料版本獨立於 App 版本，新增欄位須允許空值或有合理預設值。初始格式固定為 UUID、完成順序、2001-01-01 UTC 起算的 Double 秒數，以及 Double 秒數時長。
 
@@ -93,10 +95,10 @@ GitHub 分享預覽圖 `docs/images/brand/social-preview.png`（1280×640）由 
 
 ```sh
 xcodegen generate
-xcodebuild test -project Ripen.xcodeproj -scheme Ripen -destination 'platform=macOS' -only-testing:RipenTests/FocusLogPersistenceTests -only-testing:RipenTests/FocusLogTests -only-testing:RipenTests/AppModelOvertimeTests
+xcodebuild test -project Ripen.xcodeproj -scheme Ripen -destination 'platform=macOS' -only-testing:RipenTests/FocusLogPersistenceTests -only-testing:RipenTests/FocusLogTests -only-testing:RipenTests/AppModelOvertimeTests -only-testing:RipenTests/AppModelProjectTests
 ```
 
-固定歷史樣本在 `RipenTests/Fixtures/`；不可用當前 encoder 重建或覆寫已發佈格式的樣本。版本 1 的 SQL 用於解釋同名 SQLite 樣本，不在測試時由正式 schema 即時生成。驗收包括舊 JSON、小數與重複紀錄、跨版升級、未知版本拒寫、WAL 備份可重開、遷移失敗回滾、鎖定重試及提交回報不確定時不重複。最後跑完整回歸，並實機檢查英／繁中錯誤狀態、重試、取消退出與放棄退出。
+測試以 `upgrades:` 模擬更新版本時，須以 `SQLiteFocusLogStorage.schemaUpgrades` 加上額外步驟，代表沿著正式版本鏈往後升級。固定歷史樣本在 `RipenTests/Fixtures/`；不可用當前 encoder 重建或覆寫已發佈格式的樣本。版本 1 的 SQL 用於解釋同名 SQLite 樣本，不在測試時由正式 schema 即時生成。驗收包括舊 JSON、小數與重複紀錄、跨版升級、未知版本拒寫、WAL 備份可重開、遷移失敗回滾、鎖定重試及提交回報不確定時不重複。最後跑完整回歸，並實機檢查英／繁中錯誤狀態、重試、取消退出與放棄退出。
 
 測試 scheme 設定 `RIPEN_TESTING=1`，測試 host 使用記憶體設定與儲存，不碰真正的使用者資料。Debug 建置另可設定 `RIPEN_DATA_DIRECTORY` 指向隔離目錄，使用記憶體設定、一分鐘專注、靜音且不註冊全域快速鍵，供實機故障驗收；Release 忽略此覆寫。驗收版應使用不同 bundle id，不能取代正在使用的 App。
 

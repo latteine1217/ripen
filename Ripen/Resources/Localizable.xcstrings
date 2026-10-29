@@ -17,22 +17,6 @@
         }
       }
     },
-    "Some focuses have not been saved.": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Some focuses have not been saved."
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "部分專注紀錄尚未儲存。"
-          }
-        }
-      }
-    },
     "Your existing data is kept. You can keep using the timer and retry saving.": {
       "localizations": {
         "en": {
@@ -93,22 +77,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "目前無法讀取專注紀錄。請重試載入以查看統計。"
-          }
-        }
-      }
-    },
-    "Quitting now will discard unsaved focuses. Keep Ripen open to retry, or quit without saving.": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Quitting now will discard unsaved focuses. Keep Ripen open to retry, or quit without saving."
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "現在退出會失去尚未儲存的專注紀錄。請保持 Ripen 開啟並重試，或選擇不儲存就退出。"
           }
         }
       }
@@ -2076,6 +2044,210 @@
           "stringUnit": {
             "state": "translated",
             "value": "關於 Ripen"
+          }
+        }
+      }
+    },
+    "Project": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Project"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "分類"
+          }
+        }
+      }
+    },
+    "Uncategorized": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Uncategorized"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "未分類"
+          }
+        }
+      }
+    },
+    "New Project…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "New Project…"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "新增分類…"
+          }
+        }
+      }
+    },
+    "New Project": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "New Project"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "新增分類"
+          }
+        }
+      }
+    },
+    "Project name": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Project name"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "分類名稱"
+          }
+        }
+      }
+    },
+    "Cancel": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cancel"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "取消"
+          }
+        }
+      }
+    },
+    "Add": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "新增"
+          }
+        }
+      }
+    },
+    "Choose the project for the next focus": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choose the project for the next focus"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "選擇下一次專注的分類"
+          }
+        }
+      }
+    },
+    "Change the project of this focus": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Change the project of this focus"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "更正這次專注的分類"
+          }
+        }
+      }
+    },
+    "Some focuses or projects have not been saved.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Some focuses or projects have not been saved."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "部分專注紀錄或分類尚未儲存。"
+          }
+        }
+      }
+    },
+    "%@ · %lld focuses": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%@ · %lld focus"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%@ · %lld focuses"
+                }
+              }
+            }
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ · %lld 次專注"
+          }
+        }
+      }
+    },
+    "Quitting now will discard unsaved focuses or projects. Keep Ripen open to retry, or quit without saving.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quitting now will discard unsaved focuses or projects. Keep Ripen open to retry, or quit without saving."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "現在退出會捨棄尚未儲存的專注紀錄或分類。可以保持 Ripen 開啟以重試，或不儲存直接退出。"
           }
         }
       }

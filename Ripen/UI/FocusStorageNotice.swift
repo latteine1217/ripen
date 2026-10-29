@@ -7,7 +7,7 @@ struct FocusStorageNotice: View {
     var body: some View {
         if let issue = log.issue {
             VStack(alignment: .leading, spacing: 6) {
-                Text(issue == .load ? "Focus history could not be loaded." : "Some focuses have not been saved.")
+                Text(issue == .load ? "Focus history could not be loaded." : "Some focuses or projects have not been saved.")
                     .font(.headline)
                 Text("Your existing data is kept. You can keep using the timer and retry saving.")
                     .font(.caption)

@@ -18,6 +18,8 @@ struct TimerPageView: View {
             let phase = display.phase
             let isOvertime = display.isOvertime
             VStack(spacing: 20) {
+                ProjectPickerView(model: model, showsTotal: !model.isFocusInProgress)
+
                 // 超時中剩餘時間為 0，圓環維持滿圈、以超時色標示
                 TimerRingView(
                     progress: display.phaseProgress,

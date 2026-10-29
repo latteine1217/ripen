@@ -7,8 +7,8 @@ enum FocusStorageQuitConfirmation {
         while !model.prepareToQuit() {
             let alert = NSAlert()
             alert.alertStyle = .warning
-            alert.messageText = String(localized: "Some focuses have not been saved.")
-            alert.informativeText = String(localized: "Quitting now will discard unsaved focuses. Keep Ripen open to retry, or quit without saving.")
+            alert.messageText = String(localized: "Some focuses or projects have not been saved.")
+            alert.informativeText = String(localized: "Quitting now will discard unsaved focuses or projects. Keep Ripen open to retry, or quit without saving.")
             alert.addButton(withTitle: String(localized: "Keep Ripen Open"))
             alert.addButton(withTitle: String(localized: "Quit Without Saving"))
             alert.addButton(withTitle: String(localized: "Retry"))

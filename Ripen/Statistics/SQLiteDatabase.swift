@@ -52,8 +52,18 @@ final class SQLiteDatabase {
         }
     }
 
+    /// 版本 1 的資料庫沒有分類欄位；升級前的完整讀取也要能解讀它。
+    private func hasProjectColumn() throws -> Bool {
+        try integer("SELECT count(*) FROM pragma_table_info('focus_records') WHERE name = 'project_id'") > 0
+    }
+
+    private func hasProjectsTable() throws -> Bool {
+        try integer("SELECT count(*) FROM sqlite_master WHERE type = 'table' AND name = 'projects'") > 0
+    }
+
     func records() throws -> [StoredFocusRecord] {
-        let query = try statement("SELECT id, started_at, duration FROM focus_records ORDER BY sequence")
+        let project = try hasProjectColumn() ? "project_id" : "NULL"
+        let query = try statement("SELECT id, started_at, duration, \(project) FROM focus_records ORDER BY sequence")
         defer { sqlite3_finalize(query) }
         var records: [StoredFocusRecord] = []
         var result = sqlite3_step(query)
@@ -65,7 +75,8 @@ final class SQLiteDatabase {
             else { throw FocusStorageError.invalidData }
             let record = FocusRecord(
                 startedAt: Date(timeIntervalSinceReferenceDate: sqlite3_column_double(query, 1)),
-                duration: sqlite3_column_double(query, 2)
+                duration: sqlite3_column_double(query, 2),
+                projectID: try optionalUUID(query, column: 3)
             )
             guard record.isValid else { throw FocusStorageError.invalidData }
             records.append(StoredFocusRecord(id: id, record: record))
@@ -74,6 +85,58 @@ final class SQLiteDatabase {
         guard result == SQLITE_DONE else { throw error }
         guard Set(records.map(\.id)).count == records.count else { throw FocusStorageError.invalidData }
         return records
+    }
+
+    /// NULL 是未分類；有值卻不是 UUID 屬於無法解讀的資料。
+    private func optionalUUID(_ query: OpaquePointer, column: Int32) throws -> UUID? {
+        guard sqlite3_column_type(query, column) != SQLITE_NULL else { return nil }
+        guard let text = sqlite3_column_text(query, column), let id = UUID(uuidString: String(cString: text)) else {
+            throw FocusStorageError.invalidData
+        }
+        return id
+    }
+
+    /// 依建立順序；沒有分類資料表的舊版本視為沒有分類。未知顏色是較新版本的色盤，以第一個顏色顯示、不改寫資料。
+    func projects() throws -> [FocusProject] {
+        guard try hasProjectsTable() else { return [] }
+        let query = try statement("SELECT id, name, color FROM projects ORDER BY sequence")
+        defer { sqlite3_finalize(query) }
+        var projects: [FocusProject] = []
+        var result = sqlite3_step(query)
+        while result == SQLITE_ROW {
+            guard let id = try optionalUUID(query, column: 0),
+                  let name = sqlite3_column_text(query, 1).map({ String(cString: $0) }),
+                  FocusProject.normalizedName(name) == name,
+                  let color = sqlite3_column_text(query, 2).map({ String(cString: $0) })
+            else { throw FocusStorageError.invalidData }
+            projects.append(FocusProject(id: id, name: name, color: ProjectColor(rawValue: color) ?? .allCases[0]))
+            result = sqlite3_step(query)
+        }
+        guard result == SQLITE_DONE else { throw error }
+        return projects
+    }
+
+    func insert(_ projects: [FocusProject]) throws {
+        let query = try statement("INSERT INTO projects (id, name, color) VALUES (?, ?, ?) ON CONFLICT(id) DO NOTHING")
+        defer { sqlite3_finalize(query) }
+        for project in projects {
+            guard FocusProject.normalizedName(project.name) == project.name else { throw FocusStorageError.invalidData }
+            sqlite3_reset(query)
+            sqlite3_clear_bindings(query)
+            guard bind(project.id.uuidString, to: query, at: 1) == SQLITE_OK,
+                  bind(project.name, to: query, at: 2) == SQLITE_OK,
+                  bind(project.color.rawValue, to: query, at: 3) == SQLITE_OK,
+                  sqlite3_step(query) == SQLITE_DONE
+            else { throw error }
+            if sqlite3_changes(handle) == 0 {
+                let existing = try self.projects().first { $0.id == project.id }
+                guard existing == project else { throw FocusStorageError.invalidData }
+            }
+        }
+    }
+
+    private func bind(_ text: String, to query: OpaquePointer, at index: Int32) -> Int32 {
+        text.withCString { sqlite3_bind_text(query, index, $0, -1, unsafeBitCast(-1, to: sqlite3_destructor_type.self)) }
     }
 
     func checkIntegrity() throws {
@@ -102,18 +165,21 @@ final class SQLiteDatabase {
     }
 
     func insert(_ entries: [StoredFocusRecord]) throws {
-        let query = try statement("INSERT INTO focus_records (id, started_at, duration) VALUES (?, ?, ?) ON CONFLICT(id) DO NOTHING")
+        let hasProject = try hasProjectColumn()
+        let query = try statement(hasProject
+            ? "INSERT INTO focus_records (id, started_at, duration, project_id) VALUES (?, ?, ?, ?) ON CONFLICT(id) DO NOTHING"
+            : "INSERT INTO focus_records (id, started_at, duration) VALUES (?, ?, ?) ON CONFLICT(id) DO NOTHING")
         defer { sqlite3_finalize(query) }
         for entry in entries {
-            guard entry.record.isValid else { throw FocusStorageError.invalidData }
+            // 沒有分類欄位的版本只能保存未分類，不能默默丟掉歸屬。
+            guard entry.record.isValid, hasProject || entry.record.projectID == nil else { throw FocusStorageError.invalidData }
             sqlite3_reset(query)
             sqlite3_clear_bindings(query)
-            let boundID = entry.id.uuidString.withCString {
-                sqlite3_bind_text(query, 1, $0, -1, unsafeBitCast(-1, to: sqlite3_destructor_type.self))
-            }
-            guard boundID == SQLITE_OK,
+            let boundProject = entry.record.projectID.map { bind($0.uuidString, to: query, at: 4) } ?? SQLITE_OK
+            guard bind(entry.id.uuidString, to: query, at: 1) == SQLITE_OK,
                   sqlite3_bind_double(query, 2, entry.record.startedAt.timeIntervalSinceReferenceDate) == SQLITE_OK,
                   sqlite3_bind_double(query, 3, entry.record.duration) == SQLITE_OK,
+                  boundProject == SQLITE_OK,
                   sqlite3_step(query) == SQLITE_DONE
             else { throw error }
             if sqlite3_changes(handle) == 0 {
