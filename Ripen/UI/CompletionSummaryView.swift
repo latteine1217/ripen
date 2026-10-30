@@ -73,3 +73,76 @@ struct RecapShortcutButton: View {
         project?.name ?? String(localized: "Uncategorized")
     }
 }
+
+// MARK: - 懸浮窗與瀏海島（#25）
+
+extension FocusTotal {
+    /// 空間有限的形態用的短格式，例如「26m」「1h 3m」；與時間數字同一格，不能比倒數寬太多。
+    var compactTimeText: String {
+        Duration.seconds(minutes * 60).formatted(.units(allowed: [.hours, .minutes], width: .narrow))
+    }
+}
+
+/// 完成摘要在懸浮窗與瀏海島的時間格：勾號加本次長度，約 3 秒後換回倒數。字級由所在的格子決定。
+struct CompletionTimeText: View {
+    let summary: CompletedFocus
+
+    var body: some View {
+        HStack(spacing: 4) {
+            Image(systemName: "checkmark")
+                .imageScale(.small)
+                .accessibilityHidden(true)
+            Text(verbatim: summary.focus.compactTimeText)
+                .monospacedDigit()
+                // 收合瀏海島的翼只有約 52pt；超過一小時的長度縮小而不截斷
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
+        }
+        .foregroundStyle(.tint)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(Text("Focus Complete"))
+        .accessibilityValue(Text(verbatim: summary.focus.timeText))
+    }
+}
+
+/// 完成摘要的分類累積：色點代表分類，名稱留給朗讀，長名稱不擠壓數字。
+struct CompletionTotalCaption: View {
+    let summary: CompletedFocus
+    let project: FocusProject?
+
+    var body: some View {
+        HStack(spacing: 4) {
+            ProjectDot(color: project?.color)
+            Text("\(summary.projectTotal.compactTimeText) in total")
+                .monospacedDigit()
+        }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(project.map { Text(verbatim: $0.name) } ?? Text("Uncategorized"))
+        .accessibilityValue(Text("\(summary.projectTotal.timeText) in total"))
+    }
+}
+
+/// 休息期間接在階段說明後的成果卡入口：只有圖示，點擊範圍比圖示大一圈；開獨立視窗，不改變形態。
+/// 與復原膠囊同一格，膠囊在時被一起蓋住、不能點。
+struct RecapIconButton: View {
+    let model: AppModel
+
+    @State private var isHovering = false
+
+    var body: some View {
+        if let shortcut = model.recapShortcut {
+            let project = model.focusLog.project(withID: shortcut.projectID)
+            let name = project?.name ?? String(localized: "Uncategorized")
+            Button { RecapWindow.shared.open(projectID: shortcut.projectID) } label: {
+                Image(systemName: "photo")
+                    .opacity(isHovering ? 1 : 0.75)
+                    .background(Circle().fill(.primary.opacity(isHovering ? 0.15 : 0)).frame(width: 22, height: 22))
+                    .contentShape(Circle().inset(by: -5))
+            }
+            .buttonStyle(.plain)
+            .onHover { isHovering = $0 }
+            .help(Text("Preview, save or share this project's recap card"))
+            .accessibilityLabel(Text("\(name) Recap Card"))
+        }
+    }
+}

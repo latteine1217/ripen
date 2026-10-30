@@ -75,7 +75,11 @@ struct NotchIslandView: View {
             // 上排落在瀏海兩翼：收合時是進度圈與時間，展開時是階段說明與結束時刻
             HStack {
                 if expanded {
-                    PhaseCaption(display: display)
+                    // 成果卡入口接在階段後，與復原膠囊同一格（#25）
+                    HStack(spacing: 4) {
+                        PhaseCaption(display: display)
+                        RecapIconButton(model: model)
+                    }
                         .font(.system(size: 11, weight: .semibold, design: .rounded))
                         .foregroundStyle(.tint)
                         .undoCapsuleOverlay(model, compact: true, alignment: .leading)
@@ -84,7 +88,7 @@ struct NotchIslandView: View {
                 }
                 Spacer(minLength: state.notch.rect.width)
                 if expanded {
-                    EndCaption(display: display, clockFormat: model.settings.clockFormat)
+                    endCaption(display)
                         .font(.system(size: 11, weight: .medium, design: .rounded))
                         .foregroundStyle(.secondary)
                 } else {
@@ -118,13 +122,37 @@ struct NotchIslandView: View {
             : Text("\(Text(display.phase.title)), \(time)"))
     }
 
+    /// 收合與展開共用的時間；完成專注後約 3 秒換成完成摘要（#25）。
     private func timeText(_ time: String, size: CGFloat, dimmed: Bool, isOvertime: Bool) -> some View {
-        Text(verbatim: time)
-            .overtimeStyle(isOvertime)
-            .font(.system(size: size, weight: .semibold, design: .rounded))
-            .monospacedDigit()
-            .opacity(dimmed ? 0.45 : 1)
-            .matchedGeometryEffect(id: "time", in: timeSpace)
+        ZStack {
+            if let summary = model.completionSummary {
+                CompletionTimeText(summary: summary)
+                    .transition(.opacity)
+            } else {
+                Text(verbatim: time)
+                    .overtimeStyle(isOvertime)
+                    .monospacedDigit()
+                    .opacity(dimmed ? 0.45 : 1)
+                    .transition(.opacity)
+            }
+        }
+        .font(.system(size: size, weight: .semibold, design: .rounded))
+        .animation(.easeInOut(duration: 0.25), value: model.completionSummary)
+        .matchedGeometryEffect(id: "time", in: timeSpace)
+    }
+
+    /// 展開時的結束時刻；完成摘要期間換成分類累積。
+    private func endCaption(_ display: PhaseDisplay) -> some View {
+        ZStack {
+            if let summary = model.completionSummary {
+                CompletionTotalCaption(summary: summary, project: model.focusLog.project(withID: summary.projectID))
+                    .transition(.opacity)
+            } else {
+                EndCaption(display: display, clockFormat: model.settings.clockFormat)
+                    .transition(.opacity)
+            }
+        }
+        .animation(.easeInOut(duration: 0.25), value: model.completionSummary)
     }
 
     private func controls(status: TimerStatus, isOvertime: Bool) -> some View {

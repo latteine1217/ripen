@@ -48,7 +48,7 @@ Click the red button, or drag the main window up into the notch, and Ripen becom
 
 ### Overtime instead of interruption
 
-When the countdown reaches zero, Ripen plays a sound and keeps counting as `+mm:ss` in a new color: teal for focus, orange for breaks. Press **Done** when you are ready, and the focus is recorded with its real length. For about three seconds the ring shows this focus's length and its project's total, then returns to the break as it is; until that break ends, a link beside the end time opens the project's recap card. Time you spend away from your Mac is not counted as overtime.
+When the countdown reaches zero, Ripen plays a sound and keeps counting as `+mm:ss` in a new color: teal for focus, orange for breaks. Press **Done** when you are ready, and the focus is recorded with its real length. For about three seconds the ring shows this focus's length and its project's total, then returns to the break as it is; until that break ends, a link beside the end time opens the project's recap card. The floating window and the notch island show the same summary in place of the time, and a small photo button after the phase name opens the card in its own window without leaving the floating window or the island. Time you spend away from your Mac is not counted as overtime.
 
 <p align="center">
   <img src="docs/images/en/overtime.jpg" width="380" alt="Focus session in overtime showing +03:17 and a Done button">

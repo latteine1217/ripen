@@ -95,6 +95,13 @@ struct RipenApp: App {
         .commands { GlassTuningCommands() }
         #endif
 
+        // 從懸浮窗與瀏海島開的成果卡；不屬於任何計時形態（ADR-0001）
+        Window("Recap Card", id: RecapWindow.windowID) {
+            RecapWindowView(focusLog: model.focusLog, recapWindow: RecapWindow.shared)
+        }
+        .windowResizability(.contentSize)
+        .commandsRemoved()
+
         #if DEBUG
         Window(Text(verbatim: "Glass Tuning"), id: GlassTuningView.windowID) {
             GlassTuningView(tuning: glassTuning, settings: model.settings)
