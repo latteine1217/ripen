@@ -2,7 +2,7 @@ import AppKit
 import Charts
 import SwiftUI
 
-/// Bento 成果卡（#22、#23）：主格是分類名稱與累積總時間，次格是本次專注、今日投入與累積次數，寬格是最近七天。
+/// Bento 成果卡（ADR-0011）：主格是分類名稱與累積總時間，次格是今日投入、完成次數與專注天數，寬格是最近七天。
 ///
 /// 預覽與輸出共用這個視圖；固定淺色不透明底，不跟隨 App 外觀，分享出去的圖每次一致。
 /// 直式版型重新編排同樣的格子，而不是拉伸方形版。
@@ -69,13 +69,9 @@ struct RecapCardView: View {
 
     @ViewBuilder
     private var smallTiles: some View {
-        smallTile(
-            value: Text(FocusTotal.timeText(minutes: Int((card.focus.duration / 60).rounded()))),
-            label: Text("This Focus"),
-            detail: Text(card.focus.startedAt, format: .dateTime.month().day().hour().minute())
-        )
         smallTile(value: Text(FocusTotal.timeText(minutes: card.today.minutes)), label: Text("Today"))
         smallTile(value: Text(card.total.count, format: .number), label: Text("Focuses"))
+        smallTile(value: Text(card.activeDays, format: .number), label: Text("Focus Days"))
     }
 
     private var header: some View {
@@ -88,7 +84,7 @@ struct RecapCardView: View {
             Text(verbatim: "Ripen")
                 .font(.system(size: 14, weight: .semibold, design: .rounded))
             Spacer(minLength: 8)
-            // 與本次專注的日期分開標示：其餘數字是產生卡片時的最新累積
+            // 數字是產生卡片時的最新累積，不是某次完成當下的快照
             Text("Updated \(Text(card.generatedAt, format: .dateTime.year().month().day()))")
                 .font(.system(size: 10))
                 .foregroundStyle(Self.secondaryInk)
@@ -129,7 +125,7 @@ struct RecapCardView: View {
         }
     }
 
-    private func smallTile(value: Text, label: Text, detail: Text? = nil) -> some View {
+    private func smallTile(value: Text, label: Text) -> some View {
         VStack(alignment: .leading, spacing: 1) {
             value
                 .font(.system(size: 16, weight: .semibold, design: .rounded))
@@ -140,13 +136,6 @@ struct RecapCardView: View {
             label
                 .font(.system(size: 9.5, weight: .medium))
                 .lineLimit(1)
-            if let detail {
-                detail
-                    .font(.system(size: 8.5))
-                    .foregroundStyle(Self.secondaryInk)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.8)
-            }
         }
         .padding(.horizontal, 10)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)

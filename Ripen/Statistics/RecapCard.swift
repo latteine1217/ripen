@@ -1,34 +1,48 @@
 import Foundation
 
-/// 成果卡的內容（GLOSSARY、ADR-0010）：所選那筆專注加上所屬分類最新的累積。
+/// 成果卡的內容（GLOSSARY、ADR-0011）：一個分類一張，呈現該分類最新的累積。
 ///
 /// 每次建立都重算，所有統計限同一分類；建立後是值，同一輪預覽與輸出共用，不隨新紀錄跳動。
 struct RecapCard: Equatable {
-    let recordID: UUID
     /// nil 是未分類。
+    let projectID: UUID?
     let project: FocusProject?
-    /// 所選那筆專注；舊紀錄重開時長度與日期不變。
-    let focus: FocusRecord
+    /// 建立時納入的紀錄；輸出前用來確認分類沒有變動（`exportability(in:)`）。
+    let recordIDs: Set<UUID>
     let total: FocusTotal
-    /// 以建立卡片時的日曆判定的今天，與 `focus` 的日期可能不同。
+    /// 有專注的日子數。
+    let activeDays: Int
+    /// 以建立卡片時的日曆判定的今天。
     let today: DaySummary
     let lastSevenDays: [DaySummary]
     let generatedAt: Date
 
-    /// 紀錄已不存在（例如已復原）時沒有卡片。
+    /// 分類還沒有完成的專注時沒有卡片。
     @MainActor
-    init?(focusLog: FocusLog, recordID: UUID, now: Date, calendar: Calendar) {
-        guard let entry = focusLog.entries.first(where: { $0.id == recordID }) else { return nil }
-        let projectID = entry.record.projectID
-        let statistics = FocusStatistics(records: focusLog.records.belonging(to: projectID), calendar: calendar)
-        self.recordID = recordID
+    init?(focusLog: FocusLog, projectID: UUID?, now: Date, calendar: Calendar) {
+        let entries = focusLog.entries.filter { $0.record.projectID == projectID }
+        guard !entries.isEmpty else { return nil }
+        let statistics = FocusStatistics(records: entries.map(\.record), calendar: calendar)
+        self.projectID = projectID
         project = focusLog.project(withID: projectID)
-        focus = entry.record
+        recordIDs = Set(entries.map(\.id))
         total = statistics.total
+        activeDays = statistics.activeDays
         today = statistics.summary(on: now)
         lastSevenDays = statistics.lastSevenDays(endingOn: now)
         generatedAt = now
     }
+}
+
+/// 卡片目前能否輸出；只有 `.ready` 可以儲存、複製或分享。
+enum RecapExportability: Equatable {
+    case ready
+    /// 有紀錄還能復原（ADR-0006 的完成尚未確立）。
+    case undoable
+    /// 有紀錄尚未成功寫入。
+    case unsaved
+    /// 開卡後分類的紀錄有變動（復原或新完成），要重新整理才能輸出。
+    case changed
 }
 
 extension RecapCard {
@@ -37,6 +51,17 @@ extension RecapCard {
         case name(String)
         case uncategorized
         case hidden
+    }
+
+    /// 預覽可以顯示尚未確立的紀錄，但輸出前卡片納入的紀錄必須都已保存，且分類沒有變動。
+    @MainActor
+    func exportability(in focusLog: FocusLog) -> RecapExportability {
+        let current = Set(focusLog.entries.filter { $0.record.projectID == projectID }.map(\.id))
+        guard current == recordIDs else { return .changed }
+        let statuses = recordIDs.map(focusLog.status(ofRecord:))
+        if statuses.contains(.undoable) { return .undoable }
+        if statuses.contains(.unsaved) { return .unsaved }
+        return .ready
     }
 
     func title(hidingName: Bool) -> Title {

@@ -2,7 +2,7 @@ import AppKit
 import SwiftUI
 
 enum RecapExportError: Error, Equatable {
-    /// 紀錄還能復原、尚未寫入或已不存在（#22）。
+    /// 卡片納入的紀錄還能復原、尚未寫入，或分類在開卡後有變動（ADR-0011）。
     case notExportable
     case renderFailed
     case pasteboardFailed
@@ -10,7 +10,7 @@ enum RecapExportError: Error, Equatable {
 
 /// 成果卡的所有輸出途徑（儲存、複製、系統分享）共用的入口（#22、#23）。
 ///
-/// 每次輸出前都重新確認紀錄已確立並已保存；圖片一律由同一份卡片、名稱可見性與版型畫出，任何途徑都不能繞過。
+/// 每次輸出前都重新確認卡片納入的紀錄已確立並已保存；圖片一律由同一份卡片、名稱可見性與版型畫出，任何途徑都不能繞過。
 @MainActor
 struct RecapExport {
     let focusLog: FocusLog
@@ -19,7 +19,7 @@ struct RecapExport {
     let layout: RecapLayout
 
     func pngData() throws -> Data {
-        guard focusLog.status(ofRecord: card.recordID) == .saved else { throw RecapExportError.notExportable }
+        guard card.exportability(in: focusLog) == .ready else { throw RecapExportError.notExportable }
         return try RecapCardRenderer.pngData(for: card, hidingName: hidesName, layout: layout)
     }
 

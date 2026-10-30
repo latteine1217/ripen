@@ -54,6 +54,9 @@ struct FocusStatistics {
         return FocusTotal(count: durations.count, minutes: Int((durations.reduce(0, +) / 60).rounded()))
     }
 
+    /// 有完成專注的日子數，依開始時刻歸日。
+    var activeDays: Int { recordsByDay.count }
+
     /// 含 `date` 當天在內的最近 7 天，由舊到新；沒有專注的日子也列出（0 分鐘）。
     func lastSevenDays(endingOn date: Date) -> [DaySummary] {
         sevenDays(endingOn: date).map(summary(on:))

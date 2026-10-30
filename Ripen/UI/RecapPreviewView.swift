@@ -4,11 +4,12 @@ import UniformTypeIdentifiers
 
 /// 成果卡預覽與輸出（#22、#23）：切換方形／直式、隱藏名稱，儲存、複製圖片或交給系統分享。
 ///
-/// 開啟時建立一份 `RecapCard`，同一輪的預覽與所有輸出都用它；要看最新數字就按重新整理。
-/// 每次輸出都經過 `RecapExport` 確認紀錄已確立並已保存；復原後預覽失效。開啟預覽不會提早確立完成。
+/// 一個分類一張卡（ADR-0011）。開啟時建立一份 `RecapCard`，同一輪的預覽與所有輸出都用它；要看最新數字就按重新整理。
+/// 每次輸出都經過 `RecapExport` 確認卡片納入的紀錄已確立並已保存、分類沒有變動。開啟預覽不會提早確立完成。
 struct RecapPreviewView: View {
     let focusLog: FocusLog
-    let recordID: UUID
+    /// nil 是未分類。
+    let projectID: UUID?
 
     @Environment(\.calendar) private var calendar
     @Environment(\.dismiss) private var dismiss
@@ -32,19 +33,19 @@ struct RecapPreviewView: View {
         case shareFailed
     }
 
-    private var status: FocusRecordStatus? { focusLog.status(ofRecord: recordID) }
-    private var canExport: Bool { card != nil && status == .saved }
+    private var exportability: RecapExportability? { card?.exportability(in: focusLog) }
+    private var canExport: Bool { exportability == .ready }
 
     var body: some View {
         VStack(spacing: 12) {
-            if let card, status != nil {
+            if let card {
                 preview(card)
                 controls
                 message
                     .frame(maxWidth: .infinity, alignment: .leading)
             } else {
-                // 復原後不留下可分享的成果
-                Text("This focus was undone, so there is no recap to share.")
+                // 唯一一筆被復原後也不留下可分享的成果
+                Text("No completed focuses to share yet.")
                     .frame(width: Self.stage.width, height: Self.stage.height)
             }
             buttons
@@ -91,12 +92,15 @@ struct RecapPreviewView: View {
 
     @ViewBuilder
     private var message: some View {
-        switch (status, feedback) {
+        switch (exportability, feedback) {
         case (.undoable, _):
             Label("You can export the image once the undo period ends.", systemImage: "clock")
                 .foregroundStyle(.secondary)
         case (.unsaved, _):
-            Label("This focus hasn't been saved yet. Retry saving your history before exporting.", systemImage: "exclamationmark.triangle")
+            Label("Some focuses haven't been saved yet. Retry saving your history before exporting.", systemImage: "exclamationmark.triangle")
+                .foregroundStyle(.secondary)
+        case (.changed, _):
+            Label("Statistics changed. Refresh to export the latest card.", systemImage: "arrow.clockwise")
                 .foregroundStyle(.secondary)
         case (_, .saved(let name)):
             Label("Saved “\(name)”", systemImage: "checkmark.circle")
@@ -149,7 +153,7 @@ struct RecapPreviewView: View {
     }
 
     private func regenerate() {
-        card = RecapCard(focusLog: focusLog, recordID: recordID, now: Date(), calendar: calendar)
+        card = RecapCard(focusLog: focusLog, projectID: projectID, now: Date(), calendar: calendar)
         feedback = .none
     }
 
