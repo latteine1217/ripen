@@ -56,7 +56,7 @@ When the countdown reaches zero, Ripen plays a sound and keeps counting as `+mm:
 
 ### See your week
 
-The Statistics page shows today's focus count and minutes, a seven-day chart stacked by project color, and each project's total time. Open a project to see its totals, its last seven days and every completed focus, and to pick its color from the preset palette. Click a completed focus to open its recap card: a square image with that project's latest total, today's time, focus count and last seven days, plus the length of the focus you picked. You can hide the project name and save the card as a PNG once the focus can no longer be undone. Everything is stored locally on your Mac.
+The Statistics page shows today's focus count and minutes, a seven-day chart stacked by project color, and each project's total time. Open a project to see its totals, its last seven days and every completed focus, and to pick its color from the preset palette. Click a completed focus to open its recap card: that project's latest total, today's time, focus count and last seven days, plus the length of the focus you picked, in a square (1:1) or portrait (9:16) layout. You can hide the project name, then save the card as a PNG, copy the image, or share it through the macOS share menu once the focus can no longer be undone. The share menu only lists services installed on your Mac; Instagram and Threads usually have none, so save or copy the image and upload it yourself. Ripen never posts for you. Everything is stored locally on your Mac.
 
 <p align="center">
   <img src="docs/images/en/stats.jpg" width="380" alt="Statistics page with today's totals and a seven-day chart; demonstration data">

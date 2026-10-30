@@ -50,3 +50,17 @@ extension RecapCard {
         return "Ripen Recap \(date).png"
     }
 }
+
+/// 成果卡的輸出版型：方形 1:1 與直式 9:16，寬度相同，共用同一份卡片與名稱可見性（#23）。
+enum RecapLayout: CaseIterable, Hashable, Sendable {
+    case square
+    case portrait
+
+    var pixelWidth: Int { 1080 }
+    var pixelHeight: Int {
+        switch self {
+        case .square: 1080
+        case .portrait: 1920
+        }
+    }
+}

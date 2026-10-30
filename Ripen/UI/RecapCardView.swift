@@ -2,48 +2,80 @@ import AppKit
 import Charts
 import SwiftUI
 
-/// Bento 成果卡（#22）：主格是分類名稱與累積總時間，次格是本次專注、今日投入與累積次數，寬格是最近七天。
+/// Bento 成果卡（#22、#23）：主格是分類名稱與累積總時間，次格是本次專注、今日投入與累積次數，寬格是最近七天。
 ///
 /// 預覽與輸出共用這個視圖；固定淺色不透明底，不跟隨 App 外觀，分享出去的圖每次一致。
+/// 直式版型重新編排同樣的格子，而不是拉伸方形版。
 struct RecapCardView: View {
     let card: RecapCard
     let hidesName: Bool
+    var layout: RecapLayout = .square
 
-    /// 卡片的點大小；輸出時依 `RecapCardRenderer.pixelSide` 放大。
-    static let side: CGFloat = 360
+    /// 卡片的點寬度；高度依版型比例，輸出時放大到 `RecapLayout` 的像素。
+    static let width: CGFloat = 360
     static let background = Color(red: 0.98, green: 0.97, blue: 0.95)
     /// 未分類的中性辨識色，在淺底上與白字都有足夠對比。
     private static let neutral = Color(red: 0.42, green: 0.42, blue: 0.44)
     private static let ink = Color(red: 0.13, green: 0.13, blue: 0.15)
     private static let secondaryInk = Color(red: 0.40, green: 0.40, blue: 0.43)
 
+    static func size(for layout: RecapLayout) -> CGSize {
+        CGSize(width: width, height: width * CGFloat(layout.pixelHeight) / CGFloat(layout.pixelWidth))
+    }
+
     private var tint: Color { card.project?.color.color ?? Self.neutral }
 
     var body: some View {
+        Group {
+            switch layout {
+            case .square: square
+            case .portrait: portrait
+            }
+        }
+        .frame(width: Self.size(for: layout).width, height: Self.size(for: layout).height)
+        .background(Self.background)
+        .foregroundStyle(Self.ink)
+        // 卡片自帶淺色配色，分類色取淺色外觀的版本，白字對比與輸出一致
+        .environment(\.colorScheme, .light)
+    }
+
+    private var square: some View {
         VStack(alignment: .leading, spacing: 10) {
             header
             HStack(spacing: 10) {
-                mainTile
-                VStack(spacing: 8) {
-                    smallTile(
-                        value: Text(FocusTotal.timeText(minutes: Int((card.focus.duration / 60).rounded()))),
-                        label: Text("This Focus"),
-                        detail: Text(card.focus.startedAt, format: .dateTime.month().day().hour().minute())
-                    )
-                    smallTile(value: Text(FocusTotal.timeText(minutes: card.today.minutes)), label: Text("Today"))
-                    smallTile(value: Text(card.total.count, format: .number), label: Text("Focuses"))
-                }
-                .frame(width: 128)
+                mainTile(titleSize: 15, totalSize: 30, titleLines: 2)
+                VStack(spacing: 8) { smallTiles }
+                    .frame(width: 128)
             }
             .frame(height: 178)
             weekTile
         }
         .padding(18)
-        .frame(width: Self.side, height: Self.side)
-        .background(Self.background)
-        .foregroundStyle(Self.ink)
-        // 卡片自帶淺色配色，分類色取淺色外觀的版本，白字對比與輸出一致
-        .environment(\.colorScheme, .light)
+    }
+
+    /// 9:16：主格佔滿寬度並放大，三個次格排成一列，七天趨勢加高。
+    private var portrait: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            header
+                .padding(.bottom, 4)
+            mainTile(titleSize: 22, totalSize: 44, titleLines: 3)
+                .frame(height: 250)
+            HStack(spacing: 8) { smallTiles }
+                .frame(height: 96)
+            weekTile
+        }
+        .padding(22)
+    }
+
+    @ViewBuilder
+    private var smallTiles: some View {
+        smallTile(
+            value: Text(FocusTotal.timeText(minutes: Int((card.focus.duration / 60).rounded()))),
+            label: Text("This Focus"),
+            detail: Text(card.focus.startedAt, format: .dateTime.month().day().hour().minute())
+        )
+        smallTile(value: Text(FocusTotal.timeText(minutes: card.today.minutes)), label: Text("Today"))
+        smallTile(value: Text(card.total.count, format: .number), label: Text("Focuses"))
     }
 
     private var header: some View {
@@ -65,15 +97,15 @@ struct RecapCardView: View {
         .frame(height: 22)
     }
 
-    private var mainTile: some View {
+    private func mainTile(titleSize: CGFloat, totalSize: CGFloat, titleLines: Int) -> some View {
         VStack(alignment: .leading, spacing: 4) {
             title
-                .font(.system(size: 15, weight: .semibold))
-                .lineLimit(2)
+                .font(.system(size: titleSize, weight: .semibold))
+                .lineLimit(titleLines)
                 .truncationMode(.tail)
             Spacer(minLength: 4)
             Text(card.total.timeText)
-                .font(.system(size: 30, weight: .bold, design: .rounded))
+                .font(.system(size: totalSize, weight: .bold, design: .rounded))
                 .monospacedDigit()
                 .lineLimit(1)
                 .minimumScaleFactor(0.5)
@@ -149,37 +181,5 @@ struct RecapCardView: View {
         .padding(12)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
         .background(RoundedRectangle(cornerRadius: 16).fill(tint.opacity(0.08)))
-    }
-}
-
-enum RecapCardRenderError: Error {
-    case renderFailed
-}
-
-/// 把成果卡畫成方形 PNG；與預覽用同一個視圖與同一份 `RecapCard`。
-@MainActor
-enum RecapCardRenderer {
-    static let pixelSide = 1080
-
-    static func pngData(for card: RecapCard, hidingName: Bool) throws -> Data {
-        let renderer = ImageRenderer(content: RecapCardView(card: card, hidesName: hidingName))
-        renderer.scale = CGFloat(pixelSide) / RecapCardView.side
-        guard let image = renderer.cgImage else { throw RecapCardRenderError.renderFailed }
-        // 重畫到沒有 alpha 的點陣：輸出不透明，圓角外也不會透出背景
-        let bounds = CGRect(x: 0, y: 0, width: pixelSide, height: pixelSide)
-        guard let space = CGColorSpace(name: CGColorSpace.sRGB),
-              let context = CGContext(
-                data: nil, width: pixelSide, height: pixelSide, bitsPerComponent: 8, bytesPerRow: 0,
-                space: space, bitmapInfo: CGImageAlphaInfo.noneSkipLast.rawValue
-              ),
-              let background = NSColor(RecapCardView.background).usingColorSpace(.sRGB)?.cgColor
-        else { throw RecapCardRenderError.renderFailed }
-        context.setFillColor(background)
-        context.fill(bounds)
-        context.draw(image, in: bounds)
-        guard let opaque = context.makeImage(),
-              let data = NSBitmapImageRep(cgImage: opaque).representation(using: .png, properties: [:])
-        else { throw RecapCardRenderError.renderFailed }
-        return data
     }
 }
