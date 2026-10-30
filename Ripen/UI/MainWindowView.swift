@@ -2,16 +2,16 @@ import SwiftUI
 
 /// 主視窗：頂部膠囊式切換在計時頁與統計頁之間切換。
 ///
-/// 兩頁都留在畫面樹中、只切換可見性：計時頁的刷新（確立完成）在看統計頁時不中斷，
-/// 視窗大小也不會因換頁而跳動。
+/// 兩頁都留在畫面樹中以保持版面大小，只有正在顯示的計時頁定時繪製；模型由 App 獨立刷新。
 struct MainWindowView: View {
     let model: AppModel
 
     @State private var page = MainWindowPage.timer
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.timerSurfaceVisible) private var isPresented
 
     var body: some View {
-        // 介紹蓋在兩頁之上；計時頁仍留在畫面樹中，刷新不中斷
+        // 介紹蓋在兩頁之上，底下的計時頁保留版面但不定時繪製。
         let showsIntro = !model.settings.gestureIntroSeen
         VStack(spacing: 0) {
             FocusStorageNotice(log: model.focusLog)
@@ -22,6 +22,7 @@ struct MainWindowView: View {
 
             ZStack {
                 TimerPageView(model: model)
+                    .environment(\.timerSurfaceVisible, isPresented && page == .timer && !showsIntro)
                     .visible(page == .timer && !showsIntro)
                 StatisticsPageView(focusLog: model.focusLog)
                     .visible(page == .statistics && !showsIntro)

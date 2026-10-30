@@ -7,11 +7,13 @@
 ```sh
 brew install xcodegen
 xcodegen generate
-xcodebuild build -project Ripen.xcodeproj -scheme Ripen -destination 'platform=macOS'
-xcodebuild test -project Ripen.xcodeproj -scheme Ripen -destination 'platform=macOS'
+xcodebuild build -project Ripen.xcodeproj -scheme Ripen -destination 'platform=macOS' -derivedDataPath build/dev
+xcodebuild test -project Ripen.xcodeproj -scheme Ripen -destination 'platform=macOS' -derivedDataPath build/dev
 ```
 
 只跑單一測試檔：在 `xcodebuild test` 後加上 `-only-testing:RipenTests/AppModelFocusTests`。
+
+開發與回歸共用 `build/dev`，避免每次驗證另建一份完整快取；發行打包仍使用 `build/release`。清理舊建置前先確認沒有程序從該目錄執行，僅移除可重建的 DerivedData、App 副本及編譯工具。
 
 畫面外觀與過場幾何用 Debug 建置的逐格輸出檢查；操作取消、視窗可見性與 overlay 清理則以真實 AppKit 整合測試驗證：`Ripen.app/Contents/MacOS/Ripen --render-frames <輸出資料夾> [名稱前綴]` 會把 `Ripen/UI/FrameDumpScenes.swift` 列出的場景輸出成 PNG 後結束。
 
@@ -106,17 +108,25 @@ xcodebuild test -project Ripen.xcodeproj -scheme Ripen -destination 'platform=ma
 
 ## 計時顯示
 
-計時頁、懸浮窗、瀏海島與選單列在各自更新時讀取一次 `AppModel.display`，取得不可變的 `PhaseDisplay`；時間文字、進度、超時色、階段說明與按鈕狀態使用同一次注入時鐘取樣。子畫面接收真正使用的顯示資料，不傳遞只為強迫重算的日期。不同視窗各自取樣，沒有共用顯示快取或新增排程。
+計時頁、懸浮窗、瀏海島與選單列在各自更新時讀取一次 `AppModel.display`，取得不可變的 `PhaseDisplay`；時間文字、進度、超時色、階段說明與按鈕狀態使用同一次注入時鐘取樣。子畫面接收真正使用的顯示資料，不傳遞只為強迫重算的日期。不同視窗各自取樣，不共用顯示快取。
 
-`display` 只讀資料，不呼叫 `refresh()`、不送提醒、不完成階段。各畫面保留原有的 `CountdownTickSchedule` 與刷新方式；`TimelineView` 的日期只觸發刷新，顯示時間仍取自 model 的 `TimeSource`。選單列仍只在顯示文字改變時寫入 `shownText`，不以每 250 ms 更新整份可觀察顯示值。操作意圖仍依按下當刻的時鐘判斷，不使用較早的畫面取樣。
+`display` 只讀資料，不呼叫 `refresh()`、不送提醒、不完成階段。App 持有 `ModelRefreshDriver`，與選單列共用既有的 0.25 秒格線計時器；每格由 driver 呼叫一次 `model.refresh()`，視窗與選單列都不負責模型刷新。關閉選單列、顯示統計、隱藏主窗或暫停畫面排程時，提醒、超時離開處理、閒置歸零、設定長度套用與復原到期仍繼續。driver 的訂閱隨持有者結束，閉包不強持有 model。
 
-`PhaseDisplayTests` 驗證跨零期間的取樣一致性、暫停、無副作用的讀取與操作使用當下時間；`PhaseDisplayRefreshTests` 使用真實 SwiftUI／AppKit 畫面，確認 model 不變、只有假時鐘前進時，主視窗、懸浮窗與瀏海島仍會更新。外觀以固定時鐘的逐格輸出比對。
+計時介面只有在倒數／超時進行中才排下一格；未開始與暫停時仍畫首格，模型或設定變更會透過觀察重新繪製。主窗的 `MainWindowBridge.isPresented` 在顯示時啟用、淡出真正完成後停用，過期淡出回呼不會停掉已重新顯示的主窗；計時頁另在統計頁或介紹覆蓋時停止定時繪製。隱藏主窗的介紹動畫也會暫停。主窗重新出現時由注入時鐘取得當下時間，保留原有形態曲線與動畫時長。選單列只在文字改變時寫入 `shownText`，不以每 250 ms 更新整份可觀察顯示值；操作意圖仍依按下當刻的時鐘判斷。
+
+`PhaseDisplayTests` 驗證跨零期間的取樣一致性、暫停、無副作用的讀取與操作使用當下時間；`PhaseDisplayRefreshTests` 使用真實 SwiftUI／AppKit 畫面，確認執行中的三種計時介面會隨假時鐘前進。`DisplaySchedulingTests` 驗證靜態畫面不持續讀時鐘、隱藏後重新顯示、暫停後繼續、介紹動畫暫停／恢復，以及沒有任何介面與選單列時的模型刷新及訂閱釋放。原生視窗動畫測試需在 Mac 解鎖時執行；鎖定時淡入淡出完成回呼可能停滯，不能將該結果當作程式回歸。外觀以固定時鐘的逐格輸出比對。
+
+`AppSettings` 首次讀取欄位後快取合法值或預設值，讀取不發出觀察通知；App 內寫入仍立即持久化並通知畫面，不改設定名稱、預設值或儲存格式。從 App 外部修改儲存的值須重開 App 才讀入。`ResourceLifetimeTests` 驗證重複繪製所需的設定讀取不會反覆查詢儲存。
 
 ## 外觀
 
 設定的「外觀」提供黑、白、玻璃。黑與白是實色背景並固定深淺色；玻璃可跟隨系統或指定深淺色，保留既有透明度與模糊設定。未選擇時仍為深色玻璃。主視窗、統計、懸浮窗、設定與標題列一致；瀏海島與水珠保持純黑。規則見 [ADR-0008](adr/0008-app-appearance.md)。
 
-形態切換在主視窗建立後，先暖機整窗快照與懸浮窗的建立、排版及首次繪製，減少第一次切換時的同步準備。懸浮窗以透明 panel 完成預備後立即隱藏，不註冊滑鼠監聽、不保存位置；首次提示等真正顯示後才啟用。快照不保留，實際切換仍擷取當下內容，解析度、液體與淡入動畫的曲線及時長不變；系統開啟「減少動態效果」時略過此暖機。`FloatingWindowPreparationTests` 檢查隱藏預備、首次提示、位置設定、重用 panel 與同步建立主視窗的可見性。
+懸浮窗與瀏海島按需建立，不在啟動時預建隱藏懸浮窗或擷取暖機快照。淡出、展開或取消隱藏中的過場後，移除各自的 SwiftUI 內容、滑鼠與螢幕監聽並關閉 panel；位置、尺寸與首次提示仍由既有設定／狀態保存，顯示中的 panel 重複使用，淡出中重新顯示則使舊清理回呼失效。主視窗依 ADR-0003 以 `orderOut` 保留頁面狀態。實際切換仍擷取當下內容，快照解析度、液體曲線與動畫時長不變；代價是首次切換及重新建立輔助視窗時需要同步建立內容。
+
+`FloatingWindowPreparationTests` 檢查按需建立、首次提示、位置與可見 panel 重用；`ResourceLifetimeTests` 檢查啟動沒有未使用的懸浮窗、反覆隱藏後內容釋放及淡出中重新顯示。測試 host 的 AppKit 暫存參照可能延後 panel 物件釋放，因此另以隔離資料的獨立 App 連續四輪顯示／隱藏懸浮窗及瀏海島，確認每輪懸浮窗已釋放且總視窗數固定為 3。這個數量包含 App 自己的主視窗與選單列相關視窗，並非三個計時介面都可見。
+
+在首次啟動的介紹動畫情境下，以隔離資料的 Debug App 比較修改前後的 RSS 與 CPU，兩者中位數皆下降（RSS 128.45 → 115.56 MiB，CPU 15.74% → 12.82%）。可見倒數仍有 CPU 成本；短時間量測不能推算切換延遲或掉幀率，取消暖機後的首次切換手感仍需實機確認。
 
 收進瀏海的交接在下一輪完成真島的排版與必要繪製後，才啟動內容淡入，取代固定等待 33 ms 的做法；實心 overlay 仍保留 150 ms，供原有的 120 ms 內容淡入完成。切換被取消時，`PresentationTransitions` 統一使過期交接回呼失效並撤除 overlay。`NotchIslandHandoffTests` 檢查正常交接與取消後不再出現；overlay 的生命週期測試只追蹤本次建立的 panel，避免其他並行視窗影響斷言。
 

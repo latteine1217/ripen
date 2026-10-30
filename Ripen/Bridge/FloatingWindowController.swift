@@ -58,21 +58,6 @@ final class FloatingWindowController {
 
     // MARK: - 顯示與隱藏
 
-    /// 主視窗出現後先準備隱藏的懸浮窗，避免第一次按黃色按鈕時才建立與排版。
-    /// 不顯示、不註冊滑鼠監聽，也不寫入尚未使用的位置。
-    func prepare() {
-        guard panel == nil else { return }
-        let panel = makePanel()
-        let size = rememberedSize
-        withoutAnimation {
-            state.size = FloatingWindowSize(height: size.height)
-            state.glassFrame = CGRect(origin: CGPoint(x: Self.margin, y: Self.margin), size: size)
-        }
-        panel.setFrame(Self.panelFrame(for: CGRect(origin: .zero, size: size)), display: false)
-        // 以透明視窗先完成首張快照，暖機繪圖管線；不保留會隨計時變舊的畫面。
-        _ = glassSnapshot(of: panel)
-    }
-
     /// 在記住的位置（沒有就在主視窗右上角附近）淡入；已在畫面上時不動。
     func show(near mainWindowFrame: CGRect?) {
         stopResizing()
@@ -98,7 +83,8 @@ final class FloatingWindowController {
     func dismiss() {
         stopResizing()
         cancelMorph()
-        guard let panel, panel.isVisible else { return }
+        guard let panel else { return }
+        guard panel.isVisible else { return releasePanel(panel) }
         generation += 1
         let current = generation
         let animation: Animation = NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
@@ -106,32 +92,35 @@ final class FloatingWindowController {
             : .easeIn(duration: Self.dismissDuration)
         withAnimation(animation) {
             state.isDismissing = true
-        } completion: { [weak self] in
-            guard let self, self.generation == current else { return }
+        } completion: { [weak self, weak panel] in
+            guard let self, let panel, self.generation == current else { return }
             panel.orderOut(nil)
             self.state.isPresented = false
             self.removeMouseMonitors()
             self.resetDismissal()
+            self.releasePanel(panel)
         }
     }
 
-    /// 淡出後 `orderOut`；收進瀏海時與 overlay 的第一格交叉淡化。
+    /// 淡出後釋放視窗及畫面；收進瀏海時與 overlay 的第一格交叉淡化。
     func hide(fadeDuration: TimeInterval = PresentationFade.duration) {
         stopResizing()
         cancelMorph()
-        guard let panel, panel.isVisible else { return }
+        guard let panel else { return }
+        guard panel.isVisible else { return releasePanel(panel) }
         generation += 1
         let current = generation
         NSAnimationContext.runAnimationGroup { context in
             context.duration = fadeDuration
             panel.animator().alphaValue = 0
-        } completionHandler: { [weak self] in
+        } completionHandler: { [weak self, weak panel] in
             MainActor.assumeIsolated {
-                guard let self, self.generation == current else { return }
+                guard let self, let panel, self.generation == current else { return }
                 panel.orderOut(nil)
                 self.state.isPresented = false
                 panel.alphaValue = 1
                 self.removeMouseMonitors()
+                self.releasePanel(panel)
             }
         }
     }
@@ -271,6 +260,7 @@ final class FloatingWindowController {
         panel.orderOut(nil)
         state.isPresented = false
         removeMouseMonitors()
+        releasePanel(panel)
         let c = FloatingMorph.expandCurve
         operation.play(.timingCurve(c.x1, c.y1, c.x2, c.y2, duration: FloatingMorph.expandDuration)) {
             reveal(NotchPullController.crossFadeDuration)
@@ -292,6 +282,20 @@ final class FloatingWindowController {
 
     private func cancelMorph() {
         operation?.cancel()
+    }
+
+    /// 已擷取過場快照就不必再持有隱藏的 SwiftUI 樹；幾何與位置仍由 state／設定保存。
+    private func releasePanel(_ panel: FloatingWindowPanel) {
+        guard self.panel === panel, !panel.isVisible else { return }
+        removeMouseMonitors()
+        if let screenObserver { NotificationCenter.default.removeObserver(screenObserver) }
+        screenObserver = nil
+        state.isPresented = false
+        dragStart = nil
+        panel.contentView = nil
+        panel.isReleasedWhenClosed = false
+        panel.close()
+        self.panel = nil
     }
 
     // MARK: - 拖曳與貼邊

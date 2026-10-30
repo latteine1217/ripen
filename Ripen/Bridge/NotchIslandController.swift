@@ -70,20 +70,22 @@ final class NotchIslandController {
         cancelCollapse()
         // 拉出途中島可能已隱藏，仍須取消液體與舊回呼，避免稍後重新顯示主視窗。
         puller.cancel()
-        guard let panel, panel.isVisible else { return }
         generation += 1
-        let current = generation
         removeMonitors()
         cancelWork()
+        guard let panel else { return }
+        guard panel.isVisible else { return releasePanel() }
+        let current = generation
         NSAnimationContext.runAnimationGroup { context in
             context.duration = PresentationFade.duration
             panel.animator().alphaValue = 0
-        } completionHandler: { [weak self] in
+        } completionHandler: { [weak self, weak panel] in
             MainActor.assumeIsolated {
-                guard let self, self.generation == current else { return }
+                guard let self, let panel, self.generation == current else { return }
                 panel.orderOut(nil)
                 panel.alphaValue = 1
                 self.setExpanded(false, animated: false)
+                self.releasePanel()
             }
         }
     }
@@ -116,9 +118,10 @@ final class NotchIslandController {
         cancelWork()
         puller.pullOut(into: window, panel: panel, screen: screen, removeIsland: { [weak self] in
             guard let self else { return }
-            panel.orderOut(nil)
+            self.panel?.orderOut(nil)
             self.state.isHovering = false
             self.setExpanded(false, animated: false)
+            self.releasePanel()
         }, reveal: reveal)
     }
 
@@ -228,6 +231,21 @@ final class NotchIslandController {
             MainActor.assumeIsolated { self?.screensChanged() }
         }
         return panel
+    }
+
+    /// 島離開目前形態後移除畫面與系統監聽；拉出動畫繼續使用自己的 overlay。
+    private func releasePanel() {
+        guard let panel, !panel.isVisible else { return }
+        removeMonitors()
+        cancelWork()
+        shrinkWork?.cancel()
+        shrinkWork = nil
+        if let screenObserver { NotificationCenter.default.removeObserver(screenObserver) }
+        screenObserver = nil
+        panel.contentView = nil
+        panel.isReleasedWhenClosed = false
+        panel.close()
+        self.panel = nil
     }
 
     /// 解析度或排列變了：留在原螢幕重算瀏海；原螢幕不在了就移到主螢幕。

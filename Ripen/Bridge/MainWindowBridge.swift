@@ -6,7 +6,10 @@ import SwiftUI
 /// 只負責按鈕攔截與顯示／隱藏；透明標題列等外觀由 `glassWindow()` 設定，兩者不互相覆蓋。
 /// 這是 App 中唯一設定主視窗 delegate 的地方（ADR-0003 允許的唯一例外）。
 @MainActor
+@Observable
 final class MainWindowBridge {
+    /// 保留主窗內容時仍能停止隱藏畫面的排程；首次由 SwiftUI 顯示，預設允許繪製。
+    private(set) var isPresented = true
     private(set) weak var window: NSWindow?
     private var closeInterceptor: CloseInterceptor?
     /// 黃色按鈕的新 target；按鈕只弱參照 target，要由這裡持有。
@@ -66,6 +69,7 @@ final class MainWindowBridge {
             return withWindow { [weak self] in self?.show(fadeDuration: fadeDuration) }
         }
         generation += 1
+        isPresented = true
         // SwiftUI 若換過 delegate 或按鈕，重新接上攔截
         installCloseInterceptor(on: window)
         installMiniaturizeInterceptor(on: window)
@@ -93,6 +97,7 @@ final class MainWindowBridge {
             MainActor.assumeIsolated {
                 guard let self, self.generation == current else { return }
                 window.orderOut(nil)
+                self.isPresented = false
                 window.alphaValue = 1
             }
         }

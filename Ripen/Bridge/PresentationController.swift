@@ -55,14 +55,6 @@ final class PresentationController {
     func ensureInterfaceVisible() {
         guard presentationModel.presentation.showsMainWindow else { return }
         if mainWindow.window == nil { applyOnceMainWindowExists() }
-        // 等主視窗先完成建立，再準備隱藏的懸浮窗，不把首次切換的建置成本留到按鈕按下時。
-        mainWindow.withWindow { [weak self] in
-            DispatchQueue.main.async { [weak self] in
-                guard let self, !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion else { return }
-                _ = self.mainWindow.window?.themeFrameSnapshot()
-                self.floating.prepare()
-            }
-        }
     }
 
     /// 主視窗建立並 attach 後再套用形態，過場才拿得到視窗；排到下一輪，讓 SwiftUI 先定好視窗的 frame。

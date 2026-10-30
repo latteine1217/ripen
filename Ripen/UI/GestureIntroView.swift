@@ -93,11 +93,12 @@ struct GestureIllustration: View {
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.appPalette) private var palette
+    @Environment(\.timerSurfaceVisible) private var isPresented
 
     private static let period: TimeInterval = 2.8
 
     var body: some View {
-        TimelineView(.animation(paused: reduceMotion || fixedProgress != nil)) { context in
+        TimelineView(.animation(paused: reduceMotion || fixedProgress != nil || !isPresented)) { context in
             let p = fixedProgress ?? (reduceMotion ? 1 : Self.progress(at: context.date))
             Canvas { gc, size in draw(in: &gc, size: size, progress: p) } symbols: {
                 Image(systemName: "cursorarrow")

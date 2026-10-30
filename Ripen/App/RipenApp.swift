@@ -4,6 +4,7 @@ import SwiftUI
 struct RipenApp: App {
     @NSApplicationDelegateAdaptor private var lifecycle: AppLifecycleDelegate
     @State private var model: AppModel
+    @State private var modelRefresh: ModelRefreshDriver
     /// 形態的唯一真實來源（ADR-0003）；與計時各自持有。
     @State private var presentation: PresentationModel
     /// 依形態顯示或隱藏主視窗與瀏海島（ADR-0003）。
@@ -52,6 +53,7 @@ struct RipenApp: App {
         let presentation = PresentationModel()
         let presenter = PresentationController(model: model, presentation: presentation)
         _model = State(initialValue: model)
+        _modelRefresh = State(initialValue: ModelRefreshDriver(model: model))
         _presentation = State(initialValue: presentation)
         _presenter = State(initialValue: presenter)
         _hotkeys = State(initialValue: hotkeys)
@@ -71,6 +73,7 @@ struct RipenApp: App {
         // 單一實例的 Window（非 WindowGroup），不會有第二個主視窗（ADR-0003）
         Window("Ripen", id: "main") {
             MainWindowView(model: model)
+                .environment(\.timerSurfaceVisible, presenter.mainWindow.isPresented)
                 .environment(presenter.tearOff)
                 .onWindowAttach { window in presenter.mainWindow.attach(window) }
                 .focusedSceneValue(\.timerModel, model)

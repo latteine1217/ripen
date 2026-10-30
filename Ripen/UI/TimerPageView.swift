@@ -6,6 +6,7 @@ struct TimerPageView: View {
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.appPalette) private var palette
+    @Environment(\.timerSurfaceVisible) private var isPresented
     /// 沒有提供時（例如逐格輸出）圓環不能拖出。
     @Environment(TearOffController.self) private var tearOff: TearOffController?
 
@@ -15,7 +16,7 @@ struct TimerPageView: View {
     private static let ringDiameter: CGFloat = 220
 
     var body: some View {
-        TimelineView(.countdownTick) { context in
+        TimelineView(CountdownTickSchedule(paused: !isPresented || model.status != .running)) { _ in
             let display = model.display
             let status = display.status
             let phase = display.phase
@@ -57,8 +58,6 @@ struct TimerPageView: View {
             .animation(reduceMotion ? nil : .easeInOut(duration: 0.35), value: isOvertime)
             .animation(.easeInOut(duration: 0.25), value: model.completionSummary)
             .animation(.easeOut(duration: 0.18), value: model.recapShortcut)
-            // 倒數到 0 只是推導出的狀態；每次刷新時送出提醒，畫面隨即進入超時
-            .onChange(of: context.date) { model.refresh() }
         }
         // 掛在整頁而非入口上：休息結束、入口收起時，已打開的預覽不被關掉；也不繼承階段色
         .sheet(isPresented: Binding(get: { recapProjectID != nil }, set: { if !$0 { recapProjectID = nil } })) {

@@ -43,7 +43,7 @@ struct FloatingWindowView: View {
     var onResize: (ResizeCorner?) -> Void = { _ in }
 
     var body: some View {
-        TimelineView(.countdownTick) { context in
+        TimelineView(CountdownTickSchedule(paused: model.status != .running)) { _ in
             FloatingWindowGlass(
                 model: model, presentation: presentation, display: model.display, blend: FloatingWindowSizeBlend(state.size), frame: state.glassFrame,
                 widensLeftward: state.widensLeftward,
@@ -51,9 +51,6 @@ struct FloatingWindowView: View {
                 keepsResizeCursor: state.isHovering || state.isResizing,
                 isDismissing: state.isDismissing, showsHints: state.isPresented, onDrag: onDrag, onResize: onResize
             )
-            // 主視窗不在畫面上時也要有人刷新，倒數到 0 後送出提醒並進入超時。
-            // 與主視窗並存時重複刷新無妨：每段只提醒一次
-            .onChange(of: context.date) { model.refresh() }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
     }

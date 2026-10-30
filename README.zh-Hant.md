@@ -109,7 +109,7 @@
 
 ## 開發
 
-建置、測試、打包、專案結構，以及形態過場與計時顯示取樣的架構說明，見 [docs/development.md](docs/development.md)。送出 pull request 前請先看 [CONTRIBUTING.md](CONTRIBUTING.md)。
+建置、測試、打包、專案結構，以及形態過場與計時顯示取樣的架構說明，見 [docs/development.md](docs/development.md)。開發建置共用 `build/dev`，打包使用 `build/release`。送出 pull request 前請先看 [CONTRIBUTING.md](CONTRIBUTING.md)。
 
 ## 授權
 
