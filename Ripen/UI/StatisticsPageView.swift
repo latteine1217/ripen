@@ -191,9 +191,34 @@ private struct ProjectDetailView: View {
                 }
                 .buttonStyle(ProjectRowStyle())
                 .foregroundStyle(.tint)
-                .padding(.trailing, -8)
+                .padding(.trailing, project == nil ? -8 : 0)
                 .disabled(records.isEmpty)
                 .help(Text("Preview, save or share this project's recap card"))
+                // 未分類不能刪除；刪除與成果卡同在標題列，分類的操作集中一處
+                if let project {
+                    Button { confirmsDeletion = true } label: {
+                        Label("Delete Project…", systemImage: "trash")
+                            .labelStyle(.iconOnly)
+                            .font(.callout)
+                    }
+                    .buttonStyle(ProjectRowStyle())
+                    .foregroundStyle(palette.secondary)
+                    .padding(.leading, -8)
+                    .padding(.trailing, -8)
+                    .help(Text("Delete this project; its focuses move to Uncategorized"))
+                    // 刪除不能復原（ADR-0012），先說明紀錄的去向
+                    .confirmationDialog(
+                        Text("Delete “\(project.name)”?"), isPresented: $confirmsDeletion, titleVisibility: .visible
+                    ) {
+                        Button("Delete Project", role: .destructive) { delete(project.id) }
+                    } message: {
+                        if records.isEmpty {
+                            Text("This can’t be undone.")
+                        } else {
+                            Text("\(records.count) focuses will move to Uncategorized. This can’t be undone.")
+                        }
+                    }
+                }
             }
 
             HStack(alignment: .firstTextBaseline, spacing: 28) {
@@ -206,28 +231,7 @@ private struct ProjectDetailView: View {
                 .foregroundStyle(palette.secondary)
 
             if let project {
-                HStack(spacing: 8) {
-                    ColorSwatches(selection: project.color) { focusLog.setColor($0, forProject: project.id) }
-                    Spacer(minLength: 8)
-                    Button("Delete Project…", systemImage: "trash") { confirmsDeletion = true }
-                        .labelStyle(.iconOnly)
-                        .buttonStyle(ProjectRowStyle())
-                        .foregroundStyle(palette.secondary)
-                        .padding(.trailing, -8)
-                        .help(Text("Delete this project; its focuses move to Uncategorized"))
-                }
-                // 刪除不能復原（ADR-0012），先說明紀錄的去向
-                .confirmationDialog(
-                    Text("Delete “\(project.name)”?"), isPresented: $confirmsDeletion, titleVisibility: .visible
-                ) {
-                    Button("Delete Project", role: .destructive) { delete(project.id) }
-                } message: {
-                    if records.isEmpty {
-                        Text("This can’t be undone.")
-                    } else {
-                        Text("\(records.count) focuses will move to Uncategorized. This can’t be undone.")
-                    }
-                }
+                ColorSwatches(selection: project.color) { focusLog.setColor($0, forProject: project.id) }
             }
 
             WeekChart(
