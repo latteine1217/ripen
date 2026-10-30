@@ -2064,22 +2064,6 @@
         }
       }
     },
-    "New Project…": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "New Project…"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "新增分類…"
-          }
-        }
-      }
-    },
     "New Project": {
       "localizations": {
         "en": {

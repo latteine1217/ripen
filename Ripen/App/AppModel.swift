@@ -132,8 +132,8 @@ final class AppModel {
 
     /// 新增並直接選取分類；空白名稱不建立，回傳 nil。
     @discardableResult
-    func createProject(named name: String) -> FocusProject? {
-        guard let project = focusLog.addProject(named: name) else { return nil }
+    func createProject(named name: String, color: ProjectColor? = nil) -> FocusProject? {
+        guard let project = focusLog.addProject(named: name, color: color) else { return nil }
         selectProject(project.id)
         return project
     }

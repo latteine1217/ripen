@@ -196,36 +196,6 @@ private struct ProjectDetailView: View {
     }
 }
 
-/// 預設色盤；選中的顏色加外圈，並以名稱朗讀，不只靠色相。
-private struct ColorSwatches: View {
-    let selection: ProjectColor
-    let choose: (ProjectColor) -> Void
-
-    @Environment(\.appPalette) private var palette
-
-    var body: some View {
-        HStack(spacing: 10) {
-            ForEach(ProjectColor.allCases, id: \.self) { color in
-                let isSelected = color == selection
-                Button { choose(color) } label: {
-                    Circle()
-                        .fill(color.color)
-                        .frame(width: 18, height: 18)
-                        .padding(3)
-                        .overlay(Circle().strokeBorder(isSelected ? palette.primary : .clear, lineWidth: 2))
-                        .contentShape(Circle())
-                }
-                .buttonStyle(.plain)
-                .help(Text(color.name))
-                .accessibilityLabel(Text(color.name))
-                .accessibilityAddTraits(isSelected ? .isSelected : [])
-            }
-        }
-        .accessibilityElement(children: .contain)
-        .accessibilityLabel(Text("Project Color"))
-    }
-}
-
 /// 依開始時刻新的在上（保存順序不一定是開始順序）；日期與時刻依系統格式，長度與統計相同取整到分鐘。
 private struct RecordList: View {
     let records: [FocusRecord]

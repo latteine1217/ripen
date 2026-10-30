@@ -94,10 +94,13 @@ final class FocusLog {
         if hasLoaded { savePending() }
     }
 
-    /// 建立分類並自動分配代表色；空白名稱不建立。
-    func addProject(named name: String) -> FocusProject? {
+    /// 新分類預設的代表色：色盤中尚未使用的第一個。
+    var suggestedProjectColor: ProjectColor { .next(avoiding: projects.map(\.color)) }
+
+    /// 建立分類；未指定代表色時用建議色。空白名稱不建立。
+    func addProject(named name: String, color: ProjectColor? = nil) -> FocusProject? {
         guard let name = FocusProject.normalizedName(name) else { return nil }
-        let project = FocusProject(name: name, color: .next(avoiding: projects.map(\.color)))
+        let project = FocusProject(name: name, color: color ?? suggestedProjectColor)
         guard storage != nil else { savedProjects.append(project); return project }
         pendingProjects.append(project)
         if hasLoaded { savePending() }
