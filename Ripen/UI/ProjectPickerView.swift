@@ -129,8 +129,8 @@ private struct ProjectMenu: View {
         }
         .padding(8)
         .frame(width: 286)
-        // 浮層繼承計時頁的階段色；按鈕改回系統強調色，分類操作不帶階段訊號（ADR-0010）
-        .tint(.accentColor)
+        // 浮層繼承計時頁的階段色；按鈕改回品牌強調色，分類操作不帶階段訊號（ADR-0010、ADR-0013）
+        .tint(.brandAccent)
         .onAppear {
             highlighted = .some(model.currentProject?.id)
             focus = .list

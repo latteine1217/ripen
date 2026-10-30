@@ -16,6 +16,7 @@ Notable changes to Ripen. The format follows [Keep a Changelog](https://keepacha
 ### Changed
 
 - The floating window and notch island are created when shown and released when hidden, and timers that are idle, paused or hidden no longer redraw on a schedule.
+- Text and icons in phase, project and brand colors stay readable on every appearance: brighter on dark glass, darker on light backgrounds. Windows no longer fall back to the system accent color.
 
 ### Fixed
 

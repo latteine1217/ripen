@@ -109,7 +109,7 @@ struct FloatingWindowGlass: View, Animatable {
             }
             .overlay { PhaseRipple(shape: shape, reminderID: model.lastReminder?.id, tint: display.displayTint) }
             // 超時色是時間推導的值；這個 view 在 TimelineView 裡，每次刷新都重讀
-            .tint(display.displayTint)
+            .tint(display.displayContentTint)
             .scaleEffect(isDismissing && !reduceMotion ? 0.85 : 1)
             .opacity(isDismissing ? 0 : 1)
             .accessibilityElement(children: .contain)

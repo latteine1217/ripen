@@ -73,6 +73,7 @@ struct RipenApp: App {
         // 單一實例的 Window（非 WindowGroup），不會有第二個主視窗（ADR-0003）
         Window("Ripen", id: "main") {
             MainWindowView(model: model)
+                .tint(.brandAccent)
                 .environment(\.timerSurfaceVisible, presenter.mainWindow.isPresented)
                 .environment(presenter.tearOff)
                 .onWindowAttach { window in presenter.mainWindow.attach(window) }
@@ -101,6 +102,7 @@ struct RipenApp: App {
         // 從懸浮窗與瀏海島開的成果卡；不屬於任何計時形態（ADR-0001）
         Window("Recap Card", id: RecapWindow.windowID) {
             RecapWindowView(focusLog: model.focusLog, recapWindow: RecapWindow.shared)
+                .tint(.brandAccent)
         }
         .windowResizability(.contentSize)
         .commandsRemoved()
@@ -114,6 +116,7 @@ struct RipenApp: App {
 
         Settings {
             SettingsView(settings: model.settings, showMainWindow: presenter.showMainWindow)
+                .tint(.brandAccent)
                 .environment(hotkeys)
                 .environment(loginItem)
                 .environment(updater)

@@ -52,7 +52,7 @@ struct TimerPageView: View {
                 self.controls(controls)
             }
             .padding(32)
-            .tint(display.displayTint)
+            .tint(display.displayContentTint)
             // 減少動態效果時直接切換，不做過場
             .animation(reduceMotion ? nil : .easeInOut(duration: 0.2), value: status)
             .animation(reduceMotion ? nil : .easeInOut(duration: 0.35), value: phase)

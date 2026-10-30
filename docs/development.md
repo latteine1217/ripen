@@ -134,9 +134,11 @@ xcodebuild test -project Ripen.xcodeproj -scheme Ripen -destination 'platform=ma
 
 `PresentationController` 共用一個 `PresentationTransitions` 管理形態操作：新操作取代舊操作，取消涵蓋拖曳、彈回、落地、變形與吸入交接；拉出與拖出接續同一手勢時，保留原 overlay，但使上一階段的回呼失效。操作持有舞台、待執行工作與結束清理；真視窗接手後，淡出中的 overlay 仍可被下一個操作撤除。各 controller 保留滑鼠追蹤、幾何、曲線與時長，panel 局部淡出與尺寸調整仍各自管理，`PresentationModel` 仍是形態唯一真實來源。`PresentationTransitionsTests` 驗證接續、首格前取消、延後交接與淡出清理；`PresentationInterruptionTests` 穿過形態意圖，檢查拉出、拖出與收進瀏海被打斷後的真實視窗狀態。非同步測試必須持有 presenter 到驗收及清理結束。
 
-`AppAppearanceController` 統一 AppKit 外觀；共用背景依 `AppSettings.appearanceColorMode` 解析 SwiftUI 外觀。黑與白採石墨黑／暖瓷白的微弱漸層，`AppPalette` 統一數字、次要文字、軌道與按鈕，配色集中於 Asset Catalog；`TimerButtonStyle` 明確控制主按鈕文字。淺色玻璃參數在 `GlassStyle.light`，深色維持 `GlassStyle.standard`；Debug 玻璃調整面板目前調整深色參數。階段與超時配色在 Asset Catalog，深淺各有對應的低飽和配色。
+`AppAppearanceController` 統一 AppKit 外觀；共用背景依 `AppSettings.appearanceColorMode` 解析 SwiftUI 外觀。黑與白採石墨黑／暖瓷白的微弱漸層，`AppPalette` 統一數字、次要文字、軌道與按鈕，配色集中於 Asset Catalog；`TimerButtonStyle` 明確控制主按鈕文字。淺色玻璃參數在 `GlassStyle.light`，深色維持 `GlassStyle.standard`；Debug 玻璃調整面板目前調整深色參數。
 
-Debug App 加 `--render-frames <輸出資料夾> appearance-` 可輸出四種配色的計時、統計與三尺寸懸浮窗，以及石墨黑／暖瓷白三個階段的暫停與超時，共 32 張版面圖。模糊層不在 ImageRenderer 的擷取範圍，輸出時關閉模糊；設定 Form 亦無法以此驗收。這些圖只能核對配色與版面，不能代替實機材質與即時切換驗收。
+配色依用途分角色（[ADR-0013](adr/0013-semantic-color-roles.md)）：每個強調色（階段、超時、分類、品牌）有填色 `<名稱>` 與內容色 `<名稱>Content` 兩個 colorset，深淺各一組。填色給圓點、圓環、長條與圖表，內容色給文字與圖示；畫面不直接寫色值，Ripen 自己的表面用 `AppPalette`，系統畫出的介面用系統語意色。新增或調整顏色時，兩個 colorset 一起加，再執行 `-only-testing:RipenTests/ColorContrastTests`：內容色須在每種背景上達 4.5:1、填色達 3:1，不合格時只調亮度、不改色相。測試中的背景清單即實際會出現的背景，新增表面時一併加入。
+
+Debug App 加 `--render-frames <輸出資料夾> appearance-` 可輸出四種配色的計時、統計、三尺寸懸浮窗與配色總覽，以及石墨黑／暖瓷白三個階段的暫停與超時，共 36 張版面圖。模糊層不在 ImageRenderer 的擷取範圍，輸出時關閉模糊；設定 Form 亦無法以此驗收。這些圖只能核對配色與版面，不能代替實機材質與即時切換驗收。
 
 ## 復原與手勢引導
 

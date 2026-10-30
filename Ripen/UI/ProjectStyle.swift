@@ -1,8 +1,13 @@
 import SwiftUI
 
 extension ProjectColor {
-    /// 色值在 Asset Catalog（`Project<名稱>`），深淺外觀各一組；只用於分類標記、統計與成果卡，不取代階段色。
-    var color: Color { Color("Project" + rawValue.prefix(1).uppercased() + rawValue.dropFirst()) }
+    /// 填色：圓點、色票、圖表與成果卡底色。色值在 Asset Catalog（`Project<名稱>`），深淺外觀各一組；
+    /// 只用於分類標記、統計與成果卡，不取代階段色。
+    var color: Color { Color(assetName) }
+    /// 內容色：分類色的文字與圖示，在每種背景上都夠清楚（ADR-0013）。
+    var contentColor: Color { Color(assetName + "Content") }
+
+    var assetName: String { "Project" + rawValue.prefix(1).uppercased() + rawValue.dropFirst() }
 
     /// 選色時朗讀與提示用的名稱；顏色不能只靠色相辨識。
     var name: LocalizedStringKey {

@@ -61,7 +61,7 @@ struct PageSwitcher: View {
         return Button { selection = page } label: {
             Label(page.title, systemImage: page.systemImage)
                 .font(.callout.weight(isSelected ? .semibold : .regular))
-                .foregroundStyle(isSelected ? Color("BrandAccent") : palette.secondary)
+                .foregroundStyle(isSelected ? Color.brandAccent : palette.secondary)
                 .padding(.horizontal, 14)
                 .padding(.vertical, 6)
                 .background {

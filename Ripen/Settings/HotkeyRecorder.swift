@@ -17,7 +17,7 @@ struct HotkeyRecorder: View {
                 .frame(minWidth: 96)
         }
         .buttonStyle(.bordered)
-        .tint(hotkeys.isRecording ? .accentColor : nil)
+        .tint(hotkeys.isRecording ? .brandAccent : nil)
         .help(Text("Click, then press a new shortcut. Press Esc to cancel."))
         .onDisappear(perform: cancel)
         // 切到其他 App 時取消，熱鍵不會一直停在取消註冊的狀態

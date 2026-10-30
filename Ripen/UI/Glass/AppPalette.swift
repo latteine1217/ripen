@@ -32,6 +32,11 @@ struct AppPalette {
     }
 }
 
+extension Color {
+    /// 品牌強調色的內容色（ADR-0013）。各視窗最外層的 tint：沒有階段色的元件用它，不露出系統強調色。
+    static let brandAccent = Color("BrandAccentContent")
+}
+
 extension EnvironmentValues {
     @Entry var appPalette = AppPalette.glass
 }

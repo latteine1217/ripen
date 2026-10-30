@@ -56,7 +56,7 @@ struct NotchIslandView: View {
             .clipShape(shape)
             .contentShape(shape)
             .environment(\.colorScheme, .dark)
-            .tint(display.displayTint)
+            .tint(display.displayContentTint)
             // 減少動態效果時改為短暫的淡入淡出；下垂是位移，直接切換
             .animation(
                 reduceMotion ? .easeInOut(duration: 0.18) : .spring(response: 0.35, dampingFraction: 0.82),

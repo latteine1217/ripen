@@ -24,6 +24,8 @@ struct RecapCardView: View {
     }
 
     private var tint: Color { card.project?.color.color ?? Self.neutral }
+    /// 紙張上的分類色文字用內容色（ADR-0013）。
+    private var contentTint: Color { card.project?.color.contentColor ?? Self.neutral }
 
     var body: some View {
         Group {
@@ -130,7 +132,7 @@ struct RecapCardView: View {
             value
                 .font(.system(size: 16, weight: .semibold, design: .rounded))
                 .monospacedDigit()
-                .foregroundStyle(tint)
+                .foregroundStyle(contentTint)
                 .lineLimit(1)
                 .minimumScaleFactor(0.6)
             label

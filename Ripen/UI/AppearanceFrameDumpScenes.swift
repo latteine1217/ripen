@@ -31,6 +31,12 @@ extension FrameDump {
                         .ripenGlass(settings: settings)
                         .environment(\.colorScheme, scheme).background(desktop))
                 },
+                // 配色總覽（ADR-0013）：同一張圖核對每個角色在這種外觀下的填色與內容色
+                Scene(name: "appearance-\(name)-palette", size: CGSize(width: 420, height: 400)) { _ in
+                    AnyView(PaletteOverview()
+                        .padding(24).ripenGlass(settings: settings)
+                        .environment(\.colorScheme, scheme).background(desktop))
+                },
             ]
             for size in FloatingWindowSize.allCases {
                 let frame = CGRect(origin: CGPoint(x: 40, y: 40), size: size.defaultSize)
@@ -75,6 +81,42 @@ extension FrameDump {
             clock.current += overtime ? model.phaseDuration + 83 : 48
             if !overtime { model.pause() }
             return AnyView(TimerPageView(model: model).padding(24).ripenGlass(settings: settings))
+        }
+    }
+}
+
+/// 每一列左邊是填色圓點，右邊是內容色文字；次要文字與品牌色放最上方。
+private struct PaletteOverview: View {
+    @Environment(\.appPalette) private var palette
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 16) {
+                Text(verbatim: "Primary").foregroundStyle(palette.primary)
+                Text(verbatim: "Secondary").foregroundStyle(palette.secondary)
+                Text(verbatim: "Brand").foregroundStyle(Color.brandAccent)
+            }
+            ForEach([Phase.focus, .shortBreak, .longBreak], id: \.self) { phase in
+                HStack(spacing: 16) {
+                    swatch(fill: phase.tint, content: phase.contentTint, label: Text(phase.title))
+                    swatch(fill: phase.overtimeTint, content: phase.overtimeContentTint, label: Text("Overtime"))
+                }
+            }
+            LazyVGrid(columns: [GridItem(.flexible(), alignment: .leading), GridItem(.flexible(), alignment: .leading)],
+                      alignment: .leading, spacing: 10) {
+                ForEach(ProjectColor.allCases, id: \.self) { color in
+                    swatch(fill: color.color, content: color.contentColor, label: Text(color.name))
+                }
+            }
+        }
+        .font(.system(size: 14, weight: .semibold, design: .rounded))
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private func swatch(fill: Color, content: Color, label: Text) -> some View {
+        HStack(spacing: 8) {
+            Circle().fill(fill).frame(width: 14, height: 14)
+            label.foregroundStyle(content)
         }
     }
 }

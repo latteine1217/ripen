@@ -138,7 +138,7 @@ private struct ProjectRowStyle: ButtonStyle {
                 RoundedRectangle(cornerRadius: 8)
                     .fill(configuration.isPressed ? palette.buttonPressed : isHovering && isEnabled ? palette.buttonHover : .clear)
             )
-            .opacity(isEnabled ? 1 : 0.4)
+            // 停用時不疊半透明：彩色文字疊在玻璃上會變得混濁，改由呼叫端換成次要文字色
             .contentShape(RoundedRectangle(cornerRadius: 8))
             .onHover { isHovering = $0 }
     }
@@ -190,7 +190,9 @@ private struct ProjectDetailView: View {
                         .font(.callout)
                 }
                 .buttonStyle(ProjectRowStyle())
-                .foregroundStyle(.tint)
+                // 成果卡以分類代表色呈現（GLOSSARY），按鈕用同色相的內容色；未分類沒有代表色，用一般文字色。
+                // 還沒有專注時停用，改成次要文字色
+                .foregroundStyle(records.isEmpty ? palette.secondary : project?.color.contentColor ?? palette.primary)
                 .padding(.trailing, project == nil ? -8 : 0)
                 .disabled(records.isEmpty)
                 .help(Text("Preview, save or share this project's recap card"))

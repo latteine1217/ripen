@@ -28,7 +28,7 @@ struct MainWindowView: View {
                     .visible(page == .statistics && !showsIntro)
                 if showsIntro {
                     GestureIntroView { model.settings.gestureIntroSeen = true }
-                        .tint(model.displayTint)
+                        .tint(model.displayContentTint)
                         .transition(.opacity)
                 }
             }

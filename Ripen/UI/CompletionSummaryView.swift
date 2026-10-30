@@ -127,6 +127,7 @@ struct CompletionTotalCaption: View {
 struct RecapIconButton: View {
     let model: AppModel
 
+    @Environment(\.appPalette) private var palette
     @State private var isHovering = false
 
     var body: some View {
@@ -136,7 +137,7 @@ struct RecapIconButton: View {
             Button { RecapWindow.shared.open(projectID: shortcut.projectID) } label: {
                 Image(systemName: "photo")
                     .opacity(isHovering ? 1 : 0.75)
-                    .background(Circle().fill(.primary.opacity(isHovering ? 0.15 : 0)).frame(width: 22, height: 22))
+                    .background(Circle().fill(isHovering ? palette.buttonHover : .clear).frame(width: 22, height: 22))
                     .contentShape(Circle().inset(by: -5))
             }
             .buttonStyle(.plain)
