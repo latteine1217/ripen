@@ -142,9 +142,13 @@ final class FocusLog {
     }
 
     /// 暫存一筆還能復原的紀錄；之前暫存的先確立，同時只會有一筆。
-    func stage(_ record: FocusRecord) {
+    /// 回傳實際暫存的紀錄：失效的分類已改為未分類，摘要須以它為準。
+    @discardableResult
+    func stage(_ record: FocusRecord) -> FocusRecord {
         commitStaged()
-        staged = StoredFocusRecord(record: resolvingProject(record))
+        let entry = StoredFocusRecord(record: resolvingProject(record))
+        staged = entry
+        return entry.record
     }
 
     /// 復原期限已過或有其他操作：暫存的紀錄照一般流程寫入。

@@ -19,6 +19,7 @@ Notable changes to Ripen. The format follows [Keep a Changelog](https://keepacha
 ### Fixed
 
 - **Skip** in the main window finishes the phase when the countdown has just passed zero, instead of doing nothing.
+- The completion summary and recap card shortcut count a focus whose project no longer exists as Uncategorized.
 
 ## [0.1.0] - 2026-10-29
 

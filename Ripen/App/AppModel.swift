@@ -50,9 +50,9 @@ final class AppModel {
     /// 最後一次播出的提醒；各介面觀察它的 `id` 播提醒動畫。
     private(set) var lastReminder: PhaseReminder?
     /// 目前可以復原的操作；各介面依它顯示復原膠囊。
-    private(set) var undoOffer: UndoOffer?
-    /// 復原時要換回的狀態，與 `undoOffer` 同生同滅。
-    @ObservationIgnored private var undoSnapshot: Snapshot?
+    var undoOffer: UndoOffer? { pendingUndo?.offer }
+    /// 可以復原的操作與操作前的狀態，同生同滅；結束時一併確立（期限過了、有其他操作）或捨棄（復原）暫存的完成紀錄。
+    private var pendingUndo: PendingUndo?
     /// 進行中專注的歸屬；開始專注時取自下次選擇，途中更正時一併改寫（ADR-0010）。
     private var focusProjectID: UUID?
     /// 完成摘要；完成專注後 3 秒內存在，由 `refresh()` 收起。
@@ -69,6 +69,11 @@ final class AppModel {
         let idleSince: Date?
         let completionSummary: CompletedFocus?
         let recapShortcut: CompletedFocus?
+    }
+
+    private struct PendingUndo {
+        let offer: UndoOffer
+        let snapshot: Snapshot
     }
 
     /// 未指定的依賴一律用不碰系統的版本：測試與預覽不讀寫真正的設定、不出聲。
@@ -198,13 +203,13 @@ final class AppModel {
     }
 
     /// 完成的專注記錄實際長度，依開始時刻歸日（GLOSSARY）。
-    /// 按「完成」時先暫存（還能復原），⌘Q 時直接寫檔。回傳記下的紀錄；休息不記錄。
+    /// 按「完成」時先暫存（還能復原），⌘Q 時直接寫檔。回傳暫存的紀錄（分類已確認）；休息與直接寫檔不回傳。
     @discardableResult
     private func recordIfFocus(_ completion: PhaseCompletion, undoable: Bool) -> FocusRecord? {
         guard completion.phase == .focus else { return nil }
         let record = FocusRecord(startedAt: completion.startedAt, duration: completion.duration, projectID: focusProjectID)
-        if undoable { focusLog.stage(record) } else { focusLog.append(record) }
-        return record
+        guard undoable else { focusLog.append(record); return nil }
+        return focusLog.stage(record)
     }
 
     /// 摘要與入口都只回饋完成的專注；分類累積已含剛暫存的這一筆。
@@ -229,7 +234,7 @@ final class AppModel {
     /// 復原上一個跳過、重設或完成：換回操作前的狀態，暫存的完成紀錄一併捨棄。期限已過則不做任何事。
     func undo() {
         refresh()
-        guard undoOffer != nil, let snapshot = undoSnapshot else { return }
+        guard let snapshot = pendingUndo?.snapshot else { return }
         focusLog.discardStaged()
         cycle = snapshot.cycle
         engine = snapshot.engine
@@ -240,8 +245,7 @@ final class AppModel {
         recapShortcut = snapshot.recapShortcut
         // 換回的摘要可能已過了顯示時間，不重播
         expireCompletionSummary(at: clock.now())
-        undoOffer = nil
-        undoSnapshot = nil
+        pendingUndo = nil
     }
 
     private func snapshot() -> Snapshot {
@@ -251,14 +255,14 @@ final class AppModel {
     }
 
     private func offerUndo(_ action: UndoableAction, restoring snapshot: Snapshot) {
-        undoSnapshot = snapshot
-        undoOffer = UndoOffer(action: action, expiresAt: clock.now() + Self.undoWindow)
+        pendingUndo = PendingUndo(
+            offer: UndoOffer(action: action, expiresAt: clock.now() + Self.undoWindow), snapshot: snapshot
+        )
     }
 
     /// 其他操作出現或期限已過，復原機會結束；暫存的完成紀錄在此寫入。
     private func closeUndoOffer() {
-        undoOffer = nil
-        undoSnapshot = nil
+        pendingUndo = nil
         focusLog.commitStaged()
     }
 
