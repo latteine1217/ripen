@@ -121,6 +121,7 @@ struct RipenApp: App {
                 .environment(loginItem)
                 .environment(updater)
         }
+        .windowResizability(.contentSize)
 
         MenuBarItem(model: model, presenter: presenter)
     }

@@ -16,7 +16,12 @@ struct SettingsView: View {
             AboutSettingsSection(settings: settings, showMainWindow: showMainWindow)
         }
         .formStyle(.grouped)
+        // 內容總高已超過一般螢幕；高度設上限讓 Form 在視窗內捲動，使用者可往下拉高，寬度固定。
         .frame(width: 440)
-        .fixedSize(horizontal: false, vertical: true)
+        .frame(minHeight: Self.minHeight, idealHeight: Self.idealHeight, maxHeight: .infinity)
     }
+
+    static let minHeight: CGFloat = 320
+    /// 13 吋筆電扣掉選單列與 Dock 後仍放得下的高度。
+    static let idealHeight: CGFloat = 640
 }
