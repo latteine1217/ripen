@@ -11,6 +11,7 @@ Notable changes to Ripen. The format follows [Keep a Changelog](https://keepacha
 - A recap card per project in square or portrait layout; save it as PNG, copy the image, or share it through the macOS share menu.
 - After **Done**, a short completion summary and a shortcut to the project's recap card in the main window, floating window and notch island.
 - A capsule control to switch between the timer and statistics pages.
+- Delete a project from its detail page; its focuses move to Uncategorized after you confirm.
 
 ### Changed
 

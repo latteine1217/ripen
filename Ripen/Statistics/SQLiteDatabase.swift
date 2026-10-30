@@ -150,6 +150,21 @@ final class SQLiteDatabase {
         }
     }
 
+    /// 分類的紀錄改為未分類後刪除分類；分類已不存在時兩句都不影響任何列，重試照樣成功。
+    func deleteProjects(_ ids: Set<UUID>) throws {
+        let uncategorize = try statement("UPDATE focus_records SET project_id = NULL WHERE project_id = ?")
+        defer { sqlite3_finalize(uncategorize) }
+        let delete = try statement("DELETE FROM projects WHERE id = ?")
+        defer { sqlite3_finalize(delete) }
+        for id in ids {
+            for query in [uncategorize, delete] {
+                sqlite3_reset(query)
+                sqlite3_clear_bindings(query)
+                guard bind(id.uuidString, to: query, at: 1) == SQLITE_OK, sqlite3_step(query) == SQLITE_DONE else { throw error }
+            }
+        }
+    }
+
     private func bind(_ text: String, to query: OpaquePointer, at index: Int32) -> Int32 {
         text.withCString { sqlite3_bind_text(query, index, $0, -1, unsafeBitCast(-1, to: sqlite3_destructor_type.self)) }
     }

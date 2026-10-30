@@ -27,7 +27,7 @@ extension FrameDump {
                         .environment(\.colorScheme, scheme).background(desktop))
                 },
                 Scene(name: "appearance-\(name)-statistics", size: CGSize(width: 380, height: 340)) { _ in
-                    AnyView(StatisticsPageView(focusLog: model.focusLog)
+                    AnyView(StatisticsPageView(focusLog: model.focusLog, deleteProject: model.deleteProject)
                         .ripenGlass(settings: settings)
                         .environment(\.colorScheme, scheme).background(desktop))
                 },

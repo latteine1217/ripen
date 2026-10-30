@@ -150,6 +150,32 @@ final class AppModel {
         selectProject(project.id)
         return project
     }
+    /// 刪除分類（ADR-0012）：紀錄改為未分類；進行中的專注、下次的選擇、完成摘要與成果卡入口指向它的，也都改為未分類。
+    ///
+    /// 復原會換回操作前的摘要與入口；其中指向這個分類時就結束復原機會，暫存的完成照常寫入（已是未分類）。
+    func deleteProject(_ id: UUID) {
+        guard focusLog.project(withID: id) != nil else { return }
+        let undoRefersToIt = [pendingUndo?.snapshot.completionSummary, pendingUndo?.snapshot.recapShortcut]
+            .contains { $0??.projectID == id }
+        if undoRefersToIt || completionSummary?.projectID == id || recapShortcut?.projectID == id { closeUndoOffer() }
+        focusLog.deleteProject(id)
+        if settings.lastProjectID == id { settings.lastProjectID = nil }
+        if focusProjectID == id { focusProjectID = nil }
+        completionSummary = movingToUncategorized(completionSummary, from: id)
+        recapShortcut = movingToUncategorized(recapShortcut, from: id)
+    }
+
+    /// 這一次的長度不變；分類累積改為未分類的最新累積。
+    private func movingToUncategorized(_ completed: CompletedFocus?, from id: UUID) -> CompletedFocus? {
+        guard let completed, completed.projectID == id else { return completed }
+        return CompletedFocus(
+            projectID: nil,
+            focus: completed.focus,
+            projectTotal: FocusStatistics(records: focusLog.records.belonging(to: nil), calendar: .current).total,
+            completedAt: completed.completedAt
+        )
+    }
+
     /// 只在設定寫入後重算：UI 每 0.25 秒刷新，每次都從 UserDefaults 讀多個 key 太浪費。
     private var configuration: CycleConfiguration {
         if let cached = cachedConfiguration, cached.revision == settings.revision { return cached.value }

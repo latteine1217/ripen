@@ -36,7 +36,8 @@ struct RecapWindowView: View {
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
-        if let projectID = recapWindow.projectID {
+        // 分類開著卡片時被刪除（ADR-0012）就關閉，不留下指向已不存在分類的卡片
+        if let projectID = recapWindow.projectID, projectID.map({ focusLog.project(withID: $0) != nil }) ?? true {
             RecapPreviewView(focusLog: focusLog, projectID: projectID)
                 .id(projectID)
         } else {

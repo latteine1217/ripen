@@ -35,6 +35,8 @@ protocol FocusLogStorage {
     func loadProjects() throws -> [FocusProject]
     func appendProjects(_ projects: [FocusProject]) throws
     func updateProjectColors(_ colors: [UUID: ProjectColor]) throws
+    /// 分類的紀錄改為未分類後刪除分類；已不存在的分類略過，重試不會失敗。
+    func deleteProjects(_ ids: Set<UUID>) throws
 }
 
 /// 一筆紀錄目前的保存階段；只有 `.saved` 可以輸出成果（#22）。
@@ -63,6 +65,8 @@ final class FocusLog {
     /// 尚未寫入的換色，覆蓋在分類上呈現；分類本身保留建立時的顏色，
     /// 已提交但未確認的分類重試時才會與資料庫一致，換色另外寫入。
     private var pendingColors: [UUID: ProjectColor] = [:]
+    /// 尚未寫入的刪除；重新讀取歷史時先套用，已刪除的分類不會因讀回舊資料而復活。
+    private var pendingDeletions: Set<UUID> = []
     /// 還能復原的完成紀錄：計入統計，但復原期限過了才寫入（`commitStaged()`）。
     private var staged: StoredFocusRecord?
     private var hasLoaded = false
@@ -85,7 +89,9 @@ final class FocusLog {
         }
     }
     /// 退出前必須為空，否則會失去尚未保存的紀錄或分類。
-    var hasUnsavedChanges: Bool { pendingCount > 0 || !pendingProjects.isEmpty || !pendingColors.isEmpty }
+    var hasUnsavedChanges: Bool {
+        pendingCount > 0 || !pendingProjects.isEmpty || !pendingColors.isEmpty || !pendingDeletions.isEmpty
+    }
 
     /// 不存在的識別碼（例如已失效的上次選擇）視為未分類。
     func project(withID id: UUID?) -> FocusProject? {
@@ -141,6 +147,27 @@ final class FocusLog {
         if hasLoaded { savePending() }
     }
 
+    /// 刪除分類：它的紀錄（含還能復原與尚未寫入的）改為未分類，時間與統計都保留。不能復原（ADR-0012）。
+    func deleteProject(_ id: UUID) {
+        guard project(withID: id) != nil else { return }
+        savedProjects.removeAll { $0.id == id }
+        pendingProjects.removeAll { $0.id == id }
+        pendingColors[id] = nil
+        let deleted: Set = [id]
+        saved = saved.map { Self.uncategorizing($0, from: deleted) }
+        pending = pending.map { Self.uncategorizing($0, from: deleted) }
+        staged = staged.map { Self.uncategorizing($0, from: deleted) }
+        guard storage != nil else { return }
+        // 分類可能已寫入卻沒收到確認，一律向儲存送出刪除
+        pendingDeletions.insert(id)
+        if hasLoaded { savePending() }
+    }
+
+    private static func uncategorizing(_ entry: StoredFocusRecord, from deleted: Set<UUID>) -> StoredFocusRecord {
+        guard let projectID = entry.record.projectID, deleted.contains(projectID) else { return entry }
+        return StoredFocusRecord(id: entry.id, record: FocusRecord(startedAt: entry.record.startedAt, duration: entry.record.duration))
+    }
+
     /// 暫存一筆還能復原的紀錄；之前暫存的先確立，同時只會有一筆。
     /// 回傳實際暫存的紀錄：失效的分類已改為未分類，摘要須以它為準。
     @discardableResult
@@ -167,8 +194,8 @@ final class FocusLog {
     func retry() {
         guard let storage else { hasLoaded = true; return }
         do {
-            let loaded = try storage.load()
-            let loadedProjects = try storage.loadProjects()
+            let loaded = try storage.load().map { Self.uncategorizing($0, from: pendingDeletions) }
+            let loadedProjects = try storage.loadProjects().filter { !pendingDeletions.contains($0.id) }
             let byID = Dictionary(uniqueKeysWithValues: loaded.map { ($0.id, $0.record) })
             let projectsByID = Dictionary(uniqueKeysWithValues: loadedProjects.map { ($0.id, $0) })
             for entry in pending {
@@ -201,10 +228,11 @@ final class FocusLog {
         return FocusRecord(startedAt: record.startedAt, duration: record.duration)
     }
 
-    /// 分類先於紀錄保存，讓已保存的紀錄不會指向尚未保存的分類；換色最後寫入，失敗不擋住紀錄。
+    /// 分類先於紀錄保存，讓已保存的紀錄不會指向尚未保存的分類；換色與刪除最後寫入，失敗不擋住紀錄。
     private func savePending() {
         // 還能復原的暫存紀錄不在此寫入
-        guard let storage, !pending.isEmpty || !pendingProjects.isEmpty || !pendingColors.isEmpty else { return }
+        guard let storage, !pending.isEmpty || !pendingProjects.isEmpty || !pendingColors.isEmpty || !pendingDeletions.isEmpty
+        else { return }
         // 歷史載入前加入的紀錄，到此才能確認所屬分類是否存在
         pending = pending.map { StoredFocusRecord(id: $0.id, record: resolvingProject($0.record)) }
         do {
@@ -223,6 +251,10 @@ final class FocusLog {
                 // 此時待建立的分類都已寫入，`projects` 就是套用換色後的已保存分類
                 savedProjects = projects
                 pendingColors.removeAll()
+            }
+            if !pendingDeletions.isEmpty {
+                try storage.deleteProjects(pendingDeletions)
+                pendingDeletions.removeAll()
             }
             issue = nil
         } catch {

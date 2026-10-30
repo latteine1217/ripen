@@ -56,6 +56,11 @@ struct SQLiteFocusLogStorage: FocusLogStorage {
         try database.transaction { try database.updateColors(colors) }
     }
 
+    func deleteProjects(_ ids: Set<UUID>) throws {
+        let database = try open()
+        try database.transaction { try database.deleteProjects(ids) }
+    }
+
     private func open() throws -> SQLiteDatabase {
         let files = FileManager.default
         try files.createDirectory(at: directory, withIntermediateDirectories: true)

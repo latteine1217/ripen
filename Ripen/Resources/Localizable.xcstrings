@@ -3003,6 +3003,114 @@
           }
         }
       }
+    },
+    "Delete Project…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delete Project…"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "刪除分類⋯"
+          }
+        }
+      }
+    },
+    "Delete Project": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delete Project"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "刪除分類"
+          }
+        }
+      }
+    },
+    "Delete “%@”?": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delete “%@”?"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "刪除「%@」？"
+          }
+        }
+      }
+    },
+    "This can’t be undone.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This can’t be undone."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "刪除後無法復原。"
+          }
+        }
+      }
+    },
+    "Delete this project; its focuses move to Uncategorized": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delete this project; its focuses move to Uncategorized"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "刪除這個分類，它的專注改為未分類"
+          }
+        }
+      }
+    },
+    "%lld focuses will move to Uncategorized. This can’t be undone.": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld focus will move to Uncategorized. This can’t be undone."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld focuses will move to Uncategorized. This can’t be undone."
+                }
+              }
+            }
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld 次專注會改為未分類，刪除後無法復原。"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

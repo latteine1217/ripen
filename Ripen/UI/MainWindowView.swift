@@ -24,7 +24,7 @@ struct MainWindowView: View {
                 TimerPageView(model: model)
                     .environment(\.timerSurfaceVisible, isPresented && page == .timer && !showsIntro)
                     .visible(page == .timer && !showsIntro)
-                StatisticsPageView(focusLog: model.focusLog)
+                StatisticsPageView(focusLog: model.focusLog, deleteProject: model.deleteProject)
                     .visible(page == .statistics && !showsIntro)
                 if showsIntro {
                     GestureIntroView { model.settings.gestureIntroSeen = true }

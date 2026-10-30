@@ -2,9 +2,11 @@ import Charts
 import SwiftUI
 
 /// 主視窗的統計頁：總覽是全部分類（含未分類）的今日數字、依分類堆疊的最近 7 天與分類列表；
-/// 點分類進入該分類的詳細統計、完成紀錄與代表色設定（ADR-0010）。
+/// 點分類進入該分類的詳細統計、完成紀錄、代表色設定與刪除（ADR-0010、ADR-0012）。
 struct StatisticsPageView: View {
     let focusLog: FocusLog
+    /// 經 `AppModel` 刪除，連同下次的選擇與進行中的專注一起改為未分類。
+    let deleteProject: (UUID) -> Void
 
     /// 正在看的分類；nil 是總覽。
     @State private var detail: ProjectKey?
@@ -19,8 +21,16 @@ struct StatisticsPageView: View {
                     Text("Focus history is unavailable. Retry loading to see your statistics.")
                         .frame(width: StatisticsLayout.width, height: 240)
                 } else if let detail {
-                    ProjectDetailView(focusLog: focusLog, key: detail, now: context.date) { self.detail = nil }
-                        .transition(.opacity)
+                    ProjectDetailView(
+                        focusLog: focusLog, key: detail, now: context.date,
+                        close: { self.detail = nil },
+                        delete: { id in
+                            // 先回總覽：分類消失後詳細頁已沒有內容可顯示
+                            self.detail = nil
+                            deleteProject(id)
+                        }
+                    )
+                    .transition(.opacity)
                 } else {
                     OverviewView(focusLog: focusLog, now: context.date) { detail = $0 }
                         .transition(.opacity)
@@ -141,10 +151,12 @@ private struct ProjectDetailView: View {
     let key: ProjectKey
     let now: Date
     let close: () -> Void
+    let delete: (UUID) -> Void
 
     @Environment(\.calendar) private var calendar
     @Environment(\.appPalette) private var palette
     @State private var showsRecap = false
+    @State private var confirmsDeletion = false
 
     var body: some View {
         let project = focusLog.project(withID: key.id)
@@ -194,7 +206,28 @@ private struct ProjectDetailView: View {
                 .foregroundStyle(palette.secondary)
 
             if let project {
-                ColorSwatches(selection: project.color) { focusLog.setColor($0, forProject: project.id) }
+                HStack(spacing: 8) {
+                    ColorSwatches(selection: project.color) { focusLog.setColor($0, forProject: project.id) }
+                    Spacer(minLength: 8)
+                    Button("Delete Project…", systemImage: "trash") { confirmsDeletion = true }
+                        .labelStyle(.iconOnly)
+                        .buttonStyle(ProjectRowStyle())
+                        .foregroundStyle(palette.secondary)
+                        .padding(.trailing, -8)
+                        .help(Text("Delete this project; its focuses move to Uncategorized"))
+                }
+                // 刪除不能復原（ADR-0012），先說明紀錄的去向
+                .confirmationDialog(
+                    Text("Delete “\(project.name)”?"), isPresented: $confirmsDeletion, titleVisibility: .visible
+                ) {
+                    Button("Delete Project", role: .destructive) { delete(project.id) }
+                } message: {
+                    if records.isEmpty {
+                        Text("This can’t be undone.")
+                    } else {
+                        Text("\(records.count) focuses will move to Uncategorized. This can’t be undone.")
+                    }
+                }
             }
 
             WeekChart(
