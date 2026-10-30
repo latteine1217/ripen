@@ -160,7 +160,7 @@ uv run python -m http.server 4173 --bind 127.0.0.1 --directory website
 
 正式託管使用 GitHub Pages：`.github/workflows/pages.yml` 在 `main` 的 `website/` 或 workflow 變更時，只上傳 `website/` 並部署；也可手動觸發。不部署 App 原始碼、開發文件或本機建置產物。網站網址為 `https://latteine1217.github.io/ripen/`。
 
-下載入口使用公開 GitHub Release 的 DMG，版本固定為目前驗證的 0.1.0；發布新版後，應同步更新頁面的檔名、版本文字並驗證下載。Ko-fi 自願支持與下載分開，不限制 App 使用。
+下載入口使用公開 GitHub Release 的 DMG，版本固定為目前驗證的 0.2.0；發布新版後，應同步更新頁面的檔名、版本文字並驗證下載。Ko-fi 自願支持與下載分開，不限制 App 使用。
 
 ## 文件
 
