@@ -16,6 +16,10 @@ Notable changes to Ripen. The format follows [Keep a Changelog](https://keepacha
 
 - The floating window and notch island are created when shown and released when hidden, and timers that are idle, paused or hidden no longer redraw on a schedule.
 
+### Fixed
+
+- **Skip** in the main window finishes the phase when the countdown has just passed zero, instead of doing nothing.
+
 ## [0.1.0] - 2026-10-29
 
 The first release of Ripen, a native macOS Pomodoro timer in frosted glass.

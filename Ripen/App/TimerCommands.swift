@@ -11,19 +11,18 @@ struct TimerCommands: Commands {
     var body: some Commands {
         CommandMenu("Timer") {
             // 讀 `reachedZero` 讓選單在跨過 0 時重建；點下時由 skipOrFinish 依當下是否超時決定
-            let isOvertime = model.map { _ = $0.reachedZero; return $0.isOvertime } ?? false
-            Button(isOvertime ? "Done" : "Skip") { model?.skipOrFinish() }
+            let controls = model.map { _ = $0.reachedZero; return TimerControls(display: $0.display) }
+            Button(controls?.secondary.title ?? "Skip") { model?.perform(.skipOrFinish) }
                 .keyboardShortcut("s")
                 .disabled(model == nil)
-            // 超時中重設沒有作用（ADR-0006），停用；停在起點時也沒有可重設的
-            Button("Reset") { model?.reset() }
+            Button("Reset") { model?.perform(.reset) }
                 .keyboardShortcut("r")
-                .disabled(model == nil || isOvertime || model?.status == .idle)
+                .disabled(controls?.isResetEnabled != true)
         }
         // 主視窗沒有文字欄位，⌘Z 在那裡就是復原計時操作；其他視窗（設定）照常送給回應鏈復原文字
         CommandGroup(replacing: .undoRedo) {
-            if let model, let offer = model.undoOffer {
-                Button(offer.action.undoTitle, action: model.undo)
+            if let model, let undo = model.undoOffer.map(TimerControls.undo) {
+                Button(undo.title) { model.perform(undo.intent) }
                     .keyboardShortcut("z")
             } else {
                 Button("Undo") { NSApp.sendAction(Selector(("undo:")), to: nil, from: nil) }

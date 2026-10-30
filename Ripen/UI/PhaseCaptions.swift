@@ -30,11 +30,12 @@ struct EndCaption: View {
             )
         }
         Group {
-            if display.status == .paused {
+            switch TimerControls(display: display).endCaption {
+            case .paused:
                 Text("Paused")
-            } else if display.isOvertime {
+            case .overtime:
                 Text("Overtime")
-            } else {
+            case .endsAt:
                 Text("Ends at \(endTime ?? "--:--")")
                     .opacity(endTime == nil ? 0 : 1)
             }

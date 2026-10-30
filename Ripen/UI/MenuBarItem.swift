@@ -96,26 +96,20 @@ private struct MenuBarMenu: View {
 
     var body: some View {
         // 標題依狀態變，動作與全域熱鍵共用同一個意圖
-        let display = model.display
-        Button(primaryTitle(for: display.status), action: model.toggleStartPause)
         // 超時由時鐘推導、不會通知；讀 `reachedZero` 讓選單在跨過 0 時重建（開著時也會換成「完成」）。
         // 畫面仍可能落後，所以「跳過」點下時若已超時就改為完成
         let _ = model.reachedZero
+        let controls = TimerControls(display: model.display, undoOffer: model.undoOffer)
+        Button(controls.primary.title) { model.perform(controls.primary.intent) }
         // ⌘S／⌘R 與主選單「計時」選單相同；這裡只在選單打開時有效
-        if display.isOvertime {
-            Button("Done", action: model.finish)
-                .keyboardShortcut("s")
-        } else {
-            Button("Skip", action: model.skipOrFinish)
-                .keyboardShortcut("s")
-        }
-        // 超時中重設沒有作用（ADR-0006）
-        Button("Reset", action: model.reset)
+        Button(controls.secondary.title) { model.perform(controls.secondary.intent) }
+            .keyboardShortcut("s")
+        Button("Reset") { model.perform(.reset) }
             .keyboardShortcut("r")
-            .disabled(display.isOvertime || display.status == .idle)
+            .disabled(!controls.isResetEnabled)
         // 復原期限只有幾秒，選單打開時才看得到；選單開著時過期，點下也不會做任何事
-        if let offer = model.undoOffer {
-            Button(offer.action.undoTitle, action: model.undo)
+        if let undo = controls.undo {
+            Button(undo.title) { model.perform(undo.intent) }
                 .keyboardShortcut("z")
         }
 
@@ -129,14 +123,6 @@ private struct MenuBarMenu: View {
 
         Button("Quit Ripen") { NSApp.terminate(nil) }
             .keyboardShortcut("q")
-    }
-
-    private func primaryTitle(for status: TimerStatus) -> LocalizedStringKey {
-        switch status {
-        case .idle: "Start"
-        case .running: "Pause"
-        case .paused: "Resume"
-        }
     }
 
     /// 與 Dock 圖示共用 `PresentationController.showMainWindow()`；視窗還沒建立時由 `MainWindowBridge` 補建。

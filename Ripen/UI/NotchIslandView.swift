@@ -100,7 +100,7 @@ struct NotchIslandView: View {
                 VStack(spacing: 10) {
                     timeText(time, size: 34, dimmed: !isRunning, isOvertime: display.isOvertime)
                     ProgressBar(progress: display.phaseProgress)
-                    controls(status: status, isOvertime: display.isOvertime)
+                    controls(TimerControls(display: display))
                     // 把手：暗示整條島可以往下拉
                     Capsule().fill(.secondary.opacity(0.6)).frame(width: 28, height: 4)
                         .accessibilityHidden(true)
@@ -153,38 +153,36 @@ struct NotchIslandView: View {
         .animation(.easeInOut(duration: 0.25), value: model.completionSummary)
     }
 
-    private func controls(status: TimerStatus, isOvertime: Bool) -> some View {
+    private func controls(_ controls: TimerControls) -> some View {
         HStack(spacing: 18) {
-            switch status {
-            case .idle:
-                IslandIconButton("Start", systemImage: "play.fill", action: model.start)
-            case .running:
-                IslandIconButton("Pause", systemImage: "pause.fill", action: model.pause)
-            case .paused:
-                IslandIconButton("Resume", systemImage: "play.fill", action: model.resume)
-            }
-            SkipOrDoneButton(model: model, isOvertime: isOvertime)
+            TimerIconButton(model: model, action: controls.primary)
+            SkipOrDoneButton(model: model, controls: controls)
             IslandIconButton("Show Main Window", systemImage: "macwindow", action: presentation.expandNotchIsland)
         }
+    }
+}
+
+/// 瀏海島與懸浮窗的計時按鈕；標題、圖示與意圖取自 `TimerControls`。
+struct TimerIconButton: View {
+    let model: AppModel
+    let action: TimerControls.Action
+    var help: LocalizedStringKey?
+
+    var body: some View {
+        IslandIconButton(action.title, systemImage: action.systemImage, help: help) { model.perform(action.intent) }
     }
 }
 
 /// 瀏海島與懸浮窗的「跳過」；超時中由「完成」取代（ADR-0006）。
 struct SkipOrDoneButton: View {
     let model: AppModel
-    let isOvertime: Bool
+    let controls: TimerControls
 
     var body: some View {
-        if isOvertime {
-            IslandIconButton(
-                "Done", systemImage: "checkmark", help: "Finish this phase and move to the next", action: model.finish
-            )
-        } else {
-            // 畫面可能剛好落後於跨過 0 的那一刻；點下時已超時就改為完成
-            IslandIconButton(
-                "Skip", systemImage: "forward.end.fill", help: "Skip to the next phase", action: model.skipOrFinish
-            )
-        }
+        TimerIconButton(
+            model: model, action: controls.secondary,
+            help: controls.finishes ? "Finish this phase and move to the next" : "Skip to the next phase"
+        )
     }
 }
 

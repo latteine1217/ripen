@@ -130,6 +130,7 @@ private struct FloatingWindowContent: View {
     var body: some View {
         let status = display.status
         let isPaused = status == .paused
+        let controls = TimerControls(display: display)
         PlacedLayout(placements: placements) {
             ring(isPaused: isPaused)
             // 成果卡入口接在階段後，與復原膠囊同一格：膠囊倒數完才浮現（#25）
@@ -154,8 +155,8 @@ private struct FloatingWindowContent: View {
                 .opacity(layout.end.opacity)
             ProgressBar(progress: display.phaseProgress)
                 .opacity(layout.barOpacity)
-            startPauseButton(status: status)
-            SkipOrDoneButton(model: model, isOvertime: display.isOvertime)
+            TimerIconButton(model: model, action: controls.primary)
+            SkipOrDoneButton(model: model, controls: controls)
             IslandIconButton(
                 "Expand into Main Window", systemImage: "arrow.up.left.and.arrow.down.right",
                 action: presentation.expandFloatingWindow
@@ -233,18 +234,6 @@ private struct FloatingWindowContent: View {
             }
         }
         .animation(.easeInOut(duration: 0.25), value: model.completionSummary)
-    }
-
-    @ViewBuilder
-    private func startPauseButton(status: TimerStatus) -> some View {
-        switch status {
-        case .idle:
-            IslandIconButton("Start", systemImage: "play.fill", action: model.toggleStartPause)
-        case .running:
-            IslandIconButton("Pause", systemImage: "pause.fill", action: model.toggleStartPause)
-        case .paused:
-            IslandIconButton("Resume", systemImage: "play.fill", action: model.toggleStartPause)
-        }
     }
 }
 
