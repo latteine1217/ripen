@@ -4,6 +4,10 @@ Notable changes to Ripen. The format follows [Keep a Changelog](https://keepacha
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-10-30
+
+Projects, per-project statistics and shareable recap cards.
+
 ### Added
 
 - Projects: pick or add a project above the timer ring, each with a color from a preset palette; change it mid-focus to move the whole focus.
@@ -21,7 +25,6 @@ Notable changes to Ripen. The format follows [Keep a Changelog](https://keepacha
 ### Fixed
 
 - **Skip** in the main window finishes the phase when the countdown has just passed zero, instead of doing nothing.
-- The completion summary and recap card shortcut count a focus whose project no longer exists as Uncategorized.
 
 ## [0.1.0] - 2026-10-29
 
@@ -37,5 +40,6 @@ The first release of Ripen, a native macOS Pomodoro timer in frosted glass.
 - Statistics for today and the last 7 days, stored only on your Mac.
 - **Check for Updates…**, which only goes online when you ask.
 
-[Unreleased]: https://github.com/latteine1217/ripen/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/latteine1217/ripen/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/latteine1217/ripen/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/latteine1217/ripen/releases/tag/v0.1.0
