@@ -114,16 +114,10 @@ final class AppModel {
     var phase: Phase { engine.phase }
 
     var status: TimerStatus { engine.status(at: clock.now()) }
-    var remaining: TimeInterval { engine.remaining(at: clock.now()) }
     /// 倒數到 0 之後（含暫停中）；此時「跳過」「重設」由「完成」取代。
     var isOvertime: Bool { engine.isOvertime(at: clock.now()) }
-    /// 倒數到 0 之後經過的時間，不含暫停；未超時為 0。
-    var overtime: TimeInterval { engine.overtime(at: clock.now()) }
     /// 目前階段的總長度，供進度計算。
     var phaseDuration: TimeInterval { engine.duration }
-    var endDate: Date? { engine.endDate }
-    /// 距離上次長休息已完成的專注次數。
-    var completedFocusesInCycle: Int { cycle.completedFocuses }
     var longBreakInterval: Int { configuration.longBreakInterval }
 
     // MARK: - 分類
