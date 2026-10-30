@@ -114,9 +114,10 @@ private struct OverviewView: View {
     }
 }
 
-/// 列表列：整列可點，hover 與按下時有淡底色回饋。
+/// 列表列與詳細頁標頭按鈕：整塊可點，hover 與按下時有淡底色回饋；停用時變淡且不回應 hover。
 private struct ProjectRowStyle: ButtonStyle {
     @Environment(\.appPalette) private var palette
+    @Environment(\.isEnabled) private var isEnabled
     @State private var isHovering = false
 
     func makeBody(configuration: Configuration) -> some View {
@@ -125,8 +126,9 @@ private struct ProjectRowStyle: ButtonStyle {
             .padding(.horizontal, 8)
             .background(
                 RoundedRectangle(cornerRadius: 8)
-                    .fill(configuration.isPressed ? palette.buttonPressed : isHovering ? palette.buttonHover : .clear)
+                    .fill(configuration.isPressed ? palette.buttonPressed : isHovering && isEnabled ? palette.buttonHover : .clear)
             )
+            .opacity(isEnabled ? 1 : 0.4)
             .contentShape(RoundedRectangle(cornerRadius: 8))
             .onHover { isHovering = $0 }
     }
@@ -152,12 +154,14 @@ private struct ProjectDetailView: View {
         let today = statistics.summary(on: now)
         let tint = project?.color.color ?? palette.secondary
         VStack(alignment: .leading, spacing: 12) {
+            // 列表列同款的點擊範圍與 hover 底色；負邊距讓文字仍與下方內容對齊
             Button(action: close) {
                 Label("Statistics", systemImage: "chevron.left")
                     .font(.callout)
             }
-            .buttonStyle(.plain)
+            .buttonStyle(ProjectRowStyle())
             .foregroundStyle(palette.secondary)
+            .padding(.leading, -8)
             .keyboardShortcut(.cancelAction)
             .help(Text("Back to all projects (Esc)"))
 
@@ -173,7 +177,9 @@ private struct ProjectDetailView: View {
                     Label("Recap Card", systemImage: "photo")
                         .font(.callout)
                 }
-                .buttonStyle(.borderless)
+                .buttonStyle(ProjectRowStyle())
+                .foregroundStyle(.tint)
+                .padding(.trailing, -8)
                 .disabled(records.isEmpty)
                 .help(Text("Preview, save or share this project's recap card"))
             }
