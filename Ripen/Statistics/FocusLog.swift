@@ -37,6 +37,15 @@ protocol FocusLogStorage {
     func updateProjectColors(_ colors: [UUID: ProjectColor]) throws
 }
 
+/// 一筆紀錄目前的保存階段；只有 `.saved` 可以輸出成果（#22）。
+enum FocusRecordStatus: Equatable {
+    /// 還能復原的完成，尚未確立。
+    case undoable
+    /// 已確立但尚未成功寫入（含寫入失敗待重試）。
+    case unsaved
+    case saved
+}
+
 enum FocusLogIssue: Equatable {
     case load
     case save
@@ -64,7 +73,9 @@ final class FocusLog {
     @ObservationIgnored var onIssue: (() -> Void)?
     @ObservationIgnored private let storage: (any FocusLogStorage)?
 
-    var records: [FocusRecord] { (saved + pending).map(\.record) + (staged.map { [$0.record] } ?? []) }
+    var records: [FocusRecord] { entries.map(\.record) }
+    /// 與 `records` 同序，附識別碼，讓畫面能指定某一筆紀錄（例如開啟成果卡）。
+    var entries: [StoredFocusRecord] { saved + pending + (staged.map { [$0] } ?? []) }
     /// 尚未寫入的紀錄，含還能復原的那一筆；退出前由 `AppModel` 先確立。
     var pendingCount: Int { pending.count + (staged == nil ? 0 : 1) }
     /// 依建立順序；尚未保存的分類也可選取，與紀錄一起重試。
@@ -82,13 +93,25 @@ final class FocusLog {
         return projects.first { $0.id == id }
     }
 
+    /// 紀錄不存在（例如已復原）時為 nil。
+    func status(ofRecord id: UUID) -> FocusRecordStatus? {
+        if staged?.id == id { return .undoable }
+        if pending.contains(where: { $0.id == id }) { return .unsaved }
+        return saved.contains { $0.id == id } ? .saved : nil
+    }
+
     init(storage: (any FocusLogStorage)? = nil) {
         self.storage = storage
         retry()
     }
 
     func append(_ record: FocusRecord) {
-        let entry = StoredFocusRecord(record: resolvingProject(record))
+        append(StoredFocusRecord(record: record))
+    }
+
+    /// 暫存的紀錄確立時沿用原識別碼，已開啟的成果卡仍指向同一筆。
+    private func append(_ stored: StoredFocusRecord) {
+        let entry = StoredFocusRecord(id: stored.id, record: resolvingProject(stored.record))
         guard storage != nil else { saved.append(entry); return }
         pending.append(entry)
         if hasLoaded { savePending() }
@@ -128,7 +151,7 @@ final class FocusLog {
     func commitStaged() {
         guard let entry = staged else { return }
         staged = nil
-        append(entry.record)
+        append(entry)
     }
 
     /// 使用者復原了「完成」：暫存的紀錄從未寫入，直接捨棄。

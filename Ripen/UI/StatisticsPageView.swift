@@ -116,12 +116,14 @@ private struct OverviewView: View {
 
 /// 列表列：整列可點，hover 與按下時有淡底色回饋。
 private struct ProjectRowStyle: ButtonStyle {
+    var verticalPadding: CGFloat = 6
+
     @Environment(\.appPalette) private var palette
     @State private var isHovering = false
 
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .padding(.vertical, 6)
+            .padding(.vertical, verticalPadding)
             .padding(.horizontal, 8)
             .background(
                 RoundedRectangle(cornerRadius: 8)
@@ -142,10 +144,12 @@ private struct ProjectDetailView: View {
 
     @Environment(\.calendar) private var calendar
     @Environment(\.appPalette) private var palette
+    @State private var recap: RecapTarget?
 
     var body: some View {
         let project = focusLog.project(withID: key.id)
-        let records = focusLog.records.belonging(to: key.id)
+        let entries = focusLog.entries.filter { $0.record.projectID == key.id }
+        let records = entries.map(\.record)
         let statistics = FocusStatistics(records: records, calendar: calendar)
         let total = statistics.total
         let today = statistics.summary(on: now)
@@ -190,41 +194,57 @@ private struct ProjectDetailView: View {
 
             Text("Completed Focuses")
                 .font(.headline)
-            RecordList(records: records)
+            RecordList(entries: entries) { recap = RecapTarget(id: $0) }
         }
         .frame(width: StatisticsLayout.width, alignment: .leading)
+        .sheet(item: $recap) { RecapPreviewView(focusLog: focusLog, recordID: $0.id) }
     }
 }
 
+/// 開啟成果卡的那筆紀錄。
+private struct RecapTarget: Identifiable {
+    let id: UUID
+}
+
 /// 依開始時刻新的在上（保存順序不一定是開始順序）；日期與時刻依系統格式，長度與統計相同取整到分鐘。
+/// 點一筆紀錄開啟它的成果卡。
 private struct RecordList: View {
-    let records: [FocusRecord]
+    let entries: [StoredFocusRecord]
+    let openRecap: (UUID) -> Void
 
     @Environment(\.appPalette) private var palette
 
     var body: some View {
-        if records.isEmpty {
+        if entries.isEmpty {
             Text("No completed focuses yet.")
                 .font(.callout)
                 .foregroundStyle(palette.secondary)
                 .frame(maxWidth: .infinity, minHeight: 80, alignment: .topLeading)
         } else {
             ScrollView {
-                LazyVStack(spacing: 6) {
-                    ForEach(Array(records.sorted { $0.startedAt > $1.startedAt }.enumerated()), id: \.offset) { _, record in
-                        HStack {
-                            Text(record.startedAt, format: .dateTime.month().day().weekday(.abbreviated).hour().minute())
-                            Spacer()
-                            Text(FocusTotal.timeText(minutes: Int((record.duration / 60).rounded())))
-                                .monospacedDigit()
-                                .foregroundStyle(palette.secondary)
+                LazyVStack(spacing: 0) {
+                    ForEach(entries.sorted { $0.record.startedAt > $1.record.startedAt }, id: \.id) { entry in
+                        Button { openRecap(entry.id) } label: {
+                            HStack {
+                                Text(entry.record.startedAt, format: .dateTime.month().day().weekday(.abbreviated).hour().minute())
+                                Spacer()
+                                Text(FocusTotal.timeText(minutes: Int((entry.record.duration / 60).rounded())))
+                                    .monospacedDigit()
+                                    .foregroundStyle(palette.secondary)
+                                Image(systemName: "photo")
+                                    .font(.caption)
+                                    .foregroundStyle(palette.secondary)
+                                    .accessibilityHidden(true)
+                            }
+                            .font(.callout)
                         }
-                        .font(.callout)
-                        .accessibilityElement(children: .combine)
+                        .buttonStyle(ProjectRowStyle(verticalPadding: 3))
+                        .help(Text("Open recap card"))
+                        .accessibilityHint(Text("Open recap card"))
                     }
                 }
             }
-            .frame(height: 80)
+            .frame(height: 96)
         }
     }
 }
