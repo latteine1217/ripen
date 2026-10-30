@@ -9,6 +9,9 @@ struct TimerPageView: View {
     /// 沒有提供時（例如逐格輸出）圓環不能拖出。
     @Environment(TearOffController.self) private var tearOff: TearOffController?
 
+    /// 休息期間從入口打開的成果卡；nil 的內層是未分類。
+    @State private var recapProjectID: UUID??
+
     private static let ringDiameter: CGFloat = 220
 
     var body: some View {
@@ -26,8 +29,10 @@ struct TimerPageView: View {
                     timeText: display.timeText,
                     phaseTitle: phase.title,
                     isPaused: status == .paused,
-                    isOvertime: isOvertime
+                    isOvertime: isOvertime,
+                    hidesCenter: model.completionSummary != nil
                 )
+                .overlay { completionSummary }
                 .frame(width: Self.ringDiameter, height: Self.ringDiameter)
                 .modifier(TearOffRing(tearOff: tearOff, diameter: Self.ringDiameter))
 
@@ -36,7 +41,7 @@ struct TimerPageView: View {
                     interval: display.longBreakInterval
                 )
 
-                endTime(display.endDate, isOvertime: isOvertime)
+                endTimeRow(display.endDate, isOvertime: isOvertime)
                     .oneTimeHint(.overtimeDone, "Press Done to finish and record this phase",
                                  settings: model.settings, isActive: isOvertime)
                     // 跳過、重設、完成後暫時換成復原膠囊；這一列在新階段起點本來就是空的
@@ -50,8 +55,47 @@ struct TimerPageView: View {
             .animation(reduceMotion ? nil : .easeInOut(duration: 0.2), value: status)
             .animation(reduceMotion ? nil : .easeInOut(duration: 0.35), value: phase)
             .animation(reduceMotion ? nil : .easeInOut(duration: 0.35), value: isOvertime)
+            .animation(.easeInOut(duration: 0.25), value: model.completionSummary)
+            .animation(.easeOut(duration: 0.18), value: model.recapShortcut)
             // 倒數到 0 只是推導出的狀態；每次刷新時送出提醒，畫面隨即進入超時
             .onChange(of: context.date) { model.refresh() }
+        }
+        // 掛在整頁而非入口上：休息結束、入口收起時，已打開的預覽不被關掉；也不繼承階段色
+        .sheet(isPresented: Binding(get: { recapProjectID != nil }, set: { if !$0 { recapProjectID = nil } })) {
+            if let projectID = recapProjectID {
+                RecapPreviewView(focusLog: model.focusLog, projectID: projectID)
+            }
+        }
+    }
+
+    /// 完成摘要淡入淡出；減少動態效果時不縮放，只保留透明度的靜態切換。
+    @ViewBuilder
+    private var completionSummary: some View {
+        if let summary = model.completionSummary {
+            CompletionSummaryView(summary: summary, project: model.focusLog.project(withID: summary.projectID))
+                .transition(reduceMotion ? .opacity : .opacity.combined(with: .scale(scale: 0.92)))
+        }
+    }
+
+    /// 結束時刻那一列；緊接專注的休息期間在旁邊加上成果卡入口（#24）。
+    /// 沒有結束時刻（休息停在起點）時只放入口，不留空白讓它偏一邊。
+    @ViewBuilder
+    private func endTimeRow(_ endDate: Date?, isOvertime: Bool) -> some View {
+        if let shortcut = model.recapShortcut {
+            HStack(spacing: 6) {
+                if isOvertime || endDate != nil {
+                    endTime(endDate, isOvertime: isOvertime)
+                    Text(verbatim: "·")
+                        .font(.callout)
+                        .foregroundStyle(palette.secondary)
+                        .accessibilityHidden(true)
+                }
+                RecapShortcutButton(project: model.focusLog.project(withID: shortcut.projectID)) {
+                    recapProjectID = .some(shortcut.projectID)
+                }
+            }
+        } else {
+            endTime(endDate, isOvertime: isOvertime)
         }
     }
 

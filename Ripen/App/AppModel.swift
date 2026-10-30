@@ -15,6 +15,8 @@ final class AppModel {
     static let idleResetInterval: TimeInterval = 2 * 60 * 60
     /// 跳過、重設、完成之後可以復原的時間。
     nonisolated static let undoWindow: TimeInterval = 5
+    /// 完成摘要停留的時間；比復原期限短，收起後仍可復原。
+    nonisolated static let completionSummaryDuration: TimeInterval = 3
 
     @ObservationIgnored private let clock: any TimeSource
     /// 使用者設定；階段長度與長休息間隔每次需要時才讀，改動從下一段生效。
@@ -53,6 +55,10 @@ final class AppModel {
     @ObservationIgnored private var undoSnapshot: Snapshot?
     /// 進行中專注的歸屬；開始專注時取自下次選擇，途中更正時一併改寫（ADR-0010）。
     private var focusProjectID: UUID?
+    /// 完成摘要；完成專注後 3 秒內存在，由 `refresh()` 收起。
+    private(set) var completionSummary: CompletedFocus?
+    /// 休息期間的成果卡入口；保留到緊接的休息結束或被跳過。
+    private(set) var recapShortcut: CompletedFocus?
 
     /// 操作前的計時狀態。引擎記的是結束時刻，換回後時間照牆上時鐘接著走（ADR-0002）。
     private struct Snapshot {
@@ -61,6 +67,8 @@ final class AppModel {
         let reachedZero: Bool
         let isPausedWhileAway: Bool
         let idleSince: Date?
+        let completionSummary: CompletedFocus?
+        let recapShortcut: CompletedFocus?
     }
 
     /// 未指定的依賴一律用不碰系統的版本：測試與預覽不讀寫真正的設定、不出聲。
@@ -158,6 +166,7 @@ final class AppModel {
         resetCountIfIdle(at: now)
         applyChangedLength(at: now)
         expireUndoOffer(at: now)
+        expireCompletionSummary(at: now)
     }
 
     /// 離開期間的超時不算：在離開的那一刻暫停；離開時還在倒數則停在 0（ADR-0006）。
@@ -189,11 +198,30 @@ final class AppModel {
     }
 
     /// 完成的專注記錄實際長度，依開始時刻歸日（GLOSSARY）。
-    /// 按「完成」時先暫存（還能復原），⌘Q 時直接寫檔。
-    private func recordIfFocus(_ completion: PhaseCompletion, undoable: Bool) {
-        guard completion.phase == .focus else { return }
+    /// 按「完成」時先暫存（還能復原），⌘Q 時直接寫檔。回傳記下的紀錄；休息不記錄。
+    @discardableResult
+    private func recordIfFocus(_ completion: PhaseCompletion, undoable: Bool) -> FocusRecord? {
+        guard completion.phase == .focus else { return nil }
         let record = FocusRecord(startedAt: completion.startedAt, duration: completion.duration, projectID: focusProjectID)
         if undoable { focusLog.stage(record) } else { focusLog.append(record) }
+        return record
+    }
+
+    /// 摘要與入口都只回饋完成的專注；分類累積已含剛暫存的這一筆。
+    private func presentCompletion(of record: FocusRecord, at now: Date) {
+        let completed = CompletedFocus(
+            projectID: record.projectID,
+            focus: FocusStatistics(records: [record], calendar: .current).total,
+            projectTotal: FocusStatistics(records: focusLog.records.belonging(to: record.projectID), calendar: .current).total,
+            completedAt: now
+        )
+        completionSummary = completed
+        recapShortcut = completed
+    }
+
+    private func expireCompletionSummary(at now: Date) {
+        guard let completionSummary, now >= completionSummary.completedAt + Self.completionSummaryDuration else { return }
+        self.completionSummary = nil
     }
 
     // MARK: - 復原
@@ -208,13 +236,18 @@ final class AppModel {
         reachedZero = snapshot.reachedZero
         isPausedWhileAway = snapshot.isPausedWhileAway
         idleSince = snapshot.idleSince
+        completionSummary = snapshot.completionSummary
+        recapShortcut = snapshot.recapShortcut
+        // 換回的摘要可能已過了顯示時間，不重播
+        expireCompletionSummary(at: clock.now())
         undoOffer = nil
         undoSnapshot = nil
     }
 
     private func snapshot() -> Snapshot {
         Snapshot(cycle: cycle, engine: engine, reachedZero: reachedZero,
-                 isPausedWhileAway: isPausedWhileAway, idleSince: idleSince)
+                 isPausedWhileAway: isPausedWhileAway, idleSince: idleSince,
+                 completionSummary: completionSummary, recapShortcut: recapShortcut)
     }
 
     private func offerUndo(_ action: UndoableAction, restoring snapshot: Snapshot) {
@@ -367,9 +400,10 @@ final class AppModel {
         closeUndoOffer()
         let before = snapshot()
         // 前進後已是下一段的起點，再按一次完成不會重複記錄
-        recordIfFocus(completion, undoable: true)
+        let record = recordIfFocus(completion, undoable: true)
         cycle.advance(completed: true, longBreakInterval: configuration.longBreakInterval)
         loadCurrentPhase()
+        if let record { presentCompletion(of: record, at: now) }
         startNextPhaseAutomatically(now: now)
         updateIdleSince()
         offerUndo(.finish, restoring: before)
@@ -429,10 +463,15 @@ final class AppModel {
     }
 
     /// 換上循環目前所在的階段，處於起點、尚未開始。
+    /// 回到專注就離開了緊接完成的那段休息（結束、跳過或閒置歸零），摘要與成果卡入口一併結束。
     private func loadCurrentPhase() {
         engine = TimerEngine(phase: cycle.phase, duration: configuration.duration(for: cycle.phase))
         reachedZero = false
         isPausedWhileAway = false
+        if cycle.phase == .focus {
+            completionSummary = nil
+            recapShortcut = nil
+        }
     }
 }
 

@@ -9,6 +9,8 @@ struct TimerRingView: View {
     let isPaused: Bool
     /// 超時中時間改用 tint（超時色）；進度維持滿圈。
     var isOvertime = false
+    /// 完成摘要佔用中央時隱藏時間與階段文字；進度弧照常呈現真實的休息進度。
+    var hidesCenter = false
 
     private let lineWidth: CGFloat = 12
     @Environment(\.appPalette) private var palette
@@ -38,6 +40,7 @@ struct TimerRingView: View {
                     // 保留位置，切換暫停時版面不跳動
                     .opacity(isPaused ? 1 : 0)
             }
+            .opacity(hidesCenter ? 0 : 1)
         }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(Text("Timer Ring"))

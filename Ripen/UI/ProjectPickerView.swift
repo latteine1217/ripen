@@ -64,8 +64,8 @@ struct ProjectPickerView: View {
     }
 }
 
-/// 分類色點；未分類是空心圈，與任何代表色都不混淆。
-private struct ProjectDot: View {
+/// 分類色點；未分類是空心圈，與任何代表色都不混淆。分類選單與完成摘要共用。
+struct ProjectDot: View {
     let color: ProjectColor?
 
     var body: some View {
