@@ -97,7 +97,7 @@ struct RecapPreviewView: View {
             Label("You can export the image once the undo period ends.", systemImage: "clock")
                 .foregroundStyle(.secondary)
         case (.unsaved, _):
-            Label("Some focuses haven't been saved yet. Retry saving your history before exporting.", systemImage: "exclamationmark.triangle")
+            Label("Some focuses haven’t been saved yet. Retry saving your history before exporting.", systemImage: "exclamationmark.triangle")
                 .foregroundStyle(.secondary)
         case (.changed, _):
             Label("Statistics changed. Refresh to export the latest card.", systemImage: "arrow.clockwise")
@@ -113,13 +113,13 @@ struct RecapPreviewView: View {
             Label("Handed to \(service)", systemImage: "checkmark.circle")
                 .foregroundStyle(.secondary)
         case (_, .saveFailed):
-            Label("The image couldn't be saved.", systemImage: "exclamationmark.triangle")
+            Label("The image couldn’t be saved.", systemImage: "exclamationmark.triangle")
                 .foregroundStyle(.red)
         case (_, .copyFailed):
-            Label("The image couldn't be copied.", systemImage: "exclamationmark.triangle")
+            Label("The image couldn’t be copied.", systemImage: "exclamationmark.triangle")
                 .foregroundStyle(.red)
         case (_, .shareFailed):
-            Label("The image couldn't be shared.", systemImage: "exclamationmark.triangle")
+            Label("The image couldn’t be shared.", systemImage: "exclamationmark.triangle")
                 .foregroundStyle(.red)
         default:
             // 保留一行高度，狀態出現時預覽不跳動

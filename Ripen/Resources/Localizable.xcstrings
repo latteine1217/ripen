@@ -108,7 +108,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "不儲存並退出"
+            "value": "不儲存並結束"
           }
         }
       }
@@ -1419,7 +1419,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "復原完成"
+            "value": "復原「完成」"
           }
         }
       }
@@ -1707,7 +1707,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "檢查更新…"
+            "value": "檢查更新⋯"
           }
         }
       }
@@ -1851,7 +1851,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "正在檢查…"
+            "value": "正在檢查⋯"
           }
         }
       }
@@ -1899,7 +1899,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "正在下載…"
+            "value": "正在下載⋯"
           }
         }
       }
@@ -2215,7 +2215,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "現在退出會捨棄尚未儲存的專注紀錄或分類。可以保持 Ripen 開啟以重試，或不儲存直接退出。"
+            "value": "現在結束會捨棄尚未儲存的專注紀錄或分類。可以保持 Ripen 開啟以重試，或不儲存直接結束。"
           }
         }
       }
@@ -2455,7 +2455,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "橘"
+            "value": "柑橘"
           }
         }
       }
@@ -2519,7 +2519,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "今天：%@ · %lld 分鐘"
+            "value": "今日：%@ · %lld 分鐘"
           }
         }
       }
@@ -2652,12 +2652,12 @@
         }
       }
     },
-    "The image couldn't be saved.": {
+    "The image couldn’t be saved.": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "The image couldn't be saved."
+            "value": "The image couldn’t be saved."
           }
         },
         "zh-Hant": {
@@ -2679,7 +2679,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "儲存圖片…"
+            "value": "儲存圖片⋯"
           }
         }
       }
@@ -2775,7 +2775,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "分享…"
+            "value": "分享⋯"
           }
         }
       }
@@ -2812,12 +2812,12 @@
         }
       }
     },
-    "The image couldn't be copied.": {
+    "The image couldn’t be copied.": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "The image couldn't be copied."
+            "value": "The image couldn’t be copied."
           }
         },
         "zh-Hant": {
@@ -2828,12 +2828,12 @@
         }
       }
     },
-    "The image couldn't be shared.": {
+    "The image couldn’t be shared.": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "The image couldn't be shared."
+            "value": "The image couldn’t be shared."
           }
         },
         "zh-Hant": {
@@ -2924,12 +2924,12 @@
         }
       }
     },
-    "Some focuses haven't been saved yet. Retry saving your history before exporting.": {
+    "Some focuses haven’t been saved yet. Retry saving your history before exporting.": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Some focuses haven't been saved yet. Retry saving your history before exporting."
+            "value": "Some focuses haven’t been saved yet. Retry saving your history before exporting."
           }
         },
         "zh-Hant": {

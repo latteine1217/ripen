@@ -37,7 +37,7 @@ Release 發佈後更新 [latteine1217/homebrew-tap](https://github.com/latteine1
 
 每次 push 與 pull request 由 `.github/workflows/ci.yml` 在 macOS runner 上產生專案並執行完整測試；只改 `website/`、`docs/` 或 Markdown 時不觸發。失敗時 xcresult 會上傳為 `test-results` artifact。
 
-App 內的「檢查更新…」依賴這個格式（ADR-0009）：標籤為 `v<版本>`、不是 draft 或 prerelease，且附件名稱必須是 `Ripen-<版本>.dmg`，dmg 根目錄有 `Ripen.app`，其 bundle id 與 `CFBundleShortVersionString` 與標籤一致。安裝前以 GitHub 為附件算出的 SHA-256（API 的 `digest` 欄位）核對下載內容；缺少雜湊或任何一項不符時不自動安裝，設定裡改提供下載頁連結。
+App 內的「檢查更新⋯」依賴這個格式（ADR-0009）：標籤為 `v<版本>`、不是 draft 或 prerelease，且附件名稱必須是 `Ripen-<版本>.dmg`，dmg 根目錄有 `Ripen.app`，其 bundle id 與 `CFBundleShortVersionString` 與標籤一致。安裝前以 GitHub 為附件算出的 SHA-256（API 的 `digest` 欄位）核對下載內容；缺少雜湊或任何一項不符時不自動安裝，設定裡改提供下載頁連結。
 
 替換 App 時，在安裝目錄以 `mktemp -d` 預留獨立的 `.Ripen-update.XXXXXX` 資料夾，將本次舊版改名移入；新版複製成功後才刪除本次備份，複製失敗則移除不完整新版並還原本次舊版。無法預留資料夾或無法移開舊版時不替換，照常重新開啟舊版。既有 `.Ripen-previous.app` 或其他更新的備份不會被覆蓋、合併或清除；還原失敗時停止並保留備份，不繼續開啟不完整的 App。`UpdateInstallerTests` 直接執行正式替換指令，以隔離檔案檢查成功替換、失敗回滾、無法預留或移開時保留舊版，以及殘留備份保留；不啟動或結束 App，完整下載、掛載與重開仍須另外實機驗收。
 
