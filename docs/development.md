@@ -63,9 +63,10 @@ App 內的「檢查更新⋯」依賴這個格式（ADR-0009）：標籤為 `v<�
 
 ```sh
 swift scripts/generate-brand-assets.swift
+swift scripts/generate-readme-assets.swift
 ```
 
-腳本產生 `AppIcon.appiconset` 的 16–1024 像素圖標與兩種語言的 `showcase.png`。展示圖使用各語言目錄中的 `main.jpg`、`floating-medium.jpg` 與 `notch.jpg` 原始截圖；圖上標題與標籤統一使用英文。圖標首次加入或資產位置改動後，重新執行 `xcodegen generate` 再建置。
+`generate-brand-assets.swift` 產生 `AppIcon.appiconset` 的 16–1024 像素圖標與 `showcase.png` 品牌拼圖。`generate-readme-assets.swift` 以已入庫的雙語截圖與網站純成果卡為來源，產生 README 的 `presentation.png`（1600×1000）、`projects.png`（1600×1140）與 `recap-layouts.png`（1600×1040）：裁去視窗外的背景，依原比例排入統一底色，不重繪介面。圖上標題與標籤統一使用英文。README 每段只放一張展示圖，其他懸浮窗尺寸與超時畫面放在展開區塊。圖標首次加入或資產位置改動後，重新執行 `xcodegen generate` 再建置。
 
 GitHub 分享預覽圖 `docs/images/brand/social-preview.png`（1280×640）由 `scripts/social-preview.html` 以 headless Chrome 截圖產生，更新後須在 repo 的 Settings › Social preview 手動上傳：
 
@@ -75,11 +76,11 @@ GitHub 分享預覽圖 `docs/images/brand/social-preview.png`（1280×640）由 
   --screenshot="$PWD/docs/images/brand/social-preview.png" "file://$PWD/scripts/social-preview.html"
 ```
 
-產品截圖採用彩色漸層背景，中英文各九張：玻璃及暖瓷白主視窗、三尺寸懸浮窗、瀏海島收合／展開、超時及統計。`docs/images/en/` 與 `zh-Hant/` 保存供 README 使用的 JPEG，`website/assets/` 使用同一批繁中素材；網站首屏採暖瓷白，形態展示保留玻璃。原始 PNG、拍攝副本與工具保留於 `build/screenshots-20261029/`。
+產品截圖採用彩色漸層背景，中英文各十二張：玻璃及暖瓷白主視窗、三尺寸懸浮窗、瀏海島收合／展開、超時、分類統計、分類詳情，以及方形／直式成果卡預覽。`docs/images/en/` 與 `zh-Hant/` 保存供 README 使用的 JPEG 與展示拼圖；`website/assets/` 與 `website/assets/en/` 使用同一批計時及統計素材。網站首屏採暖瓷白，形態展示保留玻璃；分類介紹採統計畫面配文，成果卡介紹直接使用 App 原有 `RecapCardRenderer` 匯出的 `recap-square.png`（1080×1080）與 `recap-portrait.png`（1080×1920），不含預覽視窗及操作按鈕。README 分類區以統計總覽與分類詳情構圖，成果卡區使用與網站相同的純卡片來源。v0.2.0 的原始 PNG、拍攝副本、工具與驗證輸出保留於 `build/screenshots-20261030/`，取代前一輪的產品展示素材。
 
-拍攝採不同 bundle id、隔離設定與記憶體專注紀錄。只在 `staged/` 副本設定固定時鐘、隱藏首次引導、停用提示音與全域快速鍵；倒數固定為 18:42，超時固定為 +03:17。`backdrop.swift` 開啟不接收滑鼠的彩色背景，不改系統桌布；`capture-all.py` 以 `screencapture` 擷取真實視窗及陰影，完成後結束拍攝 App、背景與保持喚醒程序。統計的七日次數為展示資料 `[5,7,4,8,6,3,4]`，每次 25 分鐘，僅存在拍攝副本的記憶體；README 在圖片旁明示其用途。
+拍攝從 v0.2.0 來源重建，使用不同 bundle id、隔離設定與記憶體專注紀錄。只在 `staged/` 副本設定固定時鐘、畫面入口、隱藏首次引導、停用提示音與全域快速鍵；倒數固定為 18:42，超時固定為 +03:17。`backdrop.swift` 開啟不接收滑鼠的彩色背景，不改系統桌布；`capture-all.py` 以 `screencapture` 擷取真實視窗及陰影，完成後結束拍攝 App、背景與保持喚醒程序。展示的七日次數為 `[5,7,4,8,6,3,4]`、每次 25 分鐘，依序分配給深度工作、閱讀、深度工作、學習、未分類（每日循環），英文使用 Deep Work、Reading、Learning。資料只存在拍攝副本的記憶體，README 與網站在圖片旁明示其用途。
 
-主視窗與懸浮窗的原始圖為 1600×1200 PNG；瀏海島保留原生視窗擷取，由 `layout-notch.swift` 排上同色背景，輸出 1600×440 PNG，避免其他選單列圖示混入。`prepare-images.py` 以固定留白裁切並匯出 JPEG，不旋轉、拉伸或重繪介面。下一輪須從當時正式來源重建副本，不可把固定狀態的副本作為發行版；拍攝時 Mac 必須解鎖。
+主視窗、懸浮窗與成果卡預覽的原始圖為 1600×1200 PNG；瀏海島保留原生視窗擷取，由 `layout-notch.swift` 排上同色背景，輸出 1600×440 PNG，避免其他選單列圖示混入。`prepare-images.py` 以固定留白裁切並匯出 JPEG，同步兩種語言的網站素材，不旋轉、拉伸或重繪介面。網站純成果卡原圖存於同目錄的 `exports/en/` 與 `exports/zh-Hant/`；以拍攝副本的 `RIPEN_CAPTURE_SCENE=export-cards` 與 `RIPEN_CAPTURE_EXPORT` 輸出路徑重建，沿用同一組記憶體展示資料及雙語啟動參數。重拍方式為 `uv run python build/screenshots-20261030/capture-all.py all`，再執行同目錄的 `prepare-images.py zh-Hant en`；README 構圖由 `generate-readme-assets.swift` 產生。下一輪須從當時正式來源重建副本，不可把固定狀態的副本作為發行版；拍攝時 Mac 必須解鎖。
 
 ## 資料相容性與升級
 

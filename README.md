@@ -22,7 +22,7 @@ English · [繁體中文](README.zh-Hant.md)
 > v0.2.0 is out · [Release notes](https://github.com/latteine1217/ripen/releases/tag/v0.2.0)
 
 <p align="center">
-  <img src="docs/images/en/main-white.jpg" width="560" alt="Ripen in White appearance with the Deep Work project selected">
+  <img src="docs/images/en/presentation.png" width="1000" alt="Ripen main window, floating window and notch island">
 </p>
 
 Keep your timer in view and your attention on your work. Ripen follows your focus-and-break rhythm, organizes your time by project, and turns your progress into a recap card. Your focus history stays on your Mac.
@@ -35,10 +35,6 @@ Work, reading, or something you are learning can each have a project and a color
 
 You can start with Uncategorized. Change projects during a focus to move the whole focus to the new project; a choice made during a break applies to the next focus.
 
-<p align="center">
-  <img src="docs/images/en/main.jpg" width="440" alt="Glass timer window with the Deep Work project above the ring">
-</p>
-
 ### See where your time goes
 
 Statistics stacks your last seven days of focus time by project color, alongside today's focus count and minutes and each project's total. Open a project to see its total time, its last week and every completed focus, or choose a different color from the palette.
@@ -46,8 +42,7 @@ Statistics stacks your last seven days of focus time by project color, alongside
 If you no longer need a project, delete it from its detail page. After you confirm, its records move to Uncategorized, keeping their time and counts.
 
 <p align="center">
-  <img src="docs/images/en/stats.jpg" width="440" alt="Statistics overview with seven days of focus time by project color; demonstration data">
-  <img src="docs/images/en/project-detail.jpg" width="440" alt="Deep Work details with totals, color palette and completed focuses; demonstration data">
+  <img src="docs/images/en/projects.png" width="1000" alt="Weekly statistics and project details; demonstration data">
   <br><sub>Illustrative focus history for demonstration, not real user data.</sub>
 </p>
 
@@ -58,8 +53,7 @@ Every project with completed focuses, including Uncategorized, has a recap card 
 Once the records are saved and their undo period has passed, save the card as a PNG, copy the image, or use the macOS share menu. Refresh the card if its records change after you open it. To post on a social platform, you can save the image and upload it yourself.
 
 <p align="center">
-  <img src="docs/images/en/recap.jpg" width="440" alt="Square recap card preview with image export controls; demonstration data">
-  <img src="docs/images/en/recap-portrait.jpg" width="440" alt="Portrait project recap card preview; demonstration data">
+  <img src="docs/images/en/recap-layouts.png" width="1000" alt="Square and portrait recap cards; demonstration data">
   <br><sub>Recap cards use demonstration data, not real user records.</sub>
 </p>
 
@@ -68,17 +62,26 @@ Once the records are saved and their undo period has passed, save the card as a 
 Click the yellow button, or drag the timer ring out of the main window, to get a small always-on-top panel. Drag any corner to switch between three layouts; Ripen remembers where you left it.
 
 <p align="center">
-  <img src="docs/images/en/floating-small.jpg" width="300" alt="Small floating window">
-  <img src="docs/images/en/floating-medium.jpg" width="270" alt="Medium floating window">
-  <img src="docs/images/en/floating-large.jpg" width="250" alt="Large floating window">
+  <img src="docs/images/en/floating-medium.jpg" width="640" alt="Medium always-on-top floating window">
 </p>
+
+<details>
+<summary>See the other floating-window sizes</summary>
+
+<p align="center">
+  <img src="docs/images/en/floating-small.jpg" width="640" alt="Small floating window">
+</p>
+<p align="center">
+  <img src="docs/images/en/floating-large.jpg" width="480" alt="Large floating window">
+</p>
+
+</details>
 
 ### Tuck it into the notch
 
 Click the red button, or drag the main window up into the notch, and Ripen becomes a black island around the camera: progress on the left, time on the right. Hover to see the full controls; pull it down to bring the main window back. On a Mac without a notch, the island sits at the top center of the screen.
 
 <p align="center">
-  <img src="docs/images/en/notch.jpg" width="640" alt="Collapsed notch island">
   <img src="docs/images/en/notch-expanded.jpg" width="640" alt="Expanded notch island with controls">
 </p>
 
@@ -88,9 +91,14 @@ When the countdown reaches zero, Ripen plays a sound and keeps counting as `+mm:
 
 The main window, floating window and notch island briefly show the time you just spent and your project's total. During the following break, you can open that project's recap card directly.
 
+<details>
+<summary>See overtime in action</summary>
+
 <p align="center">
   <img src="docs/images/en/overtime.jpg" width="380" alt="Focus session in overtime showing +03:17 and a Done button">
 </p>
+
+</details>
 
 ## Everyday controls and settings
 

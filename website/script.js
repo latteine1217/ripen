@@ -1,5 +1,19 @@
 // 保留原始文字節點，切換語言時不重建連結、圖示或互動元件。
 const englishTranslations = new Map(Object.entries({
+  "每一段投入，": "See the time",
+  "都看得見。": "you put in.",
+  "工作、閱讀，或正在學的新事物。把專注分給不同分類，看看這一週，時間花在哪裡。": "Work, reading, or something you’re learning. Give each focus a project, and see where your time went this week.",
+  "今天的投入、七天的節奏、一路累積的時間，都留在你的 Mac。": "Today’s effort, your weekly rhythm, and all the time you’ve put in. Kept on your Mac.",
+  "把累積，": "Time well spent,",
+  "留成一張卡。": "made into a card.",
+  "一個分類，一張成果卡。把持續投入的時間，存成自己看得見的成果。": "One project, one recap card. Turn the time you keep putting in into something you can see.",
+  "選方形或直式，存成圖片、複製，或透過系統分享選單傳出去。": "Choose square or portrait. Save an image, copy it, or send it through the macOS share menu.",
+  "畫面中的分類與專注紀錄為展示資料。": "Projects and focus history shown here are demonstration data.",
+  "分類統計：依代表色呈現最近七天的專注；展示資料": "Project statistics: seven days of focuses stacked by project color; demonstration data",
+  "方形與直式成果卡": "Square and portrait recap cards",
+  "方形分類成果卡；展示資料": "Square project recap card; demonstration data",
+  "直式分類成果卡；展示資料": "Portrait project recap card; demonstration data",
+
   "Ripen 是原生 macOS 番茄鐘。收進瀏海、拖成懸浮窗，到點後繼續專注。免費使用，不需要帳號，專注紀錄留在你的 Mac。": "Ripen is a native macOS Pomodoro timer. Tuck it into the notch, float it above your work, and keep focusing past zero. Free to use, with no account. Your focus history stays on your Mac.",
   "Ripen — 留一點空間，給專注。": "Ripen — A little space for focus.",
   "跳至主要內容": "Skip to main content",

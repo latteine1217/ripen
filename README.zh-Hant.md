@@ -22,7 +22,7 @@
 > v0.2.0 已發布 · [更新內容](https://github.com/latteine1217/ripen/releases/tag/v0.2.0)
 
 <p align="center">
-  <img src="docs/images/zh-Hant/main-white.jpg" width="560" alt="Ripen 暖瓷白主視窗，已選擇深度工作分類">
+  <img src="docs/images/zh-Hant/presentation.png" width="1000" alt="主視窗、懸浮窗與瀏海島的整體展示">
 </p>
 
 讓計時留在視線裡，把注意力留給手上的事。Ripen 跟著專注與休息的節奏走，讓你依分類累積投入、回顧一週，再把成果存成一張卡。所有專注紀錄只留在你的 Mac 上。
@@ -35,10 +35,6 @@
 
 可以選「未分類」直接開始。專注途中切換分類，整次專注會歸入新分類；休息時選擇的分類則用於下一次專注。
 
-<p align="center">
-  <img src="docs/images/zh-Hant/main.jpg" width="440" alt="玻璃外觀計時頁，圓環上方顯示深度工作分類">
-</p>
-
 ### 看見時間花在哪裡
 
 統計頁以分類代表色堆疊最近 7 天的專注時間，並列出今天的完成次數、分鐘數與各分類的累積。點進分類，就能查看它的總投入、最近一週與每一筆完成紀錄，也能從色盤更換代表色。
@@ -46,8 +42,7 @@
 不再需要某個分類時，可在詳情頁刪除；確認後，原有紀錄會移到「未分類」，時間與次數都會保留。
 
 <p align="center">
-  <img src="docs/images/zh-Hant/stats.jpg" width="440" alt="統計總覽，依分類代表色呈現七日專注時間；展示資料">
-  <img src="docs/images/zh-Hant/project-detail.jpg" width="440" alt="深度工作分類詳情，包含累積、色盤與完成紀錄；展示資料">
+  <img src="docs/images/zh-Hant/projects.png" width="1000" alt="七日統計與分類詳情；展示資料">
   <br><sub>統計畫面使用展示資料，非真實使用者紀錄。</sub>
 </p>
 
@@ -58,8 +53,7 @@
 紀錄儲存完成且已過復原期限後，即可存成 PNG、複製圖片，或使用 macOS 分享選單。若開卡後紀錄有變動，重新整理即可更新；要貼到社群平台，也可以先存圖再自行上傳。
 
 <p align="center">
-  <img src="docs/images/zh-Hant/recap.jpg" width="440" alt="方形成果卡預覽與圖片匯出操作；展示資料">
-  <img src="docs/images/zh-Hant/recap-portrait.jpg" width="440" alt="直式分類成果卡預覽；展示資料">
+  <img src="docs/images/zh-Hant/recap-layouts.png" width="1000" alt="方形與直式成果卡；展示資料">
   <br><sub>成果卡使用展示資料，非真實使用者紀錄。</sub>
 </p>
 
@@ -68,17 +62,26 @@
 按黃色按鈕，或把計時圓環從主視窗拖出來，就會變成置頂的小懸浮窗。拖曳任一角可以在三種版面之間切換，Ripen 會記住你放的位置。
 
 <p align="center">
-  <img src="docs/images/zh-Hant/floating-small.jpg" width="300" alt="小尺寸懸浮窗">
-  <img src="docs/images/zh-Hant/floating-medium.jpg" width="270" alt="中尺寸懸浮窗">
-  <img src="docs/images/zh-Hant/floating-large.jpg" width="250" alt="大尺寸懸浮窗">
+  <img src="docs/images/zh-Hant/floating-medium.jpg" width="640" alt="中尺寸置頂懸浮窗">
 </p>
+
+<details>
+<summary>查看其他懸浮窗尺寸</summary>
+
+<p align="center">
+  <img src="docs/images/zh-Hant/floating-small.jpg" width="640" alt="小尺寸懸浮窗">
+</p>
+<p align="center">
+  <img src="docs/images/zh-Hant/floating-large.jpg" width="480" alt="大尺寸懸浮窗">
+</p>
+
+</details>
 
 ### 收進瀏海
 
 按紅色按鈕，或把主視窗往上拖進瀏海，Ripen 就變成圍著鏡頭的黑色瀏海島：左邊是進度，右邊是時間。滑鼠移上去會展開完整控制，往下拉就變回主視窗。沒有瀏海的 Mac 上，瀏海島會出現在螢幕頂端中央。
 
 <p align="center">
-  <img src="docs/images/zh-Hant/notch.jpg" width="640" alt="收合的瀏海島">
   <img src="docs/images/zh-Hant/notch-expanded.jpg" width="640" alt="展開的瀏海島與控制按鈕">
 </p>
 
@@ -88,9 +91,14 @@
 
 完成後，主視窗、懸浮窗與瀏海島都會短暫顯示本次投入與分類累積。接下來的休息期間，可以直接開啟剛完成分類的成果卡。
 
+<details>
+<summary>查看超時畫面</summary>
+
 <p align="center">
   <img src="docs/images/zh-Hant/overtime.jpg" width="380" alt="專注超時，顯示 +03:17 與完成按鈕">
 </p>
+
+</details>
 
 ## 日常操作與設定
 
