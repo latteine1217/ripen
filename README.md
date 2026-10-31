@@ -6,7 +6,7 @@
 
 **A little space for focus.**
 
-A native macOS Pomodoro timer with frosted glass, floating windows, and a home in your notch.
+A native macOS Pomodoro timer with projects, focus statistics, and a home in your notch.
 
 [![Latest release](https://img.shields.io/github/v/release/latteine1217/ripen?color=da443b)](https://github.com/latteine1217/ripen/releases/latest)
 [![macOS 14+](https://img.shields.io/badge/macOS-14%2B-000000?logo=apple&logoColor=white)](#install)
@@ -17,15 +17,51 @@ English · [繁體中文](README.zh-Hant.md)
 
 [Website (繁體中文 / English)](https://latteine1217.github.io/ripen/) · [Installation](#install) · [Features](#features) · [Releases](https://github.com/latteine1217/ripen/releases) · [Report an issue](https://github.com/latteine1217/ripen/issues)
 
-<img src="docs/images/en/showcase.png" width="1000" alt="Ripen in three presentations: the main timer window, the notch island, and an always-on-top floating window">
-
 </div>
 
-Keep your timer in view and your attention on your work. Ripen follows your focus-and-break rhythm, remembers where you put it, and keeps counting when you need a little longer. Your focus history stays on your Mac.
+> v0.2.0 is out · [Release notes](https://github.com/latteine1217/ripen/releases/tag/v0.2.0)
 
-> Download the latest version from [GitHub Releases](https://github.com/latteine1217/ripen/releases/latest). Once installed, **Check for Updates…** in the Ripen menu installs newer versions for you.
+<p align="center">
+  <img src="docs/images/en/main-white.jpg" width="560" alt="Ripen in White appearance with the Deep Work project selected">
+</p>
 
-## Highlights
+Keep your timer in view and your attention on your work. Ripen follows your focus-and-break rhythm, organizes your time by project, and turns your progress into a recap card. Your focus history stays on your Mac.
+
+## Features
+
+### Give each kind of work a project
+
+Work, reading, or something you are learning can each have a project and a color. Open the menu above the timer ring to choose a project, or type a name and choose a color to add one. Before you start, its total time and completed focus count appear below the menu.
+
+You can start with Uncategorized. Change projects during a focus to move the whole focus to the new project; a choice made during a break applies to the next focus.
+
+<p align="center">
+  <img src="docs/images/en/main.jpg" width="440" alt="Glass timer window with the Deep Work project above the ring">
+</p>
+
+### See where your time goes
+
+Statistics stacks your last seven days of focus time by project color, alongside today's focus count and minutes and each project's total. Open a project to see its total time, its last week and every completed focus, or choose a different color from the palette.
+
+If you no longer need a project, delete it from its detail page. After you confirm, its records move to Uncategorized, keeping their time and counts.
+
+<p align="center">
+  <img src="docs/images/en/stats.jpg" width="440" alt="Statistics overview with seven days of focus time by project color; demonstration data">
+  <img src="docs/images/en/project-detail.jpg" width="440" alt="Deep Work details with totals, color palette and completed focuses; demonstration data">
+  <br><sub>Illustrative focus history for demonstration, not real user data.</sub>
+</p>
+
+### Turn your progress into a recap card
+
+Every project with completed focuses, including Uncategorized, has a recap card showing total time, today's time, focus count, focus days and the last seven days. Open it from the project details, choose a square (1:1) or portrait (9:16) layout, and hide the project name if you like.
+
+Once the records are saved and their undo period has passed, save the card as a PNG, copy the image, or use the macOS share menu. Refresh the card if its records change after you open it. To post on a social platform, you can save the image and upload it yourself.
+
+<p align="center">
+  <img src="docs/images/en/recap.jpg" width="440" alt="Square recap card preview with image export controls; demonstration data">
+  <img src="docs/images/en/recap-portrait.jpg" width="440" alt="Portrait project recap card preview; demonstration data">
+  <br><sub>Recap cards use demonstration data, not real user records.</sub>
+</p>
 
 ### Shrink it to a floating window
 
@@ -46,36 +82,26 @@ Click the red button, or drag the main window up into the notch, and Ripen becom
   <img src="docs/images/en/notch-expanded.jpg" width="640" alt="Expanded notch island with controls">
 </p>
 
-### Overtime instead of interruption
+### Finish at your own pace
 
-When the countdown reaches zero, Ripen plays a sound and keeps counting as `+mm:ss` in a new color: teal for focus, orange for breaks. Press **Done** when you are ready, and the focus is recorded with its real length. For about three seconds the ring shows this focus's length and its project's total, then returns to the break as it is; until that break ends, a link beside the end time opens the project's recap card. The floating window and the notch island show the same summary in place of the time, and a small photo button after the phase name opens the card in its own window without leaving the floating window or the island. Time you spend away from your Mac is not counted as overtime.
+When the countdown reaches zero, Ripen plays a sound and keeps counting as `+mm:ss`: teal for focus, orange for breaks. Press **Done** when you are ready to record the focus's actual length. Time away from your Mac is not counted as overtime.
+
+The main window, floating window and notch island briefly show the time you just spent and your project's total. During the following break, you can open that project's recap card directly.
 
 <p align="center">
   <img src="docs/images/en/overtime.jpg" width="380" alt="Focus session in overtime showing +03:17 and a Done button">
 </p>
 
-### See your week
-
-The Statistics page shows today's focus count and minutes, a seven-day chart stacked by project color, and each project's total time. Open a project to see its totals, its last seven days and every completed focus, to pick its color from the preset palette, or to delete it; after you confirm, its focuses move to Uncategorized and keep counting there. Each project also has a recap card: its latest total, today's time, focus count, focus days and last seven days, in a square (1:1) or portrait (9:16) layout. You can hide the project name, then save the card as a PNG, copy the image, or share it through the macOS share menu once none of its focuses can still be undone. The share menu only lists services installed on your Mac; Instagram and Threads usually have none, so save or copy the image and upload it yourself. Ripen never posts for you. Everything is stored locally on your Mac.
-
-<p align="center">
-  <img src="docs/images/en/stats.jpg" width="380" alt="Statistics page with today's totals and a seven-day chart; demonstration data">
-</p>
-
-<p align="center"><sub>Illustrative focus history for demonstration, not real user data.</sub></p>
-
-## Features
+## Everyday controls and settings
 
 | Feature | Details |
 | :--- | :--- |
-| Your rhythm | 25-minute focus, 5-minute short break, 15-minute long break after every 4 focuses. Adjust each length from 1–180 minutes and the long-break interval from 1–12. |
-| Quick control | <kbd>⌥</kbd><kbd>⌘</kbd><kbd>P</kbd> to start or pause from any app, or record your own shortcut. In the main window: <kbd>⌘</kbd><kbd>S</kbd> to skip or finish, <kbd>⌘</kbd><kbd>R</kbd> to reset, <kbd>⌘</kbd><kbd>1</kbd> / <kbd>⌘</kbd><kbd>2</kbd> to switch between Timer and Statistics. Skip, reset and Done can be undone for 5 seconds from the countdown capsule or <kbd>⌘</kbd><kbd>Z</kbd>. |
-| Make it yours | Black, White, or Glass appearance; glass can follow the system or stay light or dark, with adjustable opacity and blur. System reminder sounds or silence, optional auto-start and open at login, and 12- or 24-hour end times. |
-| Projects | Pick a project from the menu above the timer ring, or add one by typing its name; each gets a color from a preset palette. Before you start, the project's total time and focus count show below the menu. Start uncategorized if you like, and change the project mid-focus to move the whole focus; a choice made during a break applies to the next focus. |
-| Always at hand | Three floating-window layouts, a notch island, and an optional menu bar countdown. |
-| A fresh start | The long-break count resets after two hours idle. |
-| Easy to learn | A short intro shows the tear-off, notch and resize gestures on first launch, with one-time tips where they apply. Replay it from Settings. |
-| Local and private | No account needed, and Ripen only goes online when you click **Check for Updates…**; a newer release is downloaded, verified against GitHub's checksum and installed only after you confirm. Focus history stays in `~/Library/Application Support/Ripen`. English and Traditional Chinese included. |
+| Your rhythm | Defaults to a 25-minute focus, a 5-minute short break and a 15-minute long break after every 4 focuses. Adjust each length from 1–180 minutes and the long-break interval from 1–12. The long-break count resets after two hours idle. |
+| Quick control | <kbd>⌥</kbd><kbd>⌘</kbd><kbd>P</kbd> to start or pause from any app, or record your own shortcut. In the main window: <kbd>⌘</kbd><kbd>S</kbd> to skip or finish, <kbd>⌘</kbd><kbd>R</kbd> to reset, <kbd>⌘</kbd><kbd>1</kbd> / <kbd>⌘</kbd><kbd>2</kbd> to switch between Timer and Statistics. |
+| Undo | Undo skip, reset or Done for 5 seconds from the countdown capsule or <kbd>⌘</kbd><kbd>Z</kbd>. |
+| Appearance and reminders | Black, White, or Glass appearance; glass can follow the system or stay light or dark, with adjustable opacity and blur. System reminder sounds or silence, an optional menu bar countdown, and 12- or 24-hour end times. |
+| Startup and guidance | Optional auto-start for the next phase and open at login. A first-launch intro shows the tear-off, notch and resize gestures; replay it from Settings. |
+| Local and private | No account needed. Focus history stays in `~/Library/Application Support/Ripen`, with English and Traditional Chinese interfaces. Ripen only goes online when you click **Check for Updates…**; updates are downloaded after confirmation and verified against GitHub's checksum before installation. |
 
 ## Install
 
