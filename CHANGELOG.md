@@ -4,6 +4,8 @@ Notable changes to Ripen. The format follows [Keep a Changelog](https://keepacha
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-11-01
+
 ### Added
 
 - Resume a closed or interrupted timer: reopening offers Continue or Discard with the last saved phase, progress and project. Time while Ripen is closed is excluded. Running timers save every five seconds and at key actions; interrupted progress is limited to the last successful save.
@@ -49,6 +51,7 @@ The first release of Ripen, a native macOS Pomodoro timer in frosted glass.
 - Statistics for today and the last 7 days, stored only on your Mac.
 - **Check for Updates…**, which only goes online when you ask.
 
-[Unreleased]: https://github.com/latteine1217/ripen/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/latteine1217/ripen/compare/v0.2.1...HEAD
+[0.2.1]: https://github.com/latteine1217/ripen/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/latteine1217/ripen/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/latteine1217/ripen/releases/tag/v0.1.0
