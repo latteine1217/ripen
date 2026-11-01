@@ -118,6 +118,14 @@ final class AppModel {
         presence.onReturn = { [weak self] in self?.userDidReturn() }
         alarm.onFire = { [weak self] in self?.alarmDidFire() }
         loadRecovery()
+        // 包含歷史頁直接重試在內，正式完成必須先有可重播的保存點。
+        if recoveryStorage != nil {
+            focusLog.persistRecoveryBeforeCommit = { [weak self] in
+                guard let self, self.recoveryLoaded, self.saveCurrentRecovery() else {
+                    throw CocoaError(.fileWriteUnknown)
+                }
+            }
+        }
     }
 
     /// 只讀取一次注入時鐘；不呼叫 refresh，不發出提醒或確立完成。

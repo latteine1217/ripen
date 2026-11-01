@@ -75,6 +75,8 @@ final class FocusLog {
     }
     /// 由 App 接上顯示主視窗，讓只有懸浮窗或瀏海島時也能看見錯誤。
     @ObservationIgnored var onIssue: (() -> Void)?
+    /// 正式確立完成前，先保存對應恢復點與完成日誌；任何重試入口都必須通過。
+    @ObservationIgnored var persistRecoveryBeforeCommit: (() throws -> Void)?
     @ObservationIgnored private let storage: (any FocusLogStorage)?
 
     var records: [FocusRecord] { entries.map(\.record) }
@@ -244,6 +246,7 @@ final class FocusLog {
                 pendingProjects.removeAll()
             }
             if !pending.isEmpty {
+                try persistRecoveryBeforeCommit?()
                 try storage.append(pending)
                 saved.append(contentsOf: pending)
                 pending.removeAll()
