@@ -19,6 +19,8 @@ struct SQLiteFocusLogStorage: FocusLogStorage, TimerRecoveryStorage {
         """,
         // 版本 3：單一可恢復階段，歷史紀錄與設定不改寫。
         "CREATE TABLE timer_recovery (id INTEGER PRIMARY KEY CHECK (id = 1), payload TEXT NOT NULL)",
+        // 版本 4：完成日誌和恢復階段同交易保存，五秒內仍可復原。
+        "CREATE TABLE timer_completion_journal (id INTEGER PRIMARY KEY CHECK (id = 1), payload TEXT NOT NULL)",
     ]
     var databaseURL: URL { directory.appending(path: "focus-log.sqlite") }
     private var stateURL: URL { directory.appending(path: "focus-log.state") }
@@ -60,7 +62,15 @@ struct SQLiteFocusLogStorage: FocusLogStorage, TimerRecoveryStorage {
 
     func deleteProjects(_ ids: Set<UUID>) throws {
         let database = try open()
-        try database.transaction { try database.deleteProjects(ids) }
+        try database.transaction {
+            try database.deleteProjects(ids)
+            let journal = try database.completionJournal().map { entry in
+                guard let id = entry.record.projectID, ids.contains(id) else { return entry }
+                return StoredFocusRecord(id: entry.id,
+                    record: FocusRecord(startedAt: entry.record.startedAt, duration: entry.record.duration))
+            }
+            try database.saveCompletionJournal(journal)
+        }
     }
 
     func loadRecovery() throws -> TimerRecovery? {
@@ -70,6 +80,36 @@ struct SQLiteFocusLogStorage: FocusLogStorage, TimerRecoveryStorage {
     func saveRecovery(_ recovery: TimerRecovery?) throws {
         let database = try open()
         try database.transaction { try database.saveRecovery(recovery) }
+    }
+
+    func saveCheckpoint(_ recovery: TimerRecovery?, completions: [StoredFocusRecord]) throws {
+        let database = try open()
+        try database.transaction {
+            // 分類尚未落盤時保留上一個有效點，不能確立無法辨識歸屬的完成。
+            let projects = Set(try database.projects().map(\.id))
+            guard completions.allSatisfy({ $0.record.projectID.map(projects.contains) ?? true }) else {
+                throw FocusStorageError.invalidData
+            }
+            try database.saveRecovery(recovery)
+            try database.saveCompletionJournal(completions)
+        }
+    }
+
+    /// 重啟後復原機會已結束；確立日誌與清除日誌是同一交易，重試不新增第二筆。
+    func recoverCompletions() throws -> Bool {
+        let database = try open()
+        // 沒有日誌時只讀取，不為一般恢復取得寫鎖。
+        guard try !database.completionJournal().isEmpty else { return false }
+        var recovered = false
+        try database.transaction {
+            _ = try database.recovery()
+            let entries = try database.completionJournal()
+            guard !entries.isEmpty else { return }
+            try database.insert(entries)
+            try database.saveCompletionJournal([])
+            recovered = true
+        }
+        return recovered
     }
 
     private func open() throws -> SQLiteDatabase {

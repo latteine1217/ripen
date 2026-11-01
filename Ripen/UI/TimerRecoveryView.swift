@@ -14,8 +14,13 @@ struct TimerRecoveryView: View {
                 Text(verbatim: model.display.timeText)
                     .font(.system(size: 44, weight: .light, design: .rounded).monospacedDigit())
                 if recovery.phase == .focus {
-                    (model.currentProject.map { Text(verbatim: $0.name) } ?? Text("Uncategorized"))
-                        .foregroundStyle(.secondary)
+                    if model.focusLog.issue == .load {
+                        Text("Project could not be loaded.")
+                            .foregroundStyle(.secondary)
+                    } else {
+                        (model.currentProject.map { Text(verbatim: $0.name) } ?? Text("Uncategorized"))
+                            .foregroundStyle(.secondary)
+                    }
                 }
                 Text("Time while Ripen was closed is not counted.")
                     .font(.callout)
@@ -27,6 +32,7 @@ struct TimerRecoveryView: View {
                     Button("Continue Timer", action: model.continueRecovery)
                         .keyboardShortcut(.defaultAction)
                         .buttonStyle(.borderedProminent)
+                        .disabled(model.focusLog.issue == .load)
                 }
             } else {
                 Text("Retry to check your previous timer.")
@@ -45,11 +51,16 @@ struct TimerRecoveryStorageNotice: View {
     var body: some View {
         if let issue = model.recoveryIssue {
             VStack(alignment: .leading, spacing: 8) {
-                Text(issue == .load ? "The previous timer could not be loaded." : "Your timer progress has not been saved.")
+                Text(issue == .load ? "The previous timer could not be loaded."
+                     : model.focusLog.recoveryCompletions.isEmpty
+                        ? "Your timer progress has not been saved."
+                        : "Timer progress or completed focuses have not been saved.")
                     .font(.headline)
                 Text("Your saved data is kept. You can retry.")
                     .font(.caption)
                 Button("Retry", action: model.retryRecovery)
+                    .keyboardShortcut("r", modifiers: [.command, .option])
+                    .help("Retry timer recovery (⌥⌘R)")
             }
             .frame(maxWidth: 300, alignment: .leading)
             .padding(12)

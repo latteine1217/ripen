@@ -11,6 +11,7 @@ Notable changes to Ripen. The format follows [Keep a Changelog](https://keepacha
 ### Changed
 
 - Quitting pauses the current phase instead of cancelling it or marking overtime Done. Previously pressed Done actions are still saved when quitting.
+- Completed focuses are journaled with timer progress during the undo window, so reopening after interruption records each saved completion once without extending undo.
 
 ## [0.2.0] - 2026-10-30
 

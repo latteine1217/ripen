@@ -10,14 +10,18 @@ struct TimerRecovery: Codable, Equatable, Sendable {
     let completedFocuses: Int
 
     var isValid: Bool {
-        duration.isFinite && duration > 0 && duration < Double(Int.max)
+        duration.isFinite && duration > 0
+            && duration <= Double(AppSettings.phaseMinutesRange.upperBound * 60)
             && remaining.isFinite && remaining > -Double(Int.max) && remaining <= duration
-            && (duration - remaining).isFinite && startedAt.timeIntervalSinceReferenceDate.isFinite
-            && completedFocuses >= 0 && completedFocuses < Int.max
+            && (duration - remaining).isFinite && duration - remaining < Double(Int.max)
+            && (Date.distantPast...Date.distantFuture).contains(startedAt)
+            && completedFocuses >= 0 && completedFocuses <= AppSettings.longBreakIntervalRange.upperBound
     }
 }
 
 protocol TimerRecoveryStorage {
     func loadRecovery() throws -> TimerRecovery?
     func saveRecovery(_ recovery: TimerRecovery?) throws
+    func saveCheckpoint(_ recovery: TimerRecovery?, completions: [StoredFocusRecord]) throws
+    func recoverCompletions() throws -> Bool
 }

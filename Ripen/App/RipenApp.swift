@@ -24,7 +24,10 @@ struct RipenApp: App {
         // 測試 host 也會執行 App.init；必須在開啟儲存前隔離，避免測試遷移真正的使用者資料。
         let isTesting = ProcessInfo.processInfo.environment["RIPEN_TESTING"] == "1"
         #if DEBUG
-        let validationDirectory = ProcessInfo.processInfo.environment["RIPEN_DATA_DIRECTORY"].map { URL(fileURLWithPath: $0) }
+        // 驗收建置可固定隔離目錄，工具重新啟動時不依賴繼承的環境變數。
+        let validationDirectory = (ProcessInfo.processInfo.environment["RIPEN_DATA_DIRECTORY"]
+            ?? Bundle.main.object(forInfoDictionaryKey: "RipenValidationDataDirectory") as? String)
+            .map { URL(fileURLWithPath: $0) }
         #else
         let validationDirectory: URL? = nil
         #endif

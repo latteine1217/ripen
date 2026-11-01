@@ -3271,6 +3271,54 @@
           }
         }
       }
+    },
+    "Project could not be loaded.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Project could not be loaded."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "無法載入分類。"
+          }
+        }
+      }
+    },
+    "Timer progress or completed focuses have not been saved.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Timer progress or completed focuses have not been saved."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "計時進度或已完成的專注尚未儲存。"
+          }
+        }
+      }
+    },
+    "Retry timer recovery (⌥⌘R)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Retry timer recovery (⌥⌘R)"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "重試恢復計時資料（⌥⌘R）"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

@@ -192,6 +192,41 @@ final class SQLiteDatabase {
         guard bind(payload, to: query, at: 1) == SQLITE_OK, sqlite3_step(query) == SQLITE_DONE else { throw error }
     }
 
+    func completionJournal() throws -> [StoredFocusRecord] {
+        let query = try statement("SELECT payload FROM timer_completion_journal WHERE id = 1")
+        defer { sqlite3_finalize(query) }
+        let result = sqlite3_step(query)
+        if result == SQLITE_DONE { return [] }
+        guard result == SQLITE_ROW, let text = sqlite3_column_text(query, 0) else { throw error }
+        let entries = try JSONDecoder().decode([StoredFocusRecord].self, from: Data(String(cString: text).utf8))
+        guard validCompletionJournal(entries),
+              sqlite3_step(query) == SQLITE_DONE else { throw FocusStorageError.invalidData }
+        return entries
+    }
+
+    func saveCompletionJournal(_ entries: [StoredFocusRecord]) throws {
+        guard !entries.isEmpty else {
+            try execute("DELETE FROM timer_completion_journal WHERE id = 1")
+            return
+        }
+        guard validCompletionJournal(entries)
+        else { throw FocusStorageError.invalidData }
+        let payload = String(decoding: try JSONEncoder().encode(entries), as: UTF8.self)
+        let query = try statement("INSERT INTO timer_completion_journal (id, payload) VALUES (1, ?) ON CONFLICT(id) DO UPDATE SET payload = excluded.payload")
+        defer { sqlite3_finalize(query) }
+        guard bind(payload, to: query, at: 1) == SQLITE_OK, sqlite3_step(query) == SQLITE_DONE else { throw error }
+    }
+
+    /// 日誌是新輸入邊界，須先排除會讓時間格式／統計整數轉換失效的數值。
+    private func validCompletionJournal(_ entries: [StoredFocusRecord]) -> Bool {
+        Set(entries.map(\.id)).count == entries.count
+            && entries.allSatisfy {
+                $0.record.isValid && $0.record.duration < Double(Int.max)
+                    && (Date.distantPast...Date.distantFuture).contains($0.record.startedAt)
+            }
+            && entries.reduce(0, { $0 + $1.record.duration }) < Double(Int.max)
+    }
+
     func checkIntegrity() throws {
         let query = try statement("PRAGMA quick_check")
         defer { sqlite3_finalize(query) }

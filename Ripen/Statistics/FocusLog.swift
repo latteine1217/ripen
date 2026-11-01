@@ -19,7 +19,7 @@ struct FocusRecord: Codable, Equatable, Sendable {
 }
 
 /// 識別碼只供保存與重試使用；相同內容的兩次專注仍是兩筆不同紀錄。
-struct StoredFocusRecord: Equatable, Sendable {
+struct StoredFocusRecord: Codable, Equatable, Sendable {
     let id: UUID
     let record: FocusRecord
 
@@ -67,7 +67,7 @@ final class FocusLog {
     private var pendingColors: [UUID: ProjectColor] = [:]
     /// 尚未寫入的刪除；重新讀取歷史時先套用，已刪除的分類不會因讀回舊資料而復活。
     private var pendingDeletions: Set<UUID> = []
-    /// 還能復原的完成紀錄：計入統計，但復原期限過了才寫入（`commitStaged()`）。
+    /// 還能復原的完成紀錄：計入統計，期限過後才寫入正式歷史；恢復日誌另行保存。
     private var staged: StoredFocusRecord?
     private var hasLoaded = false
     private(set) var issue: FocusLogIssue? {
@@ -82,6 +82,8 @@ final class FocusLog {
     var entries: [StoredFocusRecord] { saved + pending + (staged.map { [$0] } ?? []) }
     /// 尚未寫入的紀錄，含還能復原的那一筆；退出前由 `AppModel` 先確立。
     var pendingCount: Int { pending.count + (staged == nil ? 0 : 1) }
+    /// 尚未確立與未保存的完成，和恢復點一起記日誌，跨啟動依穩定識別碼確立。
+    var recoveryCompletions: [StoredFocusRecord] { pending + (staged.map { [$0] } ?? []) }
     /// 依建立順序；尚未保存的分類也可選取，與紀錄一起重試。
     var projects: [FocusProject] {
         (savedProjects + pendingProjects).map { project in
@@ -185,7 +187,7 @@ final class FocusLog {
         append(entry)
     }
 
-    /// 使用者復原了「完成」：暫存的紀錄從未寫入，直接捨棄。
+    /// 使用者復原了「完成」：暫存尚未寫入正式歷史，恢復日誌隨下一個檢查點一起更新。
     func discardStaged() {
         staged = nil
     }

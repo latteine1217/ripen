@@ -521,6 +521,9 @@ final class AppModel {
 
     private func loadRecovery() {
         do {
+            let completedWereRecovered = try recoveryStorage?.recoverCompletions() == true
+            // 先前交易可能已提交但遺失回報；重試也要讀回實際歷史。
+            if completedWereRecovered || recoveryIssue == .load { focusLog.retry() }
             let loaded = try recoveryStorage?.loadRecovery()
             if let loaded {
                 guard loaded.isValid else { throw FocusStorageError.invalidData }
@@ -555,7 +558,7 @@ final class AppModel {
     @discardableResult
     private func writeRecovery(_ value: TimerRecovery?, action: RecoveryAction) -> Bool {
         do {
-            try recoveryStorage?.saveRecovery(value)
+            try recoveryStorage?.saveCheckpoint(value, completions: focusLog.recoveryCompletions)
             lastRecoveryCheckpointAt = clock.now()
             failedRecoveryAction = nil
             recoveryIssue = nil
@@ -593,7 +596,9 @@ final class AppModel {
         switch failedRecoveryAction {
         case .continueSaved: continueRecovery()
         case .discard: discardRecovery()
-        case .save: _ = saveCurrentRecovery()
+        case .save:
+            if focusLog.issue != nil { focusLog.retry() }
+            _ = saveCurrentRecovery()
         case nil: break
         }
     }
