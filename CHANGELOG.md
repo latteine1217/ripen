@@ -6,7 +6,7 @@ Notable changes to Ripen. The format follows [Keep a Changelog](https://keepacha
 
 ### Added
 
-- Resume a normally closed timer: reopening offers Continue or Discard with the saved phase, progress and project. Time while Ripen is closed is excluded.
+- Resume a closed or interrupted timer: reopening offers Continue or Discard with the last saved phase, progress and project. Time while Ripen is closed is excluded. Running timers save every five seconds and at key actions; interrupted progress is limited to the last successful save.
 
 ### Changed
 

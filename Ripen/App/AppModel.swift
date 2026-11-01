@@ -18,6 +18,8 @@ final class AppModel {
     nonisolated static let undoWindow: TimeInterval = 5
     /// 完成摘要停留的時間；比復原期限短，收起後仍可復原。
     nonisolated static let completionSummaryDuration: TimeInterval = 3
+    /// 執行期間每五秒保存一份進度；系統延後排程或寫入失敗時，以最後成功點為準。
+    nonisolated static let recoveryCheckpointInterval: TimeInterval = 5
 
     @ObservationIgnored private let clock: any TimeSource
     /// 使用者設定；階段長度與長休息間隔每次需要時才讀，改動從下一段生效。
@@ -35,6 +37,7 @@ final class AppModel {
     }
     @ObservationIgnored var onRecoveryIssue: (() -> Void)?
     @ObservationIgnored private var recoveryLoaded = false
+    @ObservationIgnored private var lastRecoveryCheckpointAt: Date?
     private enum RecoveryAction { case continueSaved, discard, save }
     @ObservationIgnored private var failedRecoveryAction: RecoveryAction?
     /// 尚未決定或載入失敗時，所有入口維持同一份恢復資料，不允許另開計時。
@@ -153,6 +156,7 @@ final class AppModel {
         guard !requiresRecoveryDecision else { return }
         settings.lastProjectID = id
         if isFocusInProgress { focusProjectID = id }
+        _ = saveCurrentRecovery()
     }
 
     /// 新增並直接選取分類；空白名稱不建立，回傳 nil。
@@ -177,6 +181,7 @@ final class AppModel {
         if focusProjectID == id { focusProjectID = nil }
         completionSummary = movingToUncategorized(completionSummary, from: id)
         recapShortcut = movingToUncategorized(recapShortcut, from: id)
+        _ = saveCurrentRecovery()
     }
 
     /// 這一次的長度不變；分類累積改為未分類的最新累積。
@@ -207,12 +212,17 @@ final class AppModel {
     func refresh() {
         guard !requiresRecoveryDecision else { return }
         let now = clock.now()
+        let previousEngine = engine
+        let previousCycle = cycle
+        let previouslyReachedZero = reachedZero
         pauseOvertimeWhileAway(at: now)
         remindIfReachedZero(at: now)
         resetCountIfIdle(at: now)
         applyChangedLength(at: now)
         expireUndoOffer(at: now)
         expireCompletionSummary(at: now)
+        checkpointRecovery(at: now, force: engine != previousEngine || cycle != previousCycle
+                           || reachedZero != previouslyReachedZero)
     }
 
     /// 離開期間的超時不算：在離開的那一刻暫停；離開時還在倒數則停在 0（ADR-0006）。
@@ -287,6 +297,7 @@ final class AppModel {
         // 換回的摘要可能已過了顯示時間，不重播
         expireCompletionSummary(at: clock.now())
         pendingUndo = nil
+        _ = saveCurrentRecovery()
     }
 
     private func snapshot() -> Snapshot {
@@ -419,6 +430,7 @@ final class AppModel {
     private func startRefreshed() {
         startEngine(at: clock.now())
         updateIdleSince()
+        _ = saveCurrentRecovery()
     }
 
     /// 專注從起點開始時確定當次歸屬。選擇是否已失效由 `FocusLog` 在歷史載入後判定，
@@ -433,12 +445,14 @@ final class AppModel {
     private func pauseRefreshed() {
         engine.pause(at: clock.now())
         updateIdleSince()
+        _ = saveCurrentRecovery()
     }
 
     private func resumeRefreshed() {
         engine.resume(at: clock.now())
         isPausedWhileAway = false
         updateIdleSince()
+        _ = saveCurrentRecovery()
     }
 
     /// 「完成」：結束超時中的這一段、確立完成並進到下一段（ADR-0006）。倒數到 0 前不做任何事。
@@ -457,6 +471,7 @@ final class AppModel {
         startNextPhaseAutomatically(now: now)
         updateIdleSince()
         offerUndo(.finish, restoring: before)
+        _ = saveCurrentRecovery()
     }
 
     /// 直接進到下一段的起點；跳過的階段不算完成。超時中由「完成」取代，不做任何事。
@@ -470,6 +485,7 @@ final class AppModel {
         loadCurrentPhase()
         updateIdleSince()
         offerUndo(.skip, restoring: before)
+        _ = saveCurrentRecovery()
     }
 
     /// 目前階段回到完整長度並停止；重設的階段不算完成。超時中由「完成」取代，不做任何事。
@@ -483,6 +499,7 @@ final class AppModel {
         loadCurrentPhase()
         updateIdleSince()
         offerUndo(.reset, restoring: before)
+        _ = saveCurrentRecovery()
     }
 
     /// 退出先暫停目前階段，先前已按完成的紀錄才確立；取消退出也不自動完成或前進。
@@ -522,6 +539,14 @@ final class AppModel {
         }
     }
 
+    private func checkpointRecovery(at now: Date, force: Bool) {
+        guard recoveryStorage != nil, recoveryIssue == nil,
+              force || (engine.status(at: now) == .running
+                        && (lastRecoveryCheckpointAt.map({ now.timeIntervalSince($0) >= Self.recoveryCheckpointInterval }) ?? true))
+        else { return }
+        _ = saveCurrentRecovery()
+    }
+
     private func saveCurrentRecovery() -> Bool {
         writeRecovery(engine.recovery(at: clock.now(), projectID: focusProjectID,
                                       completedFocuses: cycle.completedFocuses), action: .save)
@@ -531,6 +556,7 @@ final class AppModel {
     private func writeRecovery(_ value: TimerRecovery?, action: RecoveryAction) -> Bool {
         do {
             try recoveryStorage?.saveRecovery(value)
+            lastRecoveryCheckpointAt = clock.now()
             failedRecoveryAction = nil
             recoveryIssue = nil
             return true
@@ -546,7 +572,7 @@ final class AppModel {
         guard recovery != nil, recoveryLoaded else { return }
         // 分類還沒載入時不能把未知分類當作未分類完成。
         if focusLog.issue != nil { focusLog.retry() }
-        guard focusLog.issue != .load, writeRecovery(nil, action: .continueSaved) else { return }
+        guard focusLog.issue != .load, writeRecovery(recovery, action: .continueSaved) else { return }
         recovery = nil
         engine.resume(at: clock.now())
         idleSince = nil
