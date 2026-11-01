@@ -1,5 +1,6 @@
 ---
 status: accepted
+superseded_in_part_by: 0014-resume-after-quit.md
 ---
 
 # 只在使用者要求時檢查更新，驗證後才安裝

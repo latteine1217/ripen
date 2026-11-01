@@ -25,6 +25,20 @@ struct TimerEngine: Equatable, Sendable {
         self.duration = duration
     }
 
+    init(recovery: TimerRecovery) {
+        precondition(recovery.isValid, "恢復資料必須先驗證")
+        phase = recovery.phase
+        duration = recovery.duration
+        startedAt = recovery.startedAt
+        run = .paused(remaining: recovery.remaining)
+    }
+
+    func recovery(at now: Date, projectID: UUID?, completedFocuses: Int) -> TimerRecovery? {
+        guard let startedAt else { return nil }
+        return TimerRecovery(phase: phase, duration: duration, remaining: signedRemaining(at: now),
+                             startedAt: startedAt, projectID: projectID, completedFocuses: completedFocuses)
+    }
+
     func status(at now: Date) -> TimerStatus {
         switch run {
         case .idle: .idle

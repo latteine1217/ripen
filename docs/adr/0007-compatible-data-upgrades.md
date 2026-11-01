@@ -1,5 +1,6 @@
 ---
 status: accepted
+superseded_in_part_by: 0014-resume-after-quit.md
 ---
 
 # 更新時自動遷移資料，維持既有資料相容性

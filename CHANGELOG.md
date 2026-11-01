@@ -4,6 +4,14 @@ Notable changes to Ripen. The format follows [Keep a Changelog](https://keepacha
 
 ## [Unreleased]
 
+### Added
+
+- Resume a normally closed timer: reopening offers Continue or Discard with the saved phase, progress and project. Time while Ripen is closed is excluded.
+
+### Changed
+
+- Quitting pauses the current phase instead of cancelling it or marking overtime Done. Previously pressed Done actions are still saved when quitting.
+
 ## [0.2.0] - 2026-10-30
 
 Projects, per-project statistics and shareable recap cards.

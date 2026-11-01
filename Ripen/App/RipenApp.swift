@@ -43,7 +43,8 @@ struct RipenApp: App {
             focusLog: isTesting ? FocusLog() : FocusLog(storage: storage),
             presence: SystemUserPresence(),
             reminderSound: SystemReminderSound(),
-            alarm: TimerPhaseEndAlarm()
+            alarm: TimerPhaseEndAlarm(),
+            recoveryStorage: isTesting ? nil : storage
         )
         let hotkeys = GlobalHotkeyController(registrar: CarbonHotkeyRegistrar.shared, settings: model.settings) {
             model.toggleStartPause()
@@ -60,12 +61,17 @@ struct RipenApp: App {
         model.focusLog.onIssue = { [weak presenter] in
             presenter?.showMainWindow()
         }
+        model.onRecoveryIssue = { [weak presenter] in
+            presenter?.showMainWindow()
+        }
         // 在 init 接上：主視窗上次退出時是隱藏的就不會建立，接在 onWindowAttach 會漏掉
         lifecycle.onShouldTerminate = { FocusStorageQuitConfirmation.confirm(model: model) }
         lifecycle.onReopen = presenter.handleReopen
         lifecycle.onLaunch = {
             presenter.ensureInterfaceVisible()
-            if model.focusLog.issue != nil { presenter.showMainWindow() }
+            if model.focusLog.issue != nil || model.requiresRecoveryDecision || model.recoveryIssue != nil {
+                presenter.showMainWindow()
+            }
         }
     }
 

@@ -101,12 +101,14 @@ private struct MenuBarMenu: View {
         let _ = model.reachedZero
         let controls = TimerControls(display: model.display, undoOffer: model.undoOffer)
         Button(controls.primary.title) { model.perform(controls.primary.intent) }
+            .disabled(model.requiresRecoveryDecision)
         // ⌘S／⌘R 與主選單「計時」選單相同；這裡只在選單打開時有效
         Button(controls.secondary.title) { model.perform(controls.secondary.intent) }
+            .disabled(model.requiresRecoveryDecision)
             .keyboardShortcut("s")
         Button("Reset") { model.perform(.reset) }
             .keyboardShortcut("r")
-            .disabled(!controls.isResetEnabled)
+            .disabled(!controls.isResetEnabled || model.requiresRecoveryDecision)
         // 復原期限只有幾秒，選單打開時才看得到；選單開著時過期，點下也不會做任何事
         if let undo = controls.undo {
             Button(undo.title) { model.perform(undo.intent) }

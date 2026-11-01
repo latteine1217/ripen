@@ -169,6 +169,29 @@ final class SQLiteDatabase {
         text.withCString { sqlite3_bind_text(query, index, $0, -1, unsafeBitCast(-1, to: sqlite3_destructor_type.self)) }
     }
 
+    func recovery() throws -> TimerRecovery? {
+        let query = try statement("SELECT payload FROM timer_recovery WHERE id = 1")
+        defer { sqlite3_finalize(query) }
+        let result = sqlite3_step(query)
+        if result == SQLITE_DONE { return nil }
+        guard result == SQLITE_ROW, let text = sqlite3_column_text(query, 0) else { throw error }
+        let recovery = try JSONDecoder().decode(TimerRecovery.self, from: Data(String(cString: text).utf8))
+        guard recovery.isValid, sqlite3_step(query) == SQLITE_DONE else { throw FocusStorageError.invalidData }
+        return recovery
+    }
+
+    func saveRecovery(_ recovery: TimerRecovery?) throws {
+        guard let recovery else {
+            try execute("DELETE FROM timer_recovery WHERE id = 1")
+            return
+        }
+        guard recovery.isValid else { throw FocusStorageError.invalidData }
+        let payload = String(decoding: try JSONEncoder().encode(recovery), as: UTF8.self)
+        let query = try statement("INSERT INTO timer_recovery (id, payload) VALUES (1, ?) ON CONFLICT(id) DO UPDATE SET payload = excluded.payload")
+        defer { sqlite3_finalize(query) }
+        guard bind(payload, to: query, at: 1) == SQLITE_OK, sqlite3_step(query) == SQLITE_DONE else { throw error }
+    }
+
     func checkIntegrity() throws {
         let query = try statement("PRAGMA quick_check")
         defer { sqlite3_finalize(query) }

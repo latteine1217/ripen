@@ -3111,6 +3111,166 @@
           }
         }
       }
+    },
+    "An unfinished timer is waiting.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "An unfinished timer is waiting."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "有一段尚未完成的計時。"
+          }
+        }
+      }
+    },
+    "Time while Ripen was closed is not counted.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Time while Ripen was closed is not counted."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ripen 關閉期間的時間不計入。"
+          }
+        }
+      }
+    },
+    "Discard Timer": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Discard Timer"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "捨棄計時"
+          }
+        }
+      }
+    },
+    "Continue Timer": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Continue Timer"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "繼續計時"
+          }
+        }
+      }
+    },
+    "The previous timer could not be loaded.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The previous timer could not be loaded."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "無法載入上次的計時。"
+          }
+        }
+      }
+    },
+    "Your timer progress has not been saved.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your timer progress has not been saved."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "計時進度尚未儲存。"
+          }
+        }
+      }
+    },
+    "Quitting without saving may lose timer progress, focuses or projects. Keep Ripen open to retry.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quitting without saving may lose timer progress, focuses or projects. Keep Ripen open to retry."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "不儲存就結束可能遺失計時進度、專注紀錄或分類。請保持 Ripen 開啟以重試。"
+          }
+        }
+      }
+    },
+    "Your saved data is kept. You can retry.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your saved data is kept. You can retry."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已儲存的資料已保留，你可以重試。"
+          }
+        }
+      }
+    },
+    "Retry to check your previous timer.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Retry to check your previous timer."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "請重試以查看上次的計時。"
+          }
+        }
+      }
+    },
+    "Discard the saved unfinished timer (⌘D)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Discard the saved unfinished timer (⌘D)"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "捨棄保存的未完成計時（⌘D）"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

@@ -4,6 +4,11 @@ struct PhaseCycle: Equatable, Sendable {
     /// 長休息間隔的計數。
     private(set) var completedFocuses = 0
 
+    init(phase: Phase = .focus, completedFocuses: Int = 0) {
+        self.phase = phase
+        self.completedFocuses = completedFocuses
+    }
+
     /// 離開目前階段、進到下一段。`completed` 為假代表跳過：跳過的專注不計數。
     mutating func advance(completed: Bool, longBreakInterval: Int) {
         switch phase {

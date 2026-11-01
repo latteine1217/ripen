@@ -15,26 +15,31 @@ struct MainWindowView: View {
         let showsIntro = !model.settings.gestureIntroSeen
         VStack(spacing: 0) {
             FocusStorageNotice(log: model.focusLog)
-            PageSwitcher(selection: $page)
-                .fixedSize()
-                .padding(.top, 16)
-            .visible(!showsIntro)
+            TimerRecoveryStorageNotice(model: model)
+            if model.requiresRecoveryDecision {
+                TimerRecoveryView(model: model)
+            } else {
+                PageSwitcher(selection: $page)
+                    .fixedSize()
+                    .padding(.top, 16)
+                .visible(!showsIntro)
 
-            ZStack {
-                TimerPageView(model: model)
-                    .environment(\.timerSurfaceVisible, isPresented && page == .timer && !showsIntro)
-                    .visible(page == .timer && !showsIntro)
-                StatisticsPageView(focusLog: model.focusLog, deleteProject: model.deleteProject)
-                    .visible(page == .statistics && !showsIntro)
-                if showsIntro {
-                    GestureIntroView { model.settings.gestureIntroSeen = true }
-                        .tint(model.displayContentTint)
-                        .transition(.opacity)
+                ZStack {
+                    TimerPageView(model: model)
+                        .environment(\.timerSurfaceVisible, isPresented && page == .timer && !showsIntro)
+                        .visible(page == .timer && !showsIntro)
+                    StatisticsPageView(focusLog: model.focusLog, deleteProject: model.deleteProject)
+                        .visible(page == .statistics && !showsIntro)
+                    if showsIntro {
+                        GestureIntroView { model.settings.gestureIntroSeen = true }
+                            .tint(model.displayContentTint)
+                            .transition(.opacity)
+                    }
                 }
+                // 減少動態效果時直接切換，不做淡入淡出
+                .animation(reduceMotion ? nil : .easeInOut(duration: 0.2), value: page)
+                .animation(reduceMotion ? nil : .easeInOut(duration: 0.25), value: showsIntro)
             }
-            // 減少動態效果時直接切換，不做淡入淡出
-            .animation(reduceMotion ? nil : .easeInOut(duration: 0.2), value: page)
-            .animation(reduceMotion ? nil : .easeInOut(duration: 0.25), value: showsIntro)
         }
         // 提醒在倒數到 0 時播出，此時已進入超時，閃的是該階段的超時色；鋪在內容底下、玻璃之上
         .reminderFlash(model.lastReminder, tint: model.displayTint)

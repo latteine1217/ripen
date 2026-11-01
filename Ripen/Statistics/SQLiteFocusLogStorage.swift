@@ -2,7 +2,7 @@ import Foundation
 import Darwin
 
 /// 正式的專注儲存；每次操作各自開啟連線，失敗後重試不沿用失效的連線。
-struct SQLiteFocusLogStorage: FocusLogStorage {
+struct SQLiteFocusLogStorage: FocusLogStorage, TimerRecoveryStorage {
     let directory: URL
     /// 索引 0 對應版本 1 → 2，依序追加；已發佈步驟不得改寫。
     private let upgrades: [String]
@@ -17,6 +17,8 @@ struct SQLiteFocusLogStorage: FocusLogStorage {
         );
         ALTER TABLE focus_records ADD COLUMN project_id TEXT;
         """,
+        // 版本 3：單一可恢復階段，歷史紀錄與設定不改寫。
+        "CREATE TABLE timer_recovery (id INTEGER PRIMARY KEY CHECK (id = 1), payload TEXT NOT NULL)",
     ]
     var databaseURL: URL { directory.appending(path: "focus-log.sqlite") }
     private var stateURL: URL { directory.appending(path: "focus-log.state") }
@@ -59,6 +61,15 @@ struct SQLiteFocusLogStorage: FocusLogStorage {
     func deleteProjects(_ ids: Set<UUID>) throws {
         let database = try open()
         try database.transaction { try database.deleteProjects(ids) }
+    }
+
+    func loadRecovery() throws -> TimerRecovery? {
+        try open().recovery()
+    }
+
+    func saveRecovery(_ recovery: TimerRecovery?) throws {
+        let database = try open()
+        try database.transaction { try database.saveRecovery(recovery) }
     }
 
     private func open() throws -> SQLiteDatabase {

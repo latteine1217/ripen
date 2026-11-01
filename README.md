@@ -106,6 +106,7 @@ The main window, floating window and notch island briefly show the time you just
 | :--- | :--- |
 | Your rhythm | Defaults to a 25-minute focus, a 5-minute short break and a 15-minute long break after every 4 focuses. Adjust each length from 1–180 minutes and the long-break interval from 1–12. The long-break count resets after two hours idle. |
 | Quick control | <kbd>⌥</kbd><kbd>⌘</kbd><kbd>P</kbd> to start or pause from any app, or record your own shortcut. In the main window: <kbd>⌘</kbd><kbd>S</kbd> to skip or finish, <kbd>⌘</kbd><kbd>R</kbd> to reset, <kbd>⌘</kbd><kbd>1</kbd> / <kbd>⌘</kbd><kbd>2</kbd> to switch between Timer and Statistics. |
+| Resume later | Quitting normally saves the current phase as paused. Choose to continue or discard it when reopening; time while Ripen is closed is excluded, and quitting an overtime phase does not mark it Done. |
 | Undo | Undo skip, reset or Done for 5 seconds from the countdown capsule or <kbd>⌘</kbd><kbd>Z</kbd>. |
 | Appearance and reminders | Black, White, or Glass appearance; glass can follow the system or stay light or dark, with adjustable opacity and blur. System reminder sounds or silence, an optional menu bar countdown, and 12- or 24-hour end times. |
 | Startup and guidance | Optional auto-start for the next phase and open at login. A first-launch intro shows the tear-off, notch and resize gestures; replay it from Settings. |

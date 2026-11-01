@@ -14,10 +14,10 @@ struct TimerCommands: Commands {
             let controls = model.map { _ = $0.reachedZero; return TimerControls(display: $0.display) }
             Button(controls?.secondary.title ?? "Skip") { model?.perform(.skipOrFinish) }
                 .keyboardShortcut("s")
-                .disabled(model == nil)
+                .disabled(model == nil || model?.requiresRecoveryDecision == true)
             Button("Reset") { model?.perform(.reset) }
                 .keyboardShortcut("r")
-                .disabled(controls?.isResetEnabled != true)
+                .disabled(controls?.isResetEnabled != true || model?.requiresRecoveryDecision == true)
         }
         // 主視窗沒有文字欄位，⌘Z 在那裡就是復原計時操作；其他視窗（設定）照常送給回應鏈復原文字
         CommandGroup(replacing: .undoRedo) {

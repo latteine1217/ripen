@@ -119,7 +119,7 @@ final class UpdateChecker {
             try UpdateInstaller.extractApp(from: diskImage, expecting: version, in: workDirectory)
         }.value
         try UpdateInstaller.scheduleReplacement(of: target, with: staged, in: workDirectory)
-        // 經過一般的結束流程：超時中的專注照常記錄，未保存紀錄照常詢問（ADR-0006、ADR-0007）
+        // 經過一般退出流程：保存目前階段的暫停進度，未保存資料照常詢問（ADR-0014）
         NSApp.terminate(nil)
         return .restarting
     }
