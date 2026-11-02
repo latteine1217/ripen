@@ -4,6 +4,8 @@ Notable changes to Ripen. The format follows [Keep a Changelog](https://keepacha
 
 ## [Unreleased]
 
+## [0.2.2] - 2026-11-02
+
 ### Added
 
 - Settings › Data: back up focus history and projects to a single file, restore from a backup, and export completed focuses as CSV for spreadsheets.
@@ -56,7 +58,8 @@ The first release of Ripen, a native macOS Pomodoro timer in frosted glass.
 - Statistics for today and the last 7 days, stored only on your Mac.
 - **Check for Updates…**, which only goes online when you ask.
 
-[Unreleased]: https://github.com/latteine1217/ripen/compare/v0.2.1...HEAD
+[Unreleased]: https://github.com/latteine1217/ripen/compare/v0.2.2...HEAD
+[0.2.2]: https://github.com/latteine1217/ripen/compare/v0.2.1...v0.2.2
 [0.2.1]: https://github.com/latteine1217/ripen/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/latteine1217/ripen/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/latteine1217/ripen/releases/tag/v0.1.0
