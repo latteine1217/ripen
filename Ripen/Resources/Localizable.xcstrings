@@ -3432,34 +3432,282 @@
         }
       }
     },
-    "A backup contains your focus history and projects. Settings aren’t included. CSV files are for spreadsheets and can’t be imported.": {
+    "%lld focuses are already here and will be skipped.": {
       "localizations": {
         "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "A backup contains your focus history and projects. Settings aren’t included. CSV files are for spreadsheets and can’t be imported."
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld focus is already here and will be skipped."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld focuses are already here and will be skipped."
+                }
+              }
+            }
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "備份包含專注紀錄與分類，不包含設定。CSV 供試算表使用，無法匯回。"
+            "value": "已有的 %lld 次專注會略過。"
           }
         }
       }
     },
-    "Recent changes haven’t been saved yet. You can back up or export once they’re saved.": {
+    "A backup contains your focus history and projects. Settings aren’t included. Restoring only adds what’s missing and never changes existing data. CSV files are for spreadsheets and can’t be imported.": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Recent changes haven’t been saved yet. You can back up or export once they’re saved."
+            "value": "A backup contains your focus history and projects. Settings aren’t included. Restoring only adds what’s missing and never changes existing data. CSV files are for spreadsheets and can’t be imported."
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "最近的變更尚未儲存，儲存後才能備份或匯出。"
+            "value": "備份包含專注紀錄與分類，不包含設定。還原只新增目前沒有的資料，不改動既有資料。CSV 供試算表使用，無法匯回。"
+          }
+        }
+      }
+    },
+    "Couldn’t restore “%@”. Your data hasn’t changed.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn’t restore “%@”. Your data hasn’t changed."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "無法從「%@」還原，目前資料沒有變更。"
+          }
+        }
+      }
+    },
+    "Everything in “%@” is already here.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Everything in “%@” is already here."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "「%@」的內容都已在 Ripen 中。"
+          }
+        }
+      }
+    },
+    "Existing focuses and projects won’t change. A copy of your current data is kept first.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Existing focuses and projects won’t change. A copy of your current data is kept first."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "既有的專注紀錄與分類不會改動，還原前會先另存一份目前資料。"
+          }
+        }
+      }
+    },
+    "New projects (%lld): %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "New projects (%lld): %@"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "新增分類（%lld）：%@"
+          }
+        }
+      }
+    },
+    "Recent changes haven’t been saved yet. You can back up, restore or export once they’re saved.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recent changes haven’t been saved yet. You can back up, restore or export once they’re saved."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "最近的變更尚未儲存，儲存後才能備份、還原或匯出。"
+          }
+        }
+      }
+    },
+    "Restore": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Restore"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "還原"
+          }
+        }
+      }
+    },
+    "Restore from Backup…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Restore from Backup…"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "從備份還原…"
+          }
+        }
+      }
+    },
+    "Restore from “%@”?": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Restore from “%@”?"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "要從「%@」還原嗎？"
+          }
+        }
+      }
+    },
+    "Restored “%@”": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Restored “%@”"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已還原「%@」"
+          }
+        }
+      }
+    },
+    "Restoring adds %lld focuses.": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Restoring adds %lld focus."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Restoring adds %lld focuses."
+                }
+              }
+            }
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "將新增 %lld 次專注。"
+          }
+        }
+      }
+    },
+    "“%@” couldn’t be opened.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "“%@” couldn’t be opened."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "無法開啟「%@」。"
+          }
+        }
+      }
+    },
+    "“%@” is damaged and can’t be restored.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "“%@” is damaged and can’t be restored."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "「%@」已損壞，無法還原。"
+          }
+        }
+      }
+    },
+    "“%@” isn’t a Ripen backup.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "“%@” isn’t a Ripen backup."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "「%@」不是 Ripen 備份。"
+          }
+        }
+      }
+    },
+    "“%@” was made by a newer version of Ripen. Update Ripen to restore it.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "“%@” was made by a newer version of Ripen. Update Ripen to restore it."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "「%@」由較新版本的 Ripen 建立，請先更新 Ripen 再還原。"
           }
         }
       }

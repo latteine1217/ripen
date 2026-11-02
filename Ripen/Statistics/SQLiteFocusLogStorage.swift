@@ -27,6 +27,7 @@ struct SQLiteFocusLogStorage: FocusLogStorage, TimerRecoveryStorage, FocusBackup
     private var legacyURL: URL { directory.appending(path: "focus-log.json") }
     private var backupURL: URL { directory.appending(path: "focus-log.pre-upgrade.sqlite") }
     private var pendingBackupURL: URL { directory.appending(path: "focus-log.pending-backup.sqlite") }
+    private var restoreSafetyURL: URL { directory.appending(path: "focus-log.pre-restore.sqlite") }
     /// 與 schema 版本分開，避免把其他 SQLite 檔案誤認為 Ripen 的資料。
     private static let applicationID = 0x52504E31
 
@@ -142,6 +143,74 @@ struct SQLiteFocusLogStorage: FocusLogStorage, TimerRecoveryStorage, FocusBackup
               try backup.records() == records,
               try backup.projects() == projects
         else { throw FocusStorageError.invalidData }
+    }
+
+    func previewRestore(from backup: URL) throws -> FocusRestore {
+        let (records, projects) = try readBackup(at: backup)
+        return try additions(records: records, projects: projects, in: try open())
+    }
+
+    func restore(_ restore: FocusRestore) throws -> Int {
+        let database = try open()
+        guard try !additions(records: restore.records, projects: restore.projects, in: database).isEmpty else { return 0 }
+        try saveRestoreSafetyCopy()
+        var added = 0
+        try database.transaction {
+            // 交易內依目前資料重算：提交回報不確定後重試，已寫入的識別碼不會再新增
+            let additions = try additions(records: restore.records, projects: restore.projects, in: database)
+            try database.insert(additions.projects)
+            try database.insert(additions.records)
+            added = additions.records.count
+        }
+        return added
+    }
+
+    /// 使用者的檔案只讀取一次，之後都在暫存副本上處理；較舊版本沿用正式開啟流程與 `upgrades` 升級。
+    /// 備份中的恢復狀態與完成日誌不讀取，進行中的計時只屬於建立備份的那台 Mac。
+    private func readBackup(at url: URL) throws -> ([StoredFocusRecord], [FocusProject]) {
+        let data: Data
+        do { data = try Data(contentsOf: url) } catch { throw FocusRestoreError.unreadable }
+        let workspace = FileManager.default.temporaryDirectory.appending(path: "ripen-restore-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: workspace, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: workspace) }
+        // 直接讀檔頭：application_id 在第 68 位元組起（大端序），截斷的 Ripen 檔仍能辨認為損壞而非他人檔案
+        guard data.count >= 100, data.prefix(16) == Data("SQLite format 3\0".utf8),
+              data[68..<72].reduce(0, { $0 << 8 | Int($1) }) == Self.applicationID
+        else { throw FocusRestoreError.notABackup }
+        let copy = Self(directory: workspace, upgrades: upgrades)
+        try data.write(to: copy.databaseURL)
+        do {
+            let records = try copy.load()
+            guard SQLiteDatabase.isSupported(records) else { throw FocusStorageError.invalidData }
+            return (records, try copy.loadProjects())
+        } catch FocusStorageError.unsupportedVersion(let version) where version > upgrades.count + 1 {
+            throw FocusRestoreError.newerVersion
+        } catch {
+            throw FocusRestoreError.damaged
+        }
+    }
+
+    /// 分類身分只看識別碼：已存在的紀錄與分類保留目前內容，同名不同識別碼的分類並存。
+    /// 紀錄引用的分類兩邊都沒有時改為未分類，不捏造分類。
+    private func additions(records: [StoredFocusRecord], projects: [FocusProject], in database: SQLiteDatabase) throws -> FocusRestore {
+        let existingRecords = Set(try database.records().map(\.id))
+        let existingProjects = Set(try database.projects().map(\.id))
+        let known = existingProjects.union(projects.map(\.id))
+        let newRecords = records.filter { !existingRecords.contains($0.id) }.map { entry in
+            guard let id = entry.record.projectID, !known.contains(id) else { return entry }
+            return StoredFocusRecord(id: entry.id, record: FocusRecord(startedAt: entry.record.startedAt, duration: entry.record.duration))
+        }
+        return FocusRestore(records: newRecords,
+                            projects: projects.filter { !existingProjects.contains($0.id) },
+                            skippedRecordCount: records.count - newRecords.count)
+    }
+
+    /// 只保留最近一份；新副本完整寫好才取代舊的，失敗就不進行還原。
+    private func saveRestoreSafetyCopy() throws {
+        let temporary = directory.appending(path: "focus-log.pre-restore-\(UUID().uuidString).sqlite")
+        defer { try? FileManager.default.removeItem(at: temporary) }
+        try SQLiteDatabase(url: databaseURL, readOnly: true).backup(to: temporary)
+        try replace(temporary, with: restoreSafetyURL)
     }
 
     private func open() throws -> SQLiteDatabase {

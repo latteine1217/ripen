@@ -103,10 +103,27 @@ final class FocusLog {
 
     var canExportBackup: Bool { storage is any FocusBackupStorage && canExportRecords }
 
+    /// 合併後要重新讀取歷史，不能蓋過尚未保存的變更，條件與備份相同（#33）。
+    var canRestoreBackup: Bool { canExportBackup }
+
     func exportBackup(to url: URL) throws {
+        try backupStorage().exportBackup(to: url)
+    }
+
+    func previewRestore(from url: URL) throws -> FocusRestore {
+        try backupStorage().previewRestore(from: url)
+    }
+
+    /// 成功後重新讀取，統計、分類清單與成果卡直接反映新增的資料。
+    func restore(_ restore: FocusRestore) throws {
+        try backupStorage().restore(restore)
+        retry()
+    }
+
+    private func backupStorage() throws -> any FocusBackupStorage {
         guard let backups = storage as? any FocusBackupStorage else { throw FocusBackupError.unavailable }
         guard canExportBackup else { throw FocusBackupError.unsavedChanges }
-        try backups.exportBackup(to: url)
+        return backups
     }
 
     /// 不存在的識別碼（例如已失效的上次選擇）視為未分類。
