@@ -89,6 +89,7 @@ GitHub 分享預覽圖 `docs/images/brand/social-preview.png`（1280×640）由 
 - `focus-log.state`：初始化中或已啟用的狀態；不能單獨刪除以繞過資料庫遺失的保護。
 - `focus-log.pre-upgrade.sqlite`：最近一次成功結構升級前的完整備份。正常啟動與新增紀錄不另做備份。
 - `focus-log.pending-backup.sqlite`：升級交易的待提交備份；提交後中斷時，下次開啟完成提升。
+- `focus-log.pre-restore.sqlite`：最近一次從備份還原前的完整資料；只保留一份，新副本成功後才取代。
 
 資料版本 3 新增 `timer_recovery`，以單一已驗證的暫停階段保存目前進度，包含階段、原長度、帶正負的剩餘秒數、首次開始時刻、分類與循環計數。讀取失敗不允許開始另一個計時覆蓋未知狀態，清除失敗仍保留恢復選擇。執行期間由獨立的 `ModelRefreshDriver` 每 0.25 秒呼叫模型刷新，模型每 5 秒保存進度；開始、暫停、繼續、分類更正、跳過、重設、完成、復原及跨零／離開自動暫停等狀態變更即時更新。已暫停且狀態不變不定期重寫；寫入失敗顯示錯誤並等待重試，保留最近成功保存點。正常排程且成功寫入時，週期保存間隔約 5 秒，再加模型節拍與寫入時間；主執行緒延遲、系統暫停或保存失敗會擴大誤差，因此不承諾精確閃退時刻或零損失。正常退出仍以退出採樣時刻保存。
 
@@ -104,14 +105,16 @@ GitHub 分享預覽圖 `docs/images/brand/social-preview.png`（1280×640）由 
 
 ```sh
 xcodegen generate
-xcodebuild test -project Ripen.xcodeproj -scheme Ripen -destination 'platform=macOS' -only-testing:RipenTests/FocusLogPersistenceTests -only-testing:RipenTests/FocusLogTests -only-testing:RipenTests/AppModelOvertimeTests -only-testing:RipenTests/AppModelProjectTests
+xcodebuild test -project Ripen.xcodeproj -scheme Ripen -destination 'platform=macOS' -only-testing:RipenTests/FocusLogPersistenceTests -only-testing:RipenTests/FocusLogTests -only-testing:RipenTests/AppModelOvertimeTests -only-testing:RipenTests/AppModelProjectTests -only-testing:RipenTests/FocusBackupTests -only-testing:RipenTests/FocusRestoreTests -only-testing:RipenTests/FocusCSVTests
 ```
 
 測試以 `upgrades:` 模擬更新版本時，須以 `SQLiteFocusLogStorage.schemaUpgrades` 加上額外步驟，代表沿著正式版本鏈往後升級。固定歷史樣本在 `RipenTests/Fixtures/`；不可用當前 encoder 重建或覆寫已發佈格式的樣本。版本 1 的 SQL 用於解釋同名 SQLite 樣本，不在測試時由正式 schema 即時生成。驗收包括舊 JSON、小數與重複紀錄、跨版升級、未知版本拒寫、WAL 備份可重開、遷移失敗回滾、鎖定重試及提交回報不確定時不重複。最後跑完整回歸，並實機檢查英／繁中錯誤狀態、重試、取消退出與放棄退出。
 
 測試 scheme 設定 `RIPEN_TESTING=1`，測試 host 使用記憶體設定與儲存，不碰真正的使用者資料。Debug 建置以 `RIPEN_DATA_DIRECTORY` 指向隔離目錄；驗收工具可能自行重新啟動 App、不保留環境變數時，可在驗收 App 的 Info.plist 固定 `RipenValidationDataDirectory`，環境變數仍優先。直接修改隔離驗收 bundle 的 Info.plist 後須重新簽章、驗證簽章並讀回該 key；不能假定任意 Xcode build setting 會自動寫入產物。兩者都只在 Debug 生效，會使用記憶體設定、一分鐘專注、靜音且不註冊全域快速鍵；Release 忽略這些覆寫。驗收版必須使用不同 bundle id，啟動前核對實際 Info.plist 的隔離目錄及資料庫位置，不能只靠啟動命令推定隔離已生效，也不能取代正在使用的 App。
 
-升級備份不是日常備份，也不保證降版相容。還原之前須先保留現行資料及升級後的新紀錄，不能直接覆蓋；目前不提供自動還原或部分壞資料復原介面。
+使用者自己的備份、還原與 CSV 匯出在設定的「資料」區塊，契約見 [ADR-0015](adr/0015-backup-and-merge-restore.md)。備份檔是現行格式的單檔 SQLite 快照，只代表完成的專注與分類，不含設定。還原在暫存副本上驗證與升級，依識別碼只新增目前沒有的紀錄與分類，寫入前另存 `focus-log.pre-restore.sqlite`，合併在單一交易完成；非 Ripen、損壞或版本較新的檔案一律拒絕且不寫入。CSV 只能匯出，欄名與格式是給試算表的固定契約。驗收以兩個隔離資料目錄模擬搬機：在來源備份、到空目錄與部分重疊目錄還原，逐欄核對識別碼、時刻、時長、分類與總量，並以 CSV 解析器核對匯出內容。
+
+升級備份與還原前安全副本只供復原，不是日常備份，也不保證降版相容。需要回到這些副本時，須先保留現行資料及之後新增的紀錄，不能直接覆蓋；目前不提供部分壞資料復原介面。
 
 ## 計時顯示
 

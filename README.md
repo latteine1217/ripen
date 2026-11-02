@@ -110,7 +110,16 @@ The main window, floating window and notch island briefly show the time you just
 | Undo | Undo skip, reset or Done for 5 seconds from the countdown capsule or <kbd>⌘</kbd><kbd>Z</kbd>. |
 | Appearance and reminders | Black, White, or Glass appearance; glass can follow the system or stay light or dark, with adjustable opacity and blur. System reminder sounds or silence, an optional menu bar countdown, and 12- or 24-hour end times. |
 | Startup and guidance | Optional auto-start for the next phase and open at login. A first-launch intro shows the tear-off, notch and resize gestures; replay it from Settings. |
+| Back up and export | **Settings › Data** saves a backup of your focus history and projects, restores from one, or exports every completed focus as a CSV for Numbers or Excel. Settings aren't included in backups, and CSV files can't be imported. |
 | Local and private | No account needed. Focus history stays in `~/Library/Application Support/Ripen`, with English and Traditional Chinese interfaces. Ripen only goes online when you click **Check for Updates…**; updates are downloaded after confirmation and verified against GitHub's checksum before installation. |
+
+### Move to another Mac
+
+1. On the old Mac, open **Settings › Data**, choose **Back Up…** and save the file somewhere you can reach from the new Mac, such as an external drive or a cloud folder.
+2. Install Ripen on the new Mac, open **Settings › Data** and choose **Restore from Backup…**.
+3. Check the preview, which lists how many focuses and which projects will be added, then choose **Restore**.
+
+Restoring only adds focuses and projects that aren't already there and never changes existing ones, so restoring the same backup twice adds nothing. A project you deleted after making the backup comes back and can be deleted again. Before restoring, Ripen keeps a copy of your current data. Settings such as lengths, shortcut and appearance aren't in the backup; set them again on the new Mac.
 
 ## Install
 

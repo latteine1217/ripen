@@ -4,6 +4,11 @@ Notable changes to Ripen. The format follows [Keep a Changelog](https://keepacha
 
 ## [Unreleased]
 
+### Added
+
+- Settings › Data: back up focus history and projects to a single file, restore from a backup, and export completed focuses as CSV for spreadsheets.
+- Restoring merges by identifier: it only adds focuses and projects that are missing, shows a preview first, and keeps a copy of current data before writing. Unreadable, damaged, non-Ripen and newer-version files are rejected without changing anything.
+
 ## [0.2.1] - 2026-11-01
 
 ### Added
