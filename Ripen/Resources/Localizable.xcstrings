@@ -189,6 +189,38 @@
         }
       }
     },
+    "Tuck into the Notch": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tuck into the Notch"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "收進瀏海"
+          }
+        }
+      }
+    },
+    "Tuck into the notch; the timer keeps running": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tuck into the notch; the timer keeps running"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "收進瀏海，計時會繼續"
+          }
+        }
+      }
+    },
     "Focus %lld of %lld": {
       "localizations": {
         "en": {

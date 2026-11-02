@@ -118,6 +118,39 @@ struct FloatingWindowGlass: View, Animatable {
     }
 }
 
+/// 懸浮窗關閉按鈕的呈現：依轉換表如實表示按下的結果（#39、ADR-0001）。
+/// 只有懸浮窗時按下會收進瀏海，畫成 ✕ 會讓人以為計時跟著結束。
+enum FloatingWindowDismissal: Equatable {
+    case closeFloatingWindow
+    case tuckIntoNotch
+
+    init(presentation: Presentation) {
+        self = presentation.applying(.closeFloatingWindow) == .notchIslandOnly ? .tuckIntoNotch : .closeFloatingWindow
+    }
+
+    var title: LocalizedStringKey {
+        switch self {
+        case .closeFloatingWindow: "Close Floating Window"
+        case .tuckIntoNotch: "Tuck into the Notch"
+        }
+    }
+
+    var help: LocalizedStringKey {
+        switch self {
+        case .closeFloatingWindow: "Close Floating Window"
+        case .tuckIntoNotch: "Tuck into the notch; the timer keeps running"
+        }
+    }
+
+    var systemImage: String {
+        switch self {
+        case .closeFloatingWindow: "xmark"
+        // 往上收到螢幕頂端；不用視窗外框類圖示，避免和旁邊的「展開成主視窗」看起來一樣
+        case .tuckIntoNotch: "arrow.up.to.line"
+        }
+    }
+}
+
 /// 同一組元件依版面擺放；三種尺寸只有位置、大小與不透明度不同。
 private struct FloatingWindowContent: View {
     @Environment(\.appPalette) private var palette
@@ -157,11 +190,14 @@ private struct FloatingWindowContent: View {
                 .opacity(layout.barOpacity)
             TimerIconButton(model: model, action: controls.primary)
             SkipOrDoneButton(model: model, controls: controls)
+            // 與瀏海島的「顯示主視窗」同一個圖示
             IslandIconButton(
-                "Expand into Main Window", systemImage: "arrow.up.left.and.arrow.down.right",
+                "Expand into Main Window", systemImage: "macwindow",
                 action: presentation.expandFloatingWindow
             )
-            IslandIconButton("Close Floating Window", systemImage: "xmark", action: presentation.closeFloatingWindow)
+            let dismissal = FloatingWindowDismissal(presentation: presentation.presentation)
+            IslandIconButton(dismissal.title, systemImage: dismissal.systemImage, help: dismissal.help,
+                             action: presentation.closeFloatingWindow)
         }
         .foregroundStyle(palette.primary)
         .environment(\.iconButtonMetrics, .floatingWindow)

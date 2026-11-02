@@ -38,12 +38,15 @@ extension FrameDump {
                         .environment(\.colorScheme, scheme).background(desktop))
                 },
             ]
+            // 只有懸浮窗是最常見的形態，關閉按鈕此時是「收進瀏海」（#39）
+            let floatingOnly = PresentationModel()
+            floatingOnly.minimizeMainWindow()
             for size in FloatingWindowSize.allCases {
                 let frame = CGRect(origin: CGPoint(x: 40, y: 40), size: size.defaultSize)
                 scenes.append(Scene(name: "appearance-\(name)-floating-\(size)",
                                     size: CGSize(width: frame.width + 80, height: frame.height + 80)) { _ in
                     AnyView(FloatingWindowGlass(
-                        model: model, presentation: PresentationModel(), display: model.display,
+                        model: model, presentation: floatingOnly, display: model.display,
                         blend: FloatingWindowSizeBlend(size), frame: frame
                     ).environment(\.colorScheme, scheme).background(desktop))
                 })
