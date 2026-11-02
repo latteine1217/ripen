@@ -4,6 +4,12 @@ Notable changes to Ripen. The format follows [Keep a Changelog](https://keepacha
 
 ## [Unreleased]
 
+### Changed
+
+- Overtime no longer shares a hue with any project color: focus overtime is magenta and break overtime is a mustard yellow-green, replacing teal and orange.
+- The main window's cycle dots mark the focus in progress with a ring, matching the "Focus · n/N" caption on the floating window and notch island.
+- When the floating window is the only one on screen, its close button shows that it tucks Ripen into the notch, and its tooltip says the timer keeps running. The button that expands it into the main window now uses the same icon as the notch island's.
+
 ## [0.2.2] - 2026-11-02
 
 ### Added

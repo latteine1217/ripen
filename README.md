@@ -59,7 +59,7 @@ Once the records are saved and their undo period has passed, save the card as a 
 
 ### Shrink it to a floating window
 
-Click the yellow button, or drag the timer ring out of the main window, to get a small always-on-top panel. Drag any corner to switch between three layouts; Ripen remembers where you left it.
+Click the yellow button, or drag the timer ring out of the main window, to get a small always-on-top panel. Drag any corner to switch between three layouts; Ripen remembers where you left it. Its buttons expand it back into the main window or, when it is the only window on screen, tuck Ripen into the notch; the timer keeps running either way.
 
 <p align="center">
   <img src="docs/images/en/floating-medium.jpg" width="640" alt="Medium always-on-top floating window">
@@ -87,7 +87,7 @@ Click the red button, or drag the main window up into the notch, and Ripen becom
 
 ### Finish at your own pace
 
-When the countdown reaches zero, Ripen plays a sound and keeps counting as `+mm:ss`: teal for focus, orange for breaks. Press **Done** when you are ready to record the focus's actual length. Time away from your Mac is not counted as overtime.
+When the countdown reaches zero, Ripen plays a sound and keeps counting as `+mm:ss`: magenta for focus, mustard yellow-green for breaks. Press **Done** when you are ready to record the focus's actual length. Time away from your Mac is not counted as overtime.
 
 The main window, floating window and notch island briefly show the time you just spent and your project's total. During the following break, you can open that project's recap card directly.
 
