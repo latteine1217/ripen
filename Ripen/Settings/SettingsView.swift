@@ -4,6 +4,7 @@ import SwiftUI
 /// 新的設定主題在這裡加一行區塊即可，不需要改其他區塊。
 struct SettingsView: View {
     let settings: AppSettings
+    let focusLog: FocusLog
     let showMainWindow: () -> Void
 
     var body: some View {
@@ -13,6 +14,7 @@ struct SettingsView: View {
             SoundSettingsSection(settings: settings)
             AppearanceSettingsSection(settings: settings)
             MenuBarSettingsSection(settings: settings)
+            DataSettingsSection(focusLog: focusLog)
             AboutSettingsSection(settings: settings, showMainWindow: showMainWindow)
         }
         .formStyle(.grouped)

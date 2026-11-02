@@ -2,7 +2,7 @@ import Foundation
 import Darwin
 
 /// 正式的專注儲存；每次操作各自開啟連線，失敗後重試不沿用失效的連線。
-struct SQLiteFocusLogStorage: FocusLogStorage, TimerRecoveryStorage {
+struct SQLiteFocusLogStorage: FocusLogStorage, TimerRecoveryStorage, FocusBackupStorage {
     let directory: URL
     /// 索引 0 對應版本 1 → 2，依序追加；已發佈步驟不得改寫。
     private let upgrades: [String]
@@ -110,6 +110,38 @@ struct SQLiteFocusLogStorage: FocusLogStorage, TimerRecoveryStorage {
             recovered = true
         }
         return recovered
+    }
+
+    /// 存檔面板只授權使用者選的那個檔案；目的資料夾可能受隱私保護（文件、桌面、iCloud），
+    /// SQLite 在旁邊建 journal 或開啟資料夾同步會被系統擋住。快照與核對都在 App 的暫存目錄完成，
+    /// 目的位置只做一次原子寫入。
+    func exportBackup(to destination: URL) throws {
+        let database = try open()
+        let records = try database.records()
+        let projects = try database.projects()
+        let workspace = FileManager.default.temporaryDirectory.appending(path: "ripen-backup-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: workspace, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: workspace) }
+        let snapshot = workspace.appending(path: "backup.sqlite")
+        try SQLiteDatabase(url: databaseURL, readOnly: true).backup(to: snapshot)
+        try prepareBackup(at: snapshot, records: records, projects: projects)
+        try Data(contentsOf: snapshot).write(to: destination, options: .atomic)
+    }
+
+    /// 備份只承載紀錄與分類：清掉進行中的計時與完成日誌，再讀回確認與來源一致。
+    /// 連線在函式結束時關閉，複製出去的才是已落盤的完整內容。
+    private func prepareBackup(at url: URL, records: [StoredFocusRecord], projects: [FocusProject]) throws {
+        let backup = try SQLiteDatabase(url: url)
+        try backup.transaction {
+            try backup.saveRecovery(nil)
+            try backup.saveCompletionJournal([])
+        }
+        try backup.checkIntegrity()
+        guard try backup.integer("PRAGMA application_id") == Self.applicationID,
+              try backup.integer("PRAGMA user_version") == upgrades.count + 1,
+              try backup.records() == records,
+              try backup.projects() == projects
+        else { throw FocusStorageError.invalidData }
     }
 
     private func open() throws -> SQLiteDatabase {

@@ -97,6 +97,18 @@ final class FocusLog {
         pendingCount > 0 || !pendingProjects.isEmpty || !pendingColors.isEmpty || !pendingDeletions.isEmpty
     }
 
+    /// 只有歷史已載入且所有變更都已保存時，備份與 CSV 才不會缺資料（#32、#34）；
+    /// 此時 `entries` 全是已保存的紀錄。
+    var canExportRecords: Bool { hasLoaded && issue == nil && !hasUnsavedChanges }
+
+    var canExportBackup: Bool { storage is any FocusBackupStorage && canExportRecords }
+
+    func exportBackup(to url: URL) throws {
+        guard let backups = storage as? any FocusBackupStorage else { throw FocusBackupError.unavailable }
+        guard canExportBackup else { throw FocusBackupError.unsavedChanges }
+        try backups.exportBackup(to: url)
+    }
+
     /// 不存在的識別碼（例如已失效的上次選擇）視為未分類。
     func project(withID id: UUID?) -> FocusProject? {
         guard let id else { return nil }

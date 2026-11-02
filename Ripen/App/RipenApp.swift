@@ -124,7 +124,7 @@ struct RipenApp: App {
         #endif
 
         Settings {
-            SettingsView(settings: model.settings, showMainWindow: presenter.showMainWindow)
+            SettingsView(settings: model.settings, focusLog: model.focusLog, showMainWindow: presenter.showMainWindow)
                 .tint(.brandAccent)
                 .environment(hotkeys)
                 .environment(loginItem)
