@@ -76,6 +76,8 @@ final class AppModel {
     private(set) var completionSummary: CompletedFocus?
     /// 休息期間的成果卡入口；保留到緊接的休息結束或被跳過。
     private(set) var recapShortcut: CompletedFocus?
+    /// 緊接專注的休息期間、完成摘要已收起；拖出圓環的一次性提示在這時出現，不擋住摘要（#40）。
+    var isRestingAfterFocus: Bool { recapShortcut != nil && completionSummary == nil }
 
     /// 操作前的計時狀態。引擎記的是結束時刻，換回後時間照牆上時鐘接著走（ADR-0002）。
     private struct Snapshot {

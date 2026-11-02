@@ -169,6 +169,8 @@ final class TearOffController {
         }
         landing = floating.tearOffFrame(centeredAt: drag.cursor)
         presentation.tearOffTimerRing()
+        // 會拖出了，不必再提示（#40）
+        model.settings.markSeen(.ringTearOff)
     }
 
     // MARK: - 放開

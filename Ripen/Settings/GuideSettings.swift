@@ -8,6 +8,8 @@ enum GestureHint: String, CaseIterable, Sendable {
     case notchPullOut
     /// 第一次在主視窗看到超時：按「完成」才記錄。
     case overtimeDone
+    /// 第一次完成專注後的休息：計時圓環可以拖出成懸浮窗；拖出過就不再提示（#40）。
+    case ringTearOff
 }
 
 extension AppSettings {

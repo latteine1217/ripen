@@ -52,7 +52,25 @@ extension FrameDump {
                 })
             }
             return scenes
-        } + solidStateScenes
+        } + solidStateScenes + tearOffHintScenes
+    }
+
+    /// 完成專注、摘要收起後的休息：圓環下方的拖出提示（#40），核對位置與主視窗版面不位移。
+    private static var tearOffHintScenes: [Scene] {
+        [AppearanceStyle.black, .white].map { style in
+            Scene(name: "appearance-\(style)-tearoff-hint", size: CGSize(width: 400, height: 520)) { _ in
+                let settings = AppSettings(storage: InMemorySettingsStorage())
+                settings.appearanceStyle = style
+                let clock = AppearanceFrameClock()
+                let model = AppModel(clock: clock, settings: settings)
+                model.start()
+                clock.current += model.phaseDuration
+                model.finish()
+                clock.current += AppModel.completionSummaryDuration
+                model.refresh()
+                return AnyView(TimerPageView(model: model).padding(24).ripenGlass(settings: settings))
+            }
+        }
     }
 
     /// 同時核對階段色、暫停數字與超時數字，避免只看專注中的理想狀態。

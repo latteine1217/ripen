@@ -36,7 +36,10 @@ struct TimerPageView: View {
                 )
                 .overlay { completionSummary }
                 .frame(width: Self.ringDiameter, height: Self.ringDiameter)
-                .modifier(TearOffRing(tearOff: tearOff, diameter: Self.ringDiameter))
+                .modifier(TearOffRing(tearOff: tearOff, diameter: Self.ringDiameter,
+                                      settings: model.settings,
+                                      // 主視窗不在畫面上時不提示，免得出現的當下就記為看過
+                                      offersHint: model.isRestingAfterFocus && isPresented))
 
                 CycleProgressView(progress: CycleProgress(
                     completed: display.completedFocusesInCycle,
@@ -182,13 +185,16 @@ struct TimerPageView: View {
 /// 拖曳中圓環留在原地變淡（懸浮窗原型）。
 ///
 /// 提示字一直佔著位置、只切換不透明度，出現時主視窗版面不跳動；不能拖出時（例如逐格輸出）也保留位置，
-/// 版面與實際視窗一致。
+/// 版面與實際視窗一致。hover 之外，第一次完成專注後的休息期間在同一位置提示一次（#40）。
 ///
 /// 手勢用 `minimumDistance: 0`，由 `TearOffDrag.beginsDrag` 判斷 8pt 門檻；圓環本身沒有點擊動作，
 /// 空白鍵是開始／暫停按鈕的快捷鍵，兩者都不經過這個手勢。
 private struct TearOffRing: ViewModifier {
     let tearOff: TearOffController?
     let diameter: CGFloat
+    let settings: AppSettings
+    /// 一次性提示的時機（`AppModel.isRestingAfterFocus`）。
+    let offersHint: Bool
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.appPalette) private var palette
@@ -206,6 +212,9 @@ private struct TearOffRing: ViewModifier {
                 .opacity(isLifted ? 1 : 0)
                 // 圓環已帶同一句 accessibilityHint，不重複朗讀
                 .accessibilityHidden(true)
+                .oneTimeHint(.ringTearOff, "Drag the ring out of the window to make a floating window",
+                             settings: settings, isActive: offersHint)
+                .font(.caption)
         }
         // 減少動態效果時不放大（見 ring），陰影與提示字照樣淡入淡出
         .animation(.easeOut(duration: 0.15), value: isLifted)
