@@ -144,6 +144,7 @@ struct TimerPageView: View {
         HStack(spacing: 16) {
             if controls.finishes {
                 button(controls.primary)
+                    .buttonStyle(TimerIconButtonStyle())
                     .keyboardShortcut(.space, modifiers: [])
 
                 button(controls.secondary)
@@ -153,6 +154,7 @@ struct TimerPageView: View {
                     .help(Text("Finish this phase and move to the next (⌘S)"))
             } else {
                 Button("Reset", systemImage: "arrow.counterclockwise") { model.perform(.reset) }
+                    .buttonStyle(TimerIconButtonStyle())
                     .help(Text("Reset the current phase (⌘R)"))
                     .disabled(!controls.isResetEnabled)
 
@@ -162,6 +164,7 @@ struct TimerPageView: View {
                     .keyboardShortcut(.space, modifiers: [])
 
                 button(controls.secondary)
+                    .buttonStyle(TimerIconButtonStyle())
                     .help(Text("Skip to the next phase (⌘S)"))
             }
         }
