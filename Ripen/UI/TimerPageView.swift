@@ -38,10 +38,11 @@ struct TimerPageView: View {
                 .frame(width: Self.ringDiameter, height: Self.ringDiameter)
                 .modifier(TearOffRing(tearOff: tearOff, diameter: Self.ringDiameter))
 
-                CycleProgressView(
+                CycleProgressView(progress: CycleProgress(
                     completed: display.completedFocusesInCycle,
-                    interval: display.longBreakInterval
-                )
+                    interval: display.longBreakInterval,
+                    isFocus: display.phase == .focus
+                ))
 
                 endTimeRow(Self.mainWindowCaption(controls))
                     .oneTimeHint(.overtimeDone, "Press Done to finish and record this phase",

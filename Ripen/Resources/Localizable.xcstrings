@@ -189,6 +189,22 @@
         }
       }
     },
+    "Focus %lld of %lld": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Focus %1$lld of %2$lld"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "第 %1$lld 次專注，共 %2$lld 次"
+          }
+        }
+      }
+    },
     "Day": {
       "localizations": {
         "en": {
