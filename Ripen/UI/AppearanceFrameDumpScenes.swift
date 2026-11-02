@@ -52,7 +52,43 @@ extension FrameDump {
                 })
             }
             return scenes
-        } + solidStateScenes + tearOffHintScenes
+        } + solidStateScenes + tearOffHintScenes + filledStatisticsScenes
+    }
+
+    /// 有紀錄的統計總覽與計時頁並排（#42）：核對今日時間格式、今天的標示、區塊間距，
+    /// 以及統計頁不比計時頁高（主視窗高度依內容，切換頁時不該跳動）。統計頁以實際的「現在」取今天。
+    private static var filledStatisticsScenes: [Scene] {
+        [AppearanceStyle.black, .white].map { style in
+            Scene(name: "appearance-\(style)-statistics-filled", size: CGSize(width: 820, height: 620)) { _ in
+                let settings = AppSettings(storage: InMemorySettingsStorage())
+                settings.appearanceStyle = style
+                let log = FocusLog()
+                let thesis = log.addProject(named: "Thesis", color: ProjectColor.allCases[0])
+                let reading = log.addProject(named: "Reading", color: ProjectColor.allCases[4])
+                let today = Calendar.current.startOfDay(for: Date())
+                // 每天（往前推幾天）各分類的專注次數，每次 25 分鐘；今天共 4 次 = 100 分鐘
+                let plan: [(daysAgo: Int, project: FocusProject?, count: Int)] = [
+                    (0, thesis, 3), (0, reading, 1), (1, thesis, 2), (2, reading, 3), (2, nil, 1),
+                    (3, thesis, 5), (5, reading, 2), (6, thesis, 1), (6, nil, 2),
+                ]
+                for entry in plan {
+                    let day = Calendar.current.date(byAdding: .day, value: -entry.daysAgo, to: today)!
+                    for index in 0..<entry.count {
+                        log.append(FocusRecord(startedAt: day.addingTimeInterval(9 * 3600 + Double(index) * 1800),
+                                               duration: 25 * 60, projectID: entry.project?.id))
+                    }
+                }
+                let model = AppModel(clock: AppearanceFrameClock(), settings: settings, focusLog: log)
+                return AnyView(
+                    HStack(alignment: .top, spacing: 20) {
+                        TimerPageView(model: model).fixedSize().ripenGlass(settings: settings)
+                        StatisticsPageView(focusLog: log, deleteProject: { _ in }).fixedSize().ripenGlass(settings: settings)
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .background(Color(white: 0.5))
+                )
+            }
+        }
     }
 
     /// 完成專注、摘要收起後的休息：圓環下方的拖出提示（#40），核對位置與主視窗版面不位移。

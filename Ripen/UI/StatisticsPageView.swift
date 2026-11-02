@@ -65,10 +65,12 @@ private struct OverviewView: View {
         let records = focusLog.records
         let statistics = FocusStatistics(records: records, calendar: calendar)
         let today = statistics.summary(on: now)
-        VStack(alignment: .leading, spacing: 18) {
+        // 區塊之間比標題到內容寬得多，今日、最近 7 天、分類三區一眼分得開（#42）
+        VStack(alignment: .leading, spacing: 28) {
+            // 時間與詳細頁同一格式（「1 小時 40 分鐘」）；字串較長，放第一欄
             HStack(spacing: 32) {
+                StatisticFigure(value: Text(FocusTotal.timeText(minutes: today.minutes)), label: "Focus Time Today")
                 StatisticFigure(value: Text(today.count, format: .number), label: "Focuses Today")
-                StatisticFigure(value: Text(today.minutes, format: .number), label: "Minutes Today")
             }
             VStack(alignment: .leading, spacing: 8) {
                 Text("Last 7 Days")
@@ -227,7 +229,7 @@ private struct ProjectDetailView: View {
                 StatisticFigure(value: Text(total.timeText), label: "Total Time", size: 26)
                 StatisticFigure(value: Text(total.count, format: .number), label: "Focuses", size: 26)
             }
-            Text("Today: \(Text("\(today.count) focuses")) · \(today.minutes) min")
+            Text("Today: \(Text("\(today.count) focuses")) · \(FocusTotal.timeText(minutes: today.minutes))")
                 .font(.callout)
                 .monospacedDigit()
                 .foregroundStyle(palette.secondary)
@@ -365,9 +367,12 @@ private struct WeekChart: View {
         // 沒有紀錄時 Y 軸範圍會塌成 0；至少留一小時讓空圖仍看得出尺度
         .chartYScale(domain: 0...max(60, tallest))
         .chartXAxis {
-            AxisMarks(values: .stride(by: .day, calendar: calendar)) {
+            // 今天那欄的標籤用主要文字色加粗，不靠色相分辨（#42）
+            AxisMarks(values: .stride(by: .day, calendar: calendar)) { value in
+                let isToday = value.as(Date.self).map { calendar.isDate($0, inSameDayAs: days.last!.day) } ?? false
                 AxisValueLabel(format: .dateTime.weekday(.abbreviated), centered: true)
-                    .foregroundStyle(palette.secondary)
+                    .font(.caption2.weight(isToday ? .bold : .regular))
+                    .foregroundStyle(isToday ? palette.primary : palette.secondary)
             }
         }
         .chartYAxis {

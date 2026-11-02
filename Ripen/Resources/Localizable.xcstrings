@@ -349,18 +349,18 @@
         }
       }
     },
-    "Minutes Today": {
+    "Focus Time Today": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Minutes Today"
+            "value": "Focus Time Today"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "今日專注分鐘"
+            "value": "今日專注時間"
           }
         }
       }
@@ -2556,18 +2556,18 @@
         }
       }
     },
-    "Today: %@ · %lld min": {
+    "Today: %@ · %@": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Today: %@ · %lld min"
+            "value": "Today: %1$@ · %2$@"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "今日：%@ · %lld 分鐘"
+            "value": "今日：%1$@ · %2$@"
           }
         }
       }
