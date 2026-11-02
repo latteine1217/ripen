@@ -4,11 +4,18 @@ Notable changes to Ripen. The format follows [Keep a Changelog](https://keepacha
 
 ## [Unreleased]
 
+### Added
+
+- Statistics switches between the last 7 and 30 days. Total time, focus count and each project's time follow the range; projects are listed from most to least time with a rounded bar, and 30 days shows one square per day, darker on busier days.
+- After your first completed focus, a one-time hint under the timer ring says it can be dragged out into a floating window.
+
 ### Changed
 
 - Overtime no longer shares a hue with any project color: focus overtime is magenta and break overtime is a mustard yellow-green, replacing teal and orange.
 - The main window's cycle dots mark the focus in progress with a ring, matching the "Focus · n/N" caption on the floating window and notch island.
 - When the floating window is the only one on screen, its close button shows that it tucks Ripen into the notch, and its tooltip says the timer keeps running. The button that expands it into the main window now uses the same icon as the notch island's.
+- Reset and Skip in the main window are plain icons beside the filled Start/Pause button, so the main action stands out; during overtime, Pause sits beside Done the same way.
+- A project's "Today" line shows hours and minutes like its total, and today's label in the 7-day chart is bold.
 
 ## [0.2.2] - 2026-11-02
 

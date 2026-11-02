@@ -70,7 +70,7 @@ const englishTranslations = new Map(Object.entries({
   "照自己的節奏": "Follow your own rhythm",
   "調整專注、短休息與長休息的時間。用全域快速鍵開始或暫停，手不用離開鍵盤。": "Choose your focus, short break, and long break lengths. Start or pause with a global shortcut, without leaving the keyboard.",
   "看見這一週的累積": "See your week add up",
-  "今天專注幾次、花了多久，最近七天依分類疊成長條。點進分類，看它累積了多少。": "See today’s focus sessions and minutes, with the past seven days stacked by project. Open a project to see its total.",
+  "切換最近 7 天或 30 天，看專注了多久、時間花在哪些分類。點進分類，看它累積了多少。": "Switch between the last 7 and 30 days to see how long you focused and which projects took the time. Open a project to see its total.",
   "把累積做成一張卡": "Turn it into a card",
   "每個分類都有一張成果卡，方形或直式版面。存成圖片、複製，或用系統分享選單傳出去。": "Every project has a recap card in a square or portrait layout. Save it as an image, copy it, or share it from the macOS share menu.",
   "下一段專注，": "Your next focus",

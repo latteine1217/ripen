@@ -37,7 +37,7 @@ You can start with Uncategorized. Change projects during a focus to move the who
 
 ### See where your time goes
 
-Statistics stacks your last seven days of focus time by project color, alongside today's focus count and minutes and each project's total. Open a project to see its total time, its last week and every completed focus, or choose a different color from the palette.
+Statistics shows your focus time and count for the last 7 or 30 days. Seven days are stacked by project color; thirty days appear as one square per day, darker on busier days. Below, each project's time in that range is listed from most to least with a bar. Open a project to see its total time, its last week and every completed focus, or choose a different color from the palette.
 
 If you no longer need a project, delete it from its detail page. After you confirm, its records move to Uncategorized, keeping their time and counts.
 
