@@ -59,12 +59,27 @@ struct FocusStatistics {
 
     /// 含 `date` 當天在內的最近 7 天，由舊到新；沒有專注的日子也列出（0 分鐘）。
     func lastSevenDays(endingOn date: Date) -> [DaySummary] {
-        sevenDays(endingOn: date).map(summary(on:))
+        lastDays(7, endingOn: date)
+    }
+
+    /// 含 `date` 當天在內往回 `count` 天，由舊到新；沒有專注的日子也列出（0 分鐘）。
+    func lastDays(_ count: Int, endingOn date: Date) -> [DaySummary] {
+        days(count, endingOn: date).map(summary(on:))
+    }
+
+    /// 統計總覽的區間（#46）：含 `date` 當天在內往回 `count` 天的次數與分鐘數；秒數加總後才取整。
+    func total(lastDays count: Int, endingOn date: Date) -> FocusTotal {
+        Self.total(of: records(lastDays: count, endingOn: date))
+    }
+
+    /// 同一區間各分類的次數與分鐘數；nil 是未分類，區間內沒有紀錄的分類不列出。
+    func totalsByProject(lastDays count: Int, endingOn date: Date) -> [UUID?: FocusTotal] {
+        Dictionary(grouping: records(lastDays: count, endingOn: date), by: \.projectID).mapValues(Self.total(of:))
     }
 
     /// 最近 7 天每天依分類拆開，由舊到新；同一天未分類在前，其餘依紀錄中首次出現的順序。沒有投入的分類不列出。
     func lastSevenDaysByProject(endingOn date: Date) -> [ProjectDayMinutes] {
-        sevenDays(endingOn: date).flatMap { day in
+        days(7, endingOn: date).flatMap { day in
             let records = recordsByDay[day] ?? []
             var order: [UUID?] = records.contains { $0.projectID == nil } ? [nil] : []
             for record in records where !order.contains(record.projectID) { order.append(record.projectID) }
@@ -75,8 +90,17 @@ struct FocusStatistics {
         }
     }
 
-    private func sevenDays(endingOn date: Date) -> [Date] {
+    private func days(_ count: Int, endingOn date: Date) -> [Date] {
         let today = calendar.startOfDay(for: date)
-        return (0..<7).reversed().map { calendar.date(byAdding: .day, value: -$0, to: today)! }
+        return (0..<count).reversed().map { calendar.date(byAdding: .day, value: -$0, to: today)! }
+    }
+
+    private func records(lastDays count: Int, endingOn date: Date) -> [FocusRecord] {
+        days(count, endingOn: date).flatMap { recordsByDay[$0] ?? [] }
+    }
+
+    private static func total(of records: [FocusRecord]) -> FocusTotal {
+        let seconds = records.map(\.duration).reduce(0, +)
+        return FocusTotal(count: records.count, minutes: Int((seconds / 60).rounded()))
     }
 }

@@ -269,22 +269,6 @@
         }
       }
     },
-    "Focuses Today": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Focuses Today"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "今日專注次數"
-          }
-        }
-      }
-    },
     "Last 7 Days": {
       "localizations": {
         "en": {
@@ -345,22 +329,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "分鐘"
-          }
-        }
-      }
-    },
-    "Focus Time Today": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Focus Time Today"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "今日專注時間"
           }
         }
       }
@@ -3756,6 +3724,54 @@
           "stringUnit": {
             "state": "translated",
             "value": "「%@」由較新版本的 Ripen 建立，請先更新 Ripen 再還原。"
+          }
+        }
+      }
+    },
+    "7 Days": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "7 Days"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "7 天"
+          }
+        }
+      }
+    },
+    "30 Days": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "30 Days"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "30 天"
+          }
+        }
+      }
+    },
+    "Range": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Range"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "區間"
           }
         }
       }

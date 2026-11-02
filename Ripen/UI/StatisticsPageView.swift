@@ -53,76 +53,183 @@ private enum StatisticsLayout {
 
 // MARK: - 總覽
 
+/// 統計總覽的區間（#46）：含今天往回滾動；每次開啟統計頁回到 7 天，不保存選擇。
+private enum StatisticsRange: Int, CaseIterable {
+    case week = 7
+    case month = 30
+
+    var title: LocalizedStringKey { self == .week ? "7 Days" : "30 Days" }
+}
+
+/// 總覽只有三塊：區間的總數、一張圖、分類列表（#46）。區塊之間只靠留白分開，不加標題。
 private struct OverviewView: View {
     let focusLog: FocusLog
     let now: Date
     let open: (ProjectKey) -> Void
 
+    /// 兩種圖表共用同一個高度，切換區間時分類列表不移動。
+    private static let chartHeight: CGFloat = 110
+
     @Environment(\.calendar) private var calendar
     @Environment(\.appPalette) private var palette
+    @State private var range = StatisticsRange.week
 
     var body: some View {
-        let records = focusLog.records
-        let statistics = FocusStatistics(records: records, calendar: calendar)
-        let today = statistics.summary(on: now)
-        // 區塊之間比標題到內容寬得多，今日、最近 7 天、分類三區一眼分得開（#42）
-        VStack(alignment: .leading, spacing: 28) {
-            // 時間與詳細頁同一格式（「1 小時 40 分鐘」）；字串較長，放第一欄
-            HStack(spacing: 32) {
-                StatisticFigure(value: Text(FocusTotal.timeText(minutes: today.minutes)), label: "Focus Time Today")
-                StatisticFigure(value: Text(today.count, format: .number), label: "Focuses Today")
-            }
-            VStack(alignment: .leading, spacing: 8) {
-                Text("Last 7 Days")
-                    .font(.headline)
-                WeekChart(
-                    days: statistics.lastSevenDays(endingOn: now),
-                    stacks: statistics.lastSevenDaysByProject(endingOn: now),
-                    tint: { focusLog.project(withID: $0)?.color.color ?? palette.secondary },
-                    height: 130
-                )
-            }
-            VStack(alignment: .leading, spacing: 6) {
-                Text("Projects")
-                    .font(.headline)
-                ScrollView {
-                    LazyVStack(spacing: 2) {
-                        // 依建立順序，未分類放最後
-                        ForEach(focusLog.projects) { project in
-                            row(project, records: records)
-                        }
-                        row(nil, records: records)
-                    }
+        let statistics = FocusStatistics(records: focusLog.records, calendar: calendar)
+        let total = statistics.total(lastDays: range.rawValue, endingOn: now)
+        VStack(alignment: .leading, spacing: 24) {
+            HStack(alignment: .top) {
+                StatisticFigure(value: Text(total.timeText), label: "\(total.count) focuses", size: 28)
+                Spacer(minLength: 12)
+                Picker("Range", selection: $range) {
+                    ForEach(StatisticsRange.allCases, id: \.self) { Text($0.title).tag($0) }
                 }
-                .frame(height: 120)
+                .pickerStyle(.segmented)
+                .labelsHidden()
+                .controlSize(.small)
+                .fixedSize()
             }
+            Group {
+                switch range {
+                case .week:
+                    WeekChart(
+                        days: statistics.lastSevenDays(endingOn: now),
+                        stacks: statistics.lastSevenDaysByProject(endingOn: now),
+                        tint: { focusLog.project(withID: $0)?.color.color ?? palette.secondary },
+                        height: Self.chartHeight
+                    )
+                case .month:
+                    DayGrid(days: statistics.lastDays(StatisticsRange.month.rawValue, endingOn: now))
+                }
+            }
+            .frame(height: Self.chartHeight)
+            projectList(statistics.totalsByProject(lastDays: range.rawValue, endingOn: now))
         }
         .frame(width: StatisticsLayout.width, alignment: .leading)
     }
 
-    private func row(_ project: FocusProject?, records: [FocusRecord]) -> some View {
-        let total = FocusStatistics(records: records.belonging(to: project?.id), calendar: calendar).total
+    /// 依區間內的時間由多到少；同樣多時沿用建立順序、未分類在後。區間內為 0 的分類變淡置底，仍可點進詳細頁。
+    private func projectList(_ totals: [UUID?: FocusTotal]) -> some View {
+        let entries: [(project: FocusProject?, total: FocusTotal)] = (focusLog.projects.map(Optional.some) + [nil])
+            .map { ($0, totals[$0?.id] ?? FocusTotal(count: 0, minutes: 0)) }
+        let ordered = entries.enumerated()
+            .sorted { $0.element.total.minutes != $1.element.total.minutes
+                ? $0.element.total.minutes > $1.element.total.minutes : $0.offset < $1.offset }
+            .map(\.element)
+        let most = ordered.first?.total.minutes ?? 0
+        return ScrollView {
+            LazyVStack(spacing: 2) {
+                ForEach(ordered, id: \.project?.id) { entry in
+                    row(entry.project, total: entry.total, most: most)
+                }
+            }
+        }
+        .frame(height: 130)
+    }
+
+    private func row(_ project: FocusProject?, total: FocusTotal, most: Int) -> some View {
+        let isEmpty = total.minutes == 0
         return Button { open(ProjectKey(id: project?.id)) } label: {
-            HStack(spacing: 8) {
-                Circle()
-                    .fill(project?.color.color ?? palette.secondary)
-                    .frame(width: 8, height: 8)
-                ProjectName(project: project)
-                    .lineLimit(1)
-                    .truncationMode(.tail)
-                Spacer(minLength: 8)
-                Text("\(total.timeText) · \(total.count) focuses")
-                    .font(.caption)
-                    .monospacedDigit()
-                    .foregroundStyle(palette.secondary)
-                Image(systemName: "chevron.right")
-                    .font(.caption2.weight(.semibold))
-                    .foregroundStyle(palette.secondary)
-                    .accessibilityHidden(true)
+            VStack(alignment: .leading, spacing: 6) {
+                HStack(spacing: 8) {
+                    ProjectName(project: project)
+                        .foregroundStyle(isEmpty ? palette.secondary : palette.primary)
+                        .lineLimit(1)
+                        .truncationMode(.tail)
+                    Spacer(minLength: 8)
+                    Text(total.timeText)
+                        .font(.caption)
+                        .monospacedDigit()
+                        .foregroundStyle(palette.secondary)
+                }
+                if !isEmpty {
+                    ProjectBar(fraction: Double(total.minutes) / Double(max(most, 1)),
+                               color: project?.color.color ?? palette.secondary)
+                }
             }
         }
         .buttonStyle(ProjectRowStyle())
         .accessibilityHint(Text("Show project details"))
+    }
+}
+
+/// 分類列下方的長度條：全圓角、帶淺色底槽，看得出滿格在哪（#46）。再短也保留一個圓點的長度。
+private struct ProjectBar: View {
+    let fraction: Double
+    let color: Color
+
+    @Environment(\.appPalette) private var palette
+
+    var body: some View {
+        GeometryReader { proxy in
+            Capsule()
+                .fill(palette.track)
+                .overlay(alignment: .leading) {
+                    Capsule()
+                        .fill(color)
+                        .frame(width: max(proxy.size.height, proxy.size.width * fraction))
+                }
+        }
+        .frame(height: 8)
+        .accessibilityHidden(true)
+    }
+}
+
+/// 30 天的每日方格（#46）：GitHub 外觀，一天一格、3 列 × 10 格由舊到新。深淺是當天時間相對區間內最多的一天，
+/// 分四段；沒有紀錄的日子用軌道色，今天加細框。滑鼠停留與 VoiceOver 可得知日期與時間。
+private struct DayGrid: View {
+    let days: [DaySummary]
+
+    private static let columns = 10
+    private static let cell: CGFloat = 17
+    private static let spacing: CGFloat = 4
+    private static let levels: [Double] = [0.35, 0.55, 0.8, 1]
+
+    @Environment(\.appPalette) private var palette
+
+    var body: some View {
+        let most = days.map(\.minutes).max() ?? 0
+        let width = CGFloat(Self.columns) * Self.cell + CGFloat(Self.columns - 1) * Self.spacing
+        VStack(alignment: .leading, spacing: 6) {
+            Grid(horizontalSpacing: Self.spacing, verticalSpacing: Self.spacing) {
+                ForEach(Array(stride(from: 0, to: days.count, by: Self.columns)), id: \.self) { start in
+                    GridRow {
+                        ForEach(start..<min(start + Self.columns, days.count), id: \.self) { index in
+                            square(days[index], most: most, isToday: index == days.count - 1)
+                        }
+                    }
+                }
+            }
+            HStack {
+                if let first = days.first {
+                    Text(first.day, format: .dateTime.month(.defaultDigits).day())
+                }
+                Spacer()
+                Text("Today")
+                    .fontWeight(.semibold)
+                    .foregroundStyle(palette.primary)
+            }
+            .font(.caption)
+            .foregroundStyle(palette.secondary)
+            .frame(width: width)
+            .accessibilityHidden(true)
+        }
+        .accessibilityElement(children: .contain)
+    }
+
+    private func square(_ day: DaySummary, most: Int, isToday: Bool) -> some View {
+        let shape = RoundedRectangle(cornerRadius: 4, style: .continuous)
+        let level = most == 0 ? 0 : Int((Double(day.minutes) / Double(most) * 4).rounded(.up))
+        let label = "\(day.day.formatted(.dateTime.month().day())) · \(FocusTotal.timeText(minutes: day.minutes))"
+        return shape
+            .fill(level == 0 ? palette.track : Phase.focus.tint.opacity(Self.levels[min(level, 4) - 1]))
+            .overlay { if isToday { shape.strokeBorder(palette.primary, lineWidth: 1.5) } }
+            .frame(width: Self.cell, height: Self.cell)
+            // 純圖形沒有角色時 macOS 不輸出標籤；當成圖片才會朗讀日期與時間
+            .accessibilityElement(children: .ignore)
+            .accessibilityAddTraits(.isImage)
+            .accessibilityLabel(Text(verbatim: label))
+            .help(Text(verbatim: label))
     }
 }
 
