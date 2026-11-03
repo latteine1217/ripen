@@ -4,6 +4,16 @@ Notable changes to Ripen. The format follows [Keep a Changelog](https://keepacha
 
 ## [Unreleased]
 
+### Changed
+
+- Project details list completed focuses by day, newest first, with each day's count and total time; click a day to see each focus's start time and length.
+- A project's color is changed from the color dot beside its name, which opens the palette in a popover. The delete button is set apart from the recap card button.
+- The recap card preview puts the layout, hide-name and refresh controls above the card and keeps the phase color out of the sheet; only Save Image uses the accent color. The card shows the date it was made instead of "Updated".
+- The main window no longer shows a "Ripen" title: the page switcher sits in the title bar beside the window buttons, and the window is shorter.
+- The unfinished part of the timer ring, the floating window's ring and upcoming cycle dots are easier to see, especially in the White appearance.
+- The handle at the bottom of the expanded notch island brightens while the pointer is over the island, and its tooltip says you can pull down to open the main window.
+- In the small floating window, the start/pause button inside the ring no longer draws a second circle.
+
 ## [0.2.3] - 2026-11-03
 
 ### Added

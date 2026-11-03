@@ -144,7 +144,7 @@ xcodebuild test -project Ripen.xcodeproj -scheme Ripen -destination 'platform=ma
 
 `AppAppearanceController` 統一 AppKit 外觀；共用背景依 `AppSettings.appearanceColorMode` 解析 SwiftUI 外觀。黑與白採石墨黑／暖瓷白的微弱漸層，`AppPalette` 統一數字、次要文字、軌道與按鈕，配色集中於 Asset Catalog；`TimerButtonStyle` 明確控制主按鈕文字。淺色玻璃參數在 `GlassStyle.light`，深色維持 `GlassStyle.standard`；Debug 玻璃調整面板目前調整深色參數。
 
-配色依用途分角色（[ADR-0013](adr/0013-semantic-color-roles.md)）：每個強調色（階段、超時、分類、品牌）有填色 `<名稱>` 與內容色 `<名稱>Content` 兩個 colorset，深淺各一組。填色給圓點、圓環、長條與圖表，內容色給文字與圖示；畫面不直接寫色值，Ripen 自己的表面用 `AppPalette`，系統畫出的介面用系統語意色。新增或調整顏色時，兩個 colorset 一起加，再執行 `-only-testing:RipenTests/ColorContrastTests`：內容色須在每種背景上達 4.5:1、填色達 3:1，不合格時只調亮度、不改色相；超時色另須與其他強調色保持色相距離（專注超時 30°、休息超時 25°，[ADR-0016](adr/0016-overtime-hues-apart-from-projects.md)），新增分類色時同一個測試會擋下撞色。測試中的背景清單即實際會出現的背景，新增表面時一併加入。
+配色依用途分角色（[ADR-0013](adr/0013-semantic-color-roles.md)）：每個強調色（階段、超時、分類、品牌）有填色 `<名稱>` 與內容色 `<名稱>Content` 兩個 colorset，深淺各一組。填色給圓點、圓環、長條與圖表，內容色給文字與圖示；圓環、進度條與週期點的未完成部分用 `AppPalette.progressTrack`（實色外觀為 `SurfaceProgressTrack`，對底色至少 1.5:1），膠囊底與格線等背景層用 `track`；畫面不直接寫色值，Ripen 自己的表面用 `AppPalette`，系統畫出的介面用系統語意色。新增或調整顏色時，兩個 colorset 一起加，再執行 `-only-testing:RipenTests/ColorContrastTests`：內容色須在每種背景上達 4.5:1、填色達 3:1，不合格時只調亮度、不改色相；超時色另須與其他強調色保持色相距離（專注超時 30°、休息超時 25°，[ADR-0016](adr/0016-overtime-hues-apart-from-projects.md)），新增分類色時同一個測試會擋下撞色。測試中的背景清單即實際會出現的背景，新增表面時一併加入。
 
 Debug App 加 `--render-frames <輸出資料夾> appearance-` 可輸出四種配色的計時、統計、三尺寸懸浮窗與配色總覽，以及石墨黑／暖瓷白三個階段的暫停與超時，共 36 張版面圖。模糊層不在 ImageRenderer 的擷取範圍，輸出時關閉模糊；設定 Form 亦無法以此驗收。這些圖只能核對配色與版面，不能代替實機材質與即時切換驗收。
 
