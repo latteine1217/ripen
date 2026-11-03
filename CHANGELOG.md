@@ -4,6 +4,8 @@ Notable changes to Ripen. The format follows [Keep a Changelog](https://keepacha
 
 ## [Unreleased]
 
+## [0.2.4] - 2026-11-03
+
 ### Changed
 
 - Project details list completed focuses by day, newest first, with each day's count and total time; click a day to see each focus's start time and length.
@@ -83,7 +85,8 @@ The first release of Ripen, a native macOS Pomodoro timer in frosted glass.
 - Statistics for today and the last 7 days, stored only on your Mac.
 - **Check for Updates…**, which only goes online when you ask.
 
-[Unreleased]: https://github.com/latteine1217/ripen/compare/v0.2.3...HEAD
+[Unreleased]: https://github.com/latteine1217/ripen/compare/v0.2.4...HEAD
+[0.2.4]: https://github.com/latteine1217/ripen/compare/v0.2.3...v0.2.4
 [0.2.3]: https://github.com/latteine1217/ripen/compare/v0.2.2...v0.2.3
 [0.2.2]: https://github.com/latteine1217/ripen/compare/v0.2.1...v0.2.2
 [0.2.1]: https://github.com/latteine1217/ripen/compare/v0.2.0...v0.2.1
