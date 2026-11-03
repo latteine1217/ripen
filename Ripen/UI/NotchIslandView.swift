@@ -101,8 +101,15 @@ struct NotchIslandView: View {
                     timeText(time, size: 34, dimmed: !isRunning, isOvertime: display.isOvertime)
                     ProgressBar(progress: display.phaseProgress)
                     controls(TimerControls(display: display))
-                    // 把手：暗示整條島可以往下拉
-                    Capsule().fill(.secondary.opacity(0.6)).frame(width: 28, height: 4)
+                    // 把手：暗示整條島可以往下拉；游標在島上時變亮，與下垂一起表示拉得動（#45）
+                    Capsule().fill(.white.opacity(state.isHovering ? 0.8 : 0.35)).frame(width: 28, height: 4)
+                        .animation(.easeOut(duration: 0.15), value: state.isHovering)
+                        // 說明的感應範圍比 4pt 細條大，不必瞄準；放在 overlay 不撐開版面
+                        .overlay {
+                            Color.clear.frame(width: 120, height: 16)
+                                .contentShape(Rectangle())
+                                .help(Text("Pull down to open the main window"))
+                        }
                         .accessibilityHidden(true)
                         .oneTimeHint(.notchPullOut, "Pull down to open the main window", settings: model.settings)
                         .font(.system(size: 11, weight: .medium, design: .rounded))
@@ -236,6 +243,8 @@ struct IconButtonMetrics: Sendable {
     /// 靜止時底色的不透明度；hover 0.22、按下 0.3 兩者相同。
     var restingOpacity: Double
     var pressedScale: CGFloat
+    /// 靜止底色整體再乘上的不透明度（含實色外觀的按鈕色）；hover 與按下不受影響。
+    var restingFill: Double = 1
 
     static let island = Self(diameter: 30, restingOpacity: 0.12, pressedScale: 0.92)
     /// 懸浮窗原型：32pt（FINDINGS §6）、靜止 0.10、按下 0.9。
@@ -286,7 +295,7 @@ private struct IslandIconButtonStyle: ButtonStyle {
         configuration.label
             .background(Circle().fill(
                 configuration.isPressed ? palette.buttonPressed : isHovering ? palette.buttonHover
-                    : palette.button ?? Color.primary.opacity(metrics.restingOpacity)
+                    : (palette.button ?? Color.primary.opacity(metrics.restingOpacity)).opacity(metrics.restingFill)
             ))
             .scaleEffect(configuration.isPressed ? metrics.pressedScale : 1)
             .animation(.easeOut(duration: 0.1), value: configuration.isPressed)

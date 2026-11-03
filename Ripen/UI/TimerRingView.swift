@@ -18,7 +18,7 @@ struct TimerRingView: View {
     var body: some View {
         ZStack {
             Circle()
-                .stroke(palette.track, lineWidth: lineWidth)
+                .stroke(palette.progressTrack, lineWidth: lineWidth)
             Circle()
                 .trim(from: 0, to: progress)
                 .stroke(.tint, style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))

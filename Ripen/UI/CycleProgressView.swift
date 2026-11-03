@@ -59,7 +59,7 @@ struct CycleProgressView: View {
             // 環境 tint 是內容色，描邊也滿足填色的 3:1 門檻
             Circle().strokeBorder(.tint, lineWidth: 1.5)
         case .upcoming:
-            Circle().fill(palette.track)
+            Circle().fill(palette.progressTrack)
         }
     }
 

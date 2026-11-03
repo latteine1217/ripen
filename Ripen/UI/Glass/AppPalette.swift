@@ -4,7 +4,9 @@ import SwiftUI
 struct AppPalette {
     var primary: Color
     var secondary: Color
+    /// 膠囊、熱力圖空格、格線等背景層。
     var track: Color
+    /// 圓環、進度條與週期點的未完成部分；比 `track` 深，在底色上看得出整圈範圍（#45、ADR-0013）。
     var progressTrack: Color
     var button: Color?
     var buttonHover: Color
@@ -20,7 +22,7 @@ struct AppPalette {
 
     static let solid = AppPalette(
         primary: Color("SurfaceText"), secondary: Color("SurfaceSecondaryText"),
-        track: Color("SurfaceTrack"), progressTrack: Color("SurfaceTrack"),
+        track: Color("SurfaceTrack"), progressTrack: Color("SurfaceProgressTrack"),
         button: Color("SurfaceButton"), buttonHover: Color("SurfaceButtonHover"),
         buttonPressed: Color("SurfaceButtonPressed"), prominentText: Color("SurfaceProminentText")
     )

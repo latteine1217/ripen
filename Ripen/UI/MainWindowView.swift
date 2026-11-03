@@ -19,11 +19,6 @@ struct MainWindowView: View {
             if model.requiresRecoveryDecision {
                 TimerRecoveryView(model: model)
             } else {
-                PageSwitcher(selection: $page)
-                    .fixedSize()
-                    .padding(.top, 16)
-                .visible(!showsIntro)
-
                 ZStack {
                     TimerPageView(model: model)
                         .environment(\.timerSurfaceVisible, isPresented && page == .timer && !showsIntro)
@@ -39,6 +34,18 @@ struct MainWindowView: View {
                 // 減少動態效果時直接切換，不做淡入淡出
                 .animation(reduceMotion ? nil : .easeInOut(duration: 0.2), value: page)
                 .animation(reduceMotion ? nil : .easeInOut(duration: 0.25), value: showsIntro)
+            }
+        }
+        // 頁籤切換器在標題列裡、與紅綠燈同一列（#45）；提醒與頁面排在標題列下方，不會與它重疊
+        .overlay(alignment: .top) {
+            if !model.requiresRecoveryDecision {
+                GeometryReader { proxy in
+                    PageSwitcher(selection: $page)
+                        .fixedSize()
+                        .frame(width: proxy.size.width, height: proxy.safeAreaInsets.top)
+                        .offset(y: -proxy.safeAreaInsets.top)
+                }
+                .visible(!showsIntro)
             }
         }
         // 提醒在倒數到 0 時播出，此時已進入超時，閃的是該階段的超時色；鋪在內容底下、玻璃之上

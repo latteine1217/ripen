@@ -29,6 +29,8 @@ struct FloatingWindowLayout: Equatable, Sendable {
     var bar: CGRect
     var barOpacity: Double
     var startPause: CGPoint
+    /// 開始／暫停靜止底色的不透明度：小尺寸放在進度圈裡，圓環就是按鈕邊界，再畫底色會像兩層圈（#45）。
+    var startPauseFill: Double
     var skip: CGPoint
     var expand: CGPoint
     var close: CGPoint
@@ -45,7 +47,8 @@ struct FloatingWindowLayout: Equatable, Sendable {
     private init(
         cornerRadius: CGFloat, ringCenter: CGPoint, ringDiameter: CGFloat, ringLineWidth: CGFloat,
         ringGlyphOpacity: Double, caption: TextSlot, time: TextSlot, end: TextSlot, bar: CGRect,
-        barOpacity: Double, startPause: CGPoint, skip: CGPoint, expand: CGPoint, close: CGPoint
+        barOpacity: Double, startPause: CGPoint, startPauseFill: Double = 1, skip: CGPoint, expand: CGPoint,
+        close: CGPoint
     ) {
         self.cornerRadius = cornerRadius
         self.ringCenter = ringCenter
@@ -58,6 +61,7 @@ struct FloatingWindowLayout: Equatable, Sendable {
         self.bar = bar
         self.barOpacity = barOpacity
         self.startPause = startPause
+        self.startPauseFill = startPauseFill
         self.skip = skip
         self.expand = expand
         self.close = close
@@ -78,7 +82,7 @@ struct FloatingWindowLayout: Equatable, Sendable {
             // 播放器放不下結束時刻與進度條：收在原處淡出，換尺寸時從那裡長出來
             end: TextSlot(point: CGPoint(x: textX, y: cy - 11), anchorX: 0, fontSize: 11, opacity: 0),
             bar: CGRect(x: textX, y: cy + 22, width: 80, height: 4), barOpacity: 0,
-            startPause: ring, skip: CGPoint(x: expand.x - b - 6, y: cy), expand: expand, close: close
+            startPause: ring, startPauseFill: 0, skip: CGPoint(x: expand.x - b - 6, y: cy), expand: expand, close: close
         )
     }
 
@@ -187,6 +191,7 @@ private extension FloatingWindowLayout {
         bar = CGRect(x: bar.minX * k, y: bar.minY * k, width: bar.width * k, height: bar.height * k)
         barOpacity *= Double(k)
         startPause = startPause * k
+        startPauseFill *= Double(k)
         skip = skip * k
         expand = expand * k
         close = close * k
@@ -205,6 +210,7 @@ private extension FloatingWindowLayout {
                      width: bar.width + o.bar.width, height: bar.height + o.bar.height)
         barOpacity += o.barOpacity
         startPause = startPause + o.startPause
+        startPauseFill += o.startPauseFill
         skip = skip + o.skip
         expand = expand + o.expand
         close = close + o.close

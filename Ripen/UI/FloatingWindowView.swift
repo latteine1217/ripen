@@ -189,6 +189,7 @@ private struct FloatingWindowContent: View {
             ProgressBar(progress: display.phaseProgress)
                 .opacity(layout.barOpacity)
             TimerIconButton(model: model, action: controls.primary)
+                .environment(\.iconButtonMetrics, startPauseMetrics)
             SkipOrDoneButton(model: model, controls: controls)
             // 與瀏海島的「顯示主視窗」同一個圖示
             IslandIconButton(
@@ -201,6 +202,12 @@ private struct FloatingWindowContent: View {
         }
         .foregroundStyle(palette.primary)
         .environment(\.iconButtonMetrics, .floatingWindow)
+    }
+
+    private var startPauseMetrics: IconButtonMetrics {
+        var metrics = IconButtonMetrics.floatingWindow
+        metrics.restingFill = layout.startPauseFill
+        return metrics
     }
 
     /// 子 view 的順序與 `PlacedLayout` 的子 view 一一對應。
@@ -224,7 +231,7 @@ private struct FloatingWindowContent: View {
     private func ring(isPaused: Bool) -> some View {
         let line = layout.ringLineWidth
         return ZStack {
-            Circle().inset(by: line / 2).stroke(palette.track, lineWidth: line)
+            Circle().inset(by: line / 2).stroke(palette.progressTrack, lineWidth: line)
             Circle().inset(by: line / 2)
                 .trim(from: 0, to: display.phaseProgress)
                 .stroke(.tint, style: StrokeStyle(lineWidth: line, lineCap: .round))
