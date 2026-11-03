@@ -20,7 +20,7 @@ struct RecapPreviewView: View {
     @State private var sharing = RecapSharing()
 
     /// 預覽區固定大小，切換版型時 sheet 不跳動；直式等比縮小放入。
-    private static let stage = CGSize(width: RecapCardView.width, height: 440)
+    private static let stage = CGSize(width: RecapCardView.width, height: 400)
 
     private enum Feedback: Equatable {
         case none
@@ -38,9 +38,10 @@ struct RecapPreviewView: View {
 
     var body: some View {
         VStack(spacing: 12) {
+            // 版面選項在卡片上方，下方只留狀態與輸出（#44）
             if let card {
-                preview(card)
                 controls
+                preview(card)
                 message
                     .frame(maxWidth: .infinity, alignment: .leading)
             } else {
@@ -52,6 +53,8 @@ struct RecapPreviewView: View {
         }
         .padding(20)
         .frame(width: Self.stage.width + 40)
+        // 視窗中只有「儲存圖片」用強調色（#44）；其他控制不沿用主視窗的階段色
+        .tint(.primary)
         .onAppear(perform: regenerate)
         .onChange(of: hidesName) { feedback = .none }
         .onChange(of: layout) { feedback = .none }
@@ -140,10 +143,12 @@ struct RecapPreviewView: View {
             if case .saveFailed(let url) = feedback {
                 Button("Retry") { write(to: url) }
                     .keyboardShortcut(.defaultAction)
+                    .tint(.brandAccent)
             } else {
                 Button("Save Image…", action: save)
                     .keyboardShortcut(.defaultAction)
                     .disabled(!canExport)
+                    .tint(.brandAccent)
             }
         }
     }

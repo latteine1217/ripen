@@ -86,8 +86,8 @@ struct RecapCardView: View {
             Text(verbatim: "Ripen")
                 .font(.system(size: 14, weight: .semibold, design: .rounded))
             Spacer(minLength: 8)
-            // 數字是產生卡片時的最新累積，不是某次完成當下的快照
-            Text("Updated \(Text(card.generatedAt, format: .dateTime.year().month().day()))")
+            // 產生卡片的日期，是「今日」與最近七天的基準（#44）
+            Text(card.generatedAt, format: .dateTime.year().month().day())
                 .font(.system(size: 10))
                 .foregroundStyle(Self.secondaryInk)
                 .lineLimit(1)
