@@ -4,6 +4,10 @@ Notable changes to Ripen. The format follows [Keep a Changelog](https://keepacha
 
 ## [Unreleased]
 
+### Fixed
+
+- **Check for Updates…** is back in the Ripen menu, below **About Ripen**. It had been missing since 0.1.0, so updates could only be checked from Settings.
+
 ## [0.2.4] - 2026-11-03
 
 ### Changed
