@@ -8,6 +8,13 @@ struct DaySummary: Equatable, Sendable {
     let minutes: Int
 }
 
+/// 有完成專注的某一天：當天彙總與紀錄明細。
+struct DayRecords: Equatable, Sendable {
+    let summary: DaySummary
+    /// 依開始時刻新的在上。
+    let records: [FocusRecord]
+}
+
 /// 不分日期的累積，例如某分類至今的投入。
 struct FocusTotal: Equatable, Sendable {
     let count: Int
@@ -56,6 +63,13 @@ struct FocusStatistics {
 
     /// 有完成專注的日子數，依開始時刻歸日。
     var activeDays: Int { recordsByDay.count }
+
+    /// 分類詳情頁的紀錄（#43）：只列有專注的日子，新的在上；保存順序不一定是開始順序，當天紀錄也依開始時刻重排。
+    var recordedDays: [DayRecords] {
+        recordsByDay.keys.sorted(by: >).map { day in
+            DayRecords(summary: summary(on: day), records: recordsByDay[day]!.sorted { $0.startedAt > $1.startedAt })
+        }
+    }
 
     /// 含 `date` 當天在內的最近 7 天，由舊到新；沒有專注的日子也列出（0 分鐘）。
     func lastSevenDays(endingOn date: Date) -> [DaySummary] {

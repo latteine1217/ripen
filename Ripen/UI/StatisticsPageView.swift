@@ -266,6 +266,7 @@ private struct ProjectDetailView: View {
     @Environment(\.appPalette) private var palette
     @State private var showsRecap = false
     @State private var confirmsDeletion = false
+    @State private var choosesColor = false
 
     var body: some View {
         let project = focusLog.project(withID: key.id)
@@ -287,7 +288,26 @@ private struct ProjectDetailView: View {
             .help(Text("Back to all projects (Esc)"))
 
             HStack(spacing: 8) {
-                Circle().fill(tint).frame(width: 10, height: 10)
+                // 換色不常用，收在色點後面（#43）；未分類沒有代表色，色點只是標記
+                if let project {
+                    Button { choosesColor = true } label: {
+                        Circle().fill(tint).frame(width: 10, height: 10)
+                    }
+                    .buttonStyle(ProjectRowStyle())
+                    .padding(.horizontal, -8)
+                    .help(Text("Change Color"))
+                    .accessibilityLabel(Text("Project Color"))
+                    .accessibilityValue(Text(project.color.name))
+                    .popover(isPresented: $choosesColor, arrowEdge: .bottom) {
+                        ColorSwatches(selection: project.color) {
+                            focusLog.setColor($0, forProject: project.id)
+                            choosesColor = false
+                        }
+                        .padding(12)
+                    }
+                } else {
+                    Circle().fill(tint).frame(width: 10, height: 10)
+                }
                 ProjectName(project: project)
                     .font(.title3.weight(.semibold))
                     .lineLimit(1)
@@ -305,8 +325,11 @@ private struct ProjectDetailView: View {
                 .padding(.trailing, project == nil ? -8 : 0)
                 .disabled(records.isEmpty)
                 .help(Text("Preview, save or share this project's recap card"))
-                // 未分類不能刪除；刪除與成果卡同在標題列，分類的操作集中一處
+                // 未分類不能刪除；刪除與成果卡同在標題列，分類的操作集中一處，以分隔線拉開破壞性與正向操作（#43）
                 if let project {
+                    Divider()
+                        .frame(height: 16)
+                        .padding(.horizontal, 4)
                     Button { confirmsDeletion = true } label: {
                         Label("Delete Project…", systemImage: "trash")
                             .labelStyle(.iconOnly)
@@ -341,10 +364,6 @@ private struct ProjectDetailView: View {
                 .monospacedDigit()
                 .foregroundStyle(palette.secondary)
 
-            if let project {
-                ColorSwatches(selection: project.color) { focusLog.setColor($0, forProject: project.id) }
-            }
-
             WeekChart(
                 days: statistics.lastSevenDays(endingOn: now),
                 stacks: statistics.lastSevenDaysByProject(endingOn: now),
@@ -354,43 +373,84 @@ private struct ProjectDetailView: View {
 
             Text("Completed Focuses")
                 .font(.headline)
-            RecordList(records: records)
+            // 換分類時展開狀態重來，不沿用上一個分類展開的日子
+            RecordList(days: statistics.recordedDays)
+                .id(key)
         }
         .frame(width: StatisticsLayout.width, alignment: .leading)
         .sheet(isPresented: $showsRecap) { RecapPreviewView(focusLog: focusLog, projectID: key.id) }
     }
 }
 
-/// 依開始時刻新的在上（保存順序不一定是開始順序）；日期與時刻依系統格式，長度與統計相同取整到分鐘。
+/// 按日分組（#43）：每列是當天次數與總時長，展開看每次的開始時刻與長度；日期與時刻依系統格式，長度與統計相同取整到分鐘。
 private struct RecordList: View {
-    let records: [FocusRecord]
+    let days: [DayRecords]
 
     @Environment(\.appPalette) private var palette
+    @State private var expandedDays: Set<Date> = []
 
     var body: some View {
-        if records.isEmpty {
+        if days.isEmpty {
             Text("No completed focuses yet.")
                 .font(.callout)
                 .foregroundStyle(palette.secondary)
-                .frame(maxWidth: .infinity, minHeight: 80, alignment: .topLeading)
+                .frame(maxWidth: .infinity, minHeight: 110, alignment: .topLeading)
         } else {
             ScrollView {
-                LazyVStack(spacing: 6) {
-                    ForEach(Array(records.sorted { $0.startedAt > $1.startedAt }.enumerated()), id: \.offset) { _, record in
-                        HStack {
-                            Text(record.startedAt, format: .dateTime.month().day().weekday(.abbreviated).hour().minute())
-                            Spacer()
-                            Text(FocusTotal.timeText(minutes: Int((record.duration / 60).rounded())))
-                                .monospacedDigit()
-                                .foregroundStyle(palette.secondary)
+                LazyVStack(spacing: 2) {
+                    ForEach(days, id: \.summary.day) { day in
+                        dayRow(day.summary)
+                        if expandedDays.contains(day.summary.day) {
+                            ForEach(Array(day.records.enumerated()), id: \.offset) { _, record in
+                                recordRow(record)
+                            }
                         }
-                        .font(.callout)
-                        .accessibilityElement(children: .combine)
                     }
                 }
             }
-            .frame(height: 80)
+            .frame(height: 110)
         }
+    }
+
+    private func dayRow(_ summary: DaySummary) -> some View {
+        let isExpanded = expandedDays.contains(summary.day)
+        return Button {
+            if isExpanded { expandedDays.remove(summary.day) } else { expandedDays.insert(summary.day) }
+        } label: {
+            HStack(spacing: 6) {
+                Image(systemName: "chevron.right")
+                    .font(.caption2.weight(.semibold))
+                    .foregroundStyle(palette.secondary)
+                    .rotationEffect(.degrees(isExpanded ? 90 : 0))
+                Text(summary.day, format: .dateTime.month().day().weekday(.abbreviated))
+                    .foregroundStyle(palette.primary)
+                Spacer()
+                Text("\(Text("\(summary.count) focuses")) · \(FocusTotal.timeText(minutes: summary.minutes))")
+                    .monospacedDigit()
+                    .foregroundStyle(palette.secondary)
+            }
+            .font(.callout)
+            .frame(maxWidth: .infinity)
+        }
+        .buttonStyle(ProjectRowStyle())
+        .padding(.horizontal, -8)
+        .accessibilityElement(children: .combine)
+        .accessibilityValue(isExpanded ? Text("Expanded") : Text("Collapsed"))
+    }
+
+    private func recordRow(_ record: FocusRecord) -> some View {
+        HStack {
+            Text(record.startedAt, format: .dateTime.hour().minute())
+            Spacer()
+            Text(FocusTotal.timeText(minutes: Int((record.duration / 60).rounded())))
+                .monospacedDigit()
+        }
+        .font(.callout)
+        .foregroundStyle(palette.secondary)
+        // 對齊日期文字：箭頭寬度加間距
+        .padding(.leading, 18)
+        .padding(.vertical, 2)
+        .accessibilityElement(children: .combine)
     }
 }
 
