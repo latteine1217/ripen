@@ -100,18 +100,30 @@ struct NotchIslandView: View {
                 VStack(spacing: 10) {
                     timeText(time, size: 34, dimmed: !isRunning, isOvertime: display.isOvertime)
                     ProgressBar(progress: display.phaseProgress)
-                    controls(model.timerControls(display: display))
+                    let timerControls = model.timerControls(display: display)
+                    let disabledReason = timerControls.primary.disabledReason
+                    controls(timerControls)
                     // 把手：暗示整條島可以往下拉；游標在島上時變亮，與下垂一起表示拉得動（#45）
                     Capsule().fill(.white.opacity(state.isHovering ? 0.8 : 0.35)).frame(width: 28, height: 4)
                         .animation(.easeOut(duration: 0.15), value: state.isHovering)
+                        .opacity(disabledReason == nil ? 1 : 0)
                         // 說明的感應範圍比 4pt 細條大，不必瞄準；放在 overlay 不撐開版面
                         .overlay {
                             Color.clear.frame(width: 120, height: 16)
                                 .contentShape(Rectangle())
                                 .help(Text("Pull down to open the main window"))
                         }
+                        // 瀏海島上的 `.help` 不會顯示（實機確認，可用的按鈕也一樣）：停用原因直接寫在把手這一行
+                        .overlay {
+                            if let disabledReason {
+                                Text(disabledReason)
+                                    .foregroundStyle(.secondary)
+                                    .fixedSize()
+                            }
+                        }
                         .accessibilityHidden(true)
-                        .oneTimeHint(.notchPullOut, "Pull down to open the main window", settings: model.settings)
+                        .oneTimeHint(.notchPullOut, "Pull down to open the main window", settings: model.settings,
+                                     isActive: disabledReason == nil)
                         .font(.system(size: 11, weight: .medium, design: .rounded))
                 }
                 .padding(.horizontal, 18)
@@ -155,11 +167,20 @@ struct TimerIconButton: View {
     var help: LocalizedStringKey?
 
     var body: some View {
-        IslandIconButton(action.title, systemImage: action.systemImage, help: action.disabledReason ?? help) {
+        IslandIconButton(action.title, systemImage: action.systemImage, help: help) {
             model.perform(action.intent)
         }
         .disabled(!action.isEnabled)
-        .accessibilityHint(action.disabledReason.map { Text($0) } ?? Text(verbatim: ""))
+        // 停用的按鈕不顯示 `.help`（實機確認）：說明掛在 `.disabled` 之外的透明層
+        .overlay {
+            if let reason = action.disabledReason {
+                Color.clear
+                    .contentShape(Circle())
+                    .help(Text(reason))
+            }
+        }
+        // 輔助技術讀的是這段：可用時維持與 `.help` 相同的說明
+        .accessibilityHint(Text(action.disabledReason ?? help ?? action.title))
     }
 }
 
