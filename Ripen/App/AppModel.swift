@@ -12,12 +12,10 @@ import os
 @MainActor
 @Observable
 final class AppModel {
-    /// 閒置滿這麼久，長休息間隔就重新計數（GLOSSARY）。
-    static let idleResetInterval: TimeInterval = 2 * 60 * 60
+    static let idleResetInterval = PhaseRun.idleResetInterval
     /// 跳過、重設、完成之後可以復原的時間。
     nonisolated static let undoWindow: TimeInterval = 5
-    /// 完成摘要停留的時間；比復原期限短，收起後仍可復原。
-    nonisolated static let completionSummaryDuration: TimeInterval = 3
+    nonisolated static let completionSummaryDuration = PhaseRun.completionSummaryDuration
     /// 執行期間每五秒保存一份進度；系統延後排程或寫入失敗時，以最後成功點為準。
     nonisolated static let recoveryCheckpointInterval: TimeInterval = 5
 
@@ -47,23 +45,16 @@ final class AppModel {
     /// 恢復點之後保存成功、紀錄仍未寫入時，這則提示才接手，未保存的紀錄不會沒有提示。
     var showsFocusStorageNotice: Bool { recoveryIssue == nil && focusLog.issue != nil }
 
-    private var cycle = PhaseCycle()
-    private var engine: TimerEngine {
-        // 結束時刻一變就重排到點計時器；所有操作都經過 engine，不必逐一記得重排。
+    private var run: PhaseRun {
+        // 結束時刻一變就重排到點計時器；所有操作都經過這裡，不必逐一記得重排。
         // 超時中繼續時結束時刻在過去，不再排：提醒每段只送一次
         didSet {
-            guard engine.endDate != oldValue.endDate else { return }
-            alarm.schedule(at: engine.endDate.flatMap { $0 > clock.now() ? $0 : nil })
+            guard run.engine.endDate != oldValue.engine.endDate else { return }
+            alarm.schedule(at: run.engine.endDate.flatMap { $0 > clock.now() ? $0 : nil })
         }
     }
-    /// 這段閒置開始的時刻；不在閒置時為 nil。沒有階段在跑就是閒置（暫停也算），
-    /// 超時中則只有離開時被自動暫停才算，從自動暫停的那一刻起算。
-    @ObservationIgnored private var idleSince: Date?
-    /// 目前的暫停是離開時自動暫停的超時；使用者按繼續或換階段時清掉。
-    @ObservationIgnored private var isPausedWhileAway = false
-    /// 目前階段倒數到 0 的提醒是否已送出（含待播）；換階段時歸零。
     /// 可觀察：每段只在跨過 0 時變一次，選單列選單靠它在那一刻換成「完成」，不必隨時間文字重建。
-    private(set) var reachedZero = false
+    var reachedZero: Bool { run.reachedZero }
     /// 離開期間倒數到 0、還沒播的提醒；回來時播。
     @ObservationIgnored private var pendingReminder: Phase?
     /// 使用者離開電腦的時刻；在場時為 nil。超時只算到這一刻（ADR-0006）。
@@ -76,27 +67,15 @@ final class AppModel {
     private var pendingUndo: PendingUndo?
     /// 進行中專注的歸屬；開始專注時取自下次選擇，途中更正時一併改寫（ADR-0010）。
     private var focusProjectID: UUID?
-    /// 完成摘要；完成專注後 3 秒內存在，由 `refresh()` 收起。
-    private(set) var completionSummary: CompletedFocus?
-    /// 休息期間的成果卡入口；保留到緊接的休息結束或被跳過。
-    private(set) var recapShortcut: CompletedFocus?
+    /// 完成摘要；由 `refresh()` 收起。
+    var completionSummary: CompletedFocus? { run.completionSummary }
+    var recapShortcut: CompletedFocus? { run.recapShortcut }
     /// 緊接專注的休息期間、完成摘要已收起；拖出圓環的一次性提示在這時出現，不擋住摘要（#40）。
     var isRestingAfterFocus: Bool { recapShortcut != nil && completionSummary == nil }
 
-    /// 操作前的計時狀態。引擎記的是結束時刻，換回後時間照牆上時鐘接著走（ADR-0002）。
-    private struct Snapshot {
-        let cycle: PhaseCycle
-        let engine: TimerEngine
-        let reachedZero: Bool
-        let isPausedWhileAway: Bool
-        let idleSince: Date?
-        let completionSummary: CompletedFocus?
-        let recapShortcut: CompletedFocus?
-    }
-
     private struct PendingUndo {
         let offer: UndoOffer
-        let snapshot: Snapshot
+        let snapshot: PhaseRun
     }
 
     /// 未指定的依賴一律用不碰系統的版本：測試與預覽不讀寫真正的設定與紀錄、不出聲。
@@ -119,8 +98,7 @@ final class AppModel {
         self.recoveryStorage = storage
         let configuration = settings.cycleConfiguration
         cachedConfiguration = (settings.revision, configuration)
-        engine = TimerEngine(phase: .focus, duration: configuration.duration(for: .focus))
-        idleSince = clock.now()
+        run = PhaseRun(configuration: configuration, idleSince: clock.now())
         presence.onLeave = { [weak self] leftAgo in self?.userDidLeave(leftAgo: leftAgo) }
         presence.onReturn = { [weak self] in self?.userDidReturn() }
         alarm.onFire = { [weak self] in self?.alarmDidFire() }
@@ -137,26 +115,26 @@ final class AppModel {
     var display: PhaseDisplay {
         let now = clock.now()
         return PhaseDisplay(
-            phase: engine.phase, status: engine.status(at: now), remaining: engine.remaining(at: now),
-            isOvertime: engine.isOvertime(at: now), overtime: engine.overtime(at: now),
-            phaseDuration: engine.duration, endDate: engine.endDate,
-            completedFocusesInCycle: cycle.completedFocuses, longBreakInterval: configuration.longBreakInterval
+            phase: run.engine.phase, status: run.engine.status(at: now), remaining: run.engine.remaining(at: now),
+            isOvertime: run.engine.isOvertime(at: now), overtime: run.engine.overtime(at: now),
+            phaseDuration: run.engine.duration, endDate: run.engine.endDate,
+            completedFocusesInCycle: run.cycle.completedFocuses, longBreakInterval: configuration.longBreakInterval
         )
     }
 
-    var phase: Phase { engine.phase }
+    var phase: Phase { run.engine.phase }
 
-    var status: TimerStatus { engine.status(at: clock.now()) }
+    var status: TimerStatus { run.engine.status(at: clock.now()) }
     /// 倒數到 0 之後（含暫停中）；此時「跳過」「重設」由「完成」取代。
-    var isOvertime: Bool { engine.isOvertime(at: clock.now()) }
+    var isOvertime: Bool { run.engine.isOvertime(at: clock.now()) }
     /// 目前階段的總長度，供進度計算。
-    var phaseDuration: TimeInterval { engine.duration }
+    var phaseDuration: TimeInterval { run.engine.duration }
     var longBreakInterval: Int { configuration.longBreakInterval }
 
     // MARK: - 分類
 
     /// 已開始（含暫停與超時）的專注；此時選分類是更正當次歸屬，其餘時候只影響下一次。
-    var isFocusInProgress: Bool { engine.phase == .focus && engine.startedAt != nil }
+    var isFocusInProgress: Bool { run.engine.phase == .focus && run.engine.startedAt != nil }
 
     /// 分類選單目前呈現的歸屬：進行中的專注顯示當次分類，否則是下一次的選擇。nil 是未分類。
     var currentProject: FocusProject? {
@@ -192,8 +170,8 @@ final class AppModel {
         focusLog.deleteProject(id)
         if settings.lastProjectID == id { settings.lastProjectID = nil }
         if focusProjectID == id { focusProjectID = nil }
-        completionSummary = movingToUncategorized(completionSummary, from: id)
-        recapShortcut = movingToUncategorized(recapShortcut, from: id)
+        run.completionSummary = movingToUncategorized(run.completionSummary, from: id)
+        run.recapShortcut = movingToUncategorized(run.recapShortcut, from: id)
         _ = saveCurrentRecovery()
     }
 
@@ -225,45 +203,41 @@ final class AppModel {
     func refresh() {
         guard !requiresRecoveryDecision else { return }
         let now = clock.now()
-        let previousEngine = engine
-        let previousCycle = cycle
-        let previouslyReachedZero = reachedZero
-        pauseOvertimeWhileAway(at: now)
-        remindIfReachedZero(at: now)
-        resetCountIfIdle(at: now)
-        applyChangedLength(at: now)
+        let previous = run
+        let configuration = self.configuration
+        let crossedZero = updateRun {
+            $0.pauseOvertimeIfAway(since: awaySince, at: now)
+            return $0.markReachedZero(at: now)
+        }
+        if crossedZero {
+            pendingReminder = run.engine.phase
+            deliverPendingReminder()
+        }
+        updateRun {
+            $0.resetCountIfIdle(at: now, configuration: configuration)
+            $0.applyChangedLength(at: now, configuration: configuration)
+        }
         expireUndoOffer(at: now)
-        expireCompletionSummary(at: now)
-        checkpointRecovery(at: now, force: engine != previousEngine || cycle != previousCycle
-                           || reachedZero != previouslyReachedZero)
+        updateRun { $0.expireCompletionSummary(at: now) }
+        checkpointRecovery(at: now, force: run.engine != previous.engine || run.cycle != previous.cycle
+                           || run.reachedZero != previous.reachedZero)
     }
 
-    /// 離開期間的超時不算：在離開的那一刻暫停；離開時還在倒數則停在 0（ADR-0006）。
-    ///
-    /// 睡眠時 App 不執行，可能要到回來才走到這裡；暫停時刻取自記下的離開時刻與結束時刻，不受刷新時機影響。
-    /// 自動暫停的超時算閒置，從暫停的那一刻起算：整晚睡著時倒數跨過 0，隔天回來計數也會歸零。
-    private func pauseOvertimeWhileAway(at now: Date) {
-        guard let awaySince, let endDate = engine.endDate, endDate <= now else { return }
-        let pausedAt = max(awaySince, endDate)
-        engine.pause(at: pausedAt)
-        isPausedWhileAway = true
-        idleSince = pausedAt
-    }
-
-    /// 每段只提醒一次：繼續、重複刷新、到點計時器再觸發都不重播。
-    private func remindIfReachedZero(at now: Date) {
-        guard !reachedZero, engine.isOvertime(at: now) else { return }
-        reachedZero = true
-        pendingReminder = engine.phase
-        deliverPendingReminder()
+    /// 只在真的有變化時寫入：刷新每 0.25 秒一次，對 `run` 呼叫 mutating 方法即使沒變也會通知觀察者，靜止的介面會一直重繪。
+    @discardableResult
+    private func updateRun<Result>(_ change: (inout PhaseRun) -> Result) -> Result {
+        var next = run
+        let result = change(&next)
+        if next != run { run = next }
+        return result
     }
 
     // MARK: - 完成的確立
 
     /// 這一段若在 `now` 完成會是怎樣的完成；倒數到 0 前為 nil。
     private func completion(at now: Date) -> PhaseCompletion? {
-        guard engine.isOvertime(at: now), let startedAt = engine.startedAt else { return nil }
-        return PhaseCompletion(phase: engine.phase, startedAt: startedAt, duration: engine.elapsed(at: now))
+        guard run.engine.isOvertime(at: now), let startedAt = run.engine.startedAt else { return nil }
+        return PhaseCompletion(phase: run.engine.phase, startedAt: startedAt, duration: run.engine.elapsed(at: now))
     }
 
     /// 完成的專注記錄實際長度，依開始時刻歸日（GLOSSARY）。
@@ -283,13 +257,8 @@ final class AppModel {
             projectTotal: FocusStatistics(records: focusLog.records.belonging(to: record.projectID), calendar: .current).total,
             completedAt: now
         )
-        completionSummary = completed
-        recapShortcut = completed
-    }
-
-    private func expireCompletionSummary(at now: Date) {
-        guard let completionSummary, now >= completionSummary.completedAt + Self.completionSummaryDuration else { return }
-        self.completionSummary = nil
+        run.completionSummary = completed
+        run.recapShortcut = completed
     }
 
     // MARK: - 復原
@@ -306,25 +275,13 @@ final class AppModel {
                                                 completedFocuses: snapshot.cycle.completedFocuses)
         guard writeRecovery(restored, completions: focusLog.completionsWithoutStaged, action: .save) else { return }
         focusLog.discardStaged()
-        cycle = snapshot.cycle
-        engine = snapshot.engine
-        reachedZero = snapshot.reachedZero
-        isPausedWhileAway = snapshot.isPausedWhileAway
-        idleSince = snapshot.idleSince
-        completionSummary = snapshot.completionSummary
-        recapShortcut = snapshot.recapShortcut
+        run = snapshot
         // 換回的摘要可能已過了顯示時間，不重播
-        expireCompletionSummary(at: clock.now())
+        run.expireCompletionSummary(at: clock.now())
         pendingUndo = nil
     }
 
-    private func snapshot() -> Snapshot {
-        Snapshot(cycle: cycle, engine: engine, reachedZero: reachedZero,
-                 isPausedWhileAway: isPausedWhileAway, idleSince: idleSince,
-                 completionSummary: completionSummary, recapShortcut: recapShortcut)
-    }
-
-    private func offerUndo(_ action: UndoableAction, restoring snapshot: Snapshot) {
+    private func offerUndo(_ action: UndoableAction, restoring snapshot: PhaseRun) {
         pendingUndo = PendingUndo(
             offer: UndoOffer(action: action, expiresAt: clock.now() + Self.undoWindow), snapshot: snapshot
         )
@@ -369,20 +326,8 @@ final class AppModel {
         refresh()
         // 計時器可能比結束時刻早一點觸發；還沒到 0 就重排，否則視窗關閉時提醒永遠不會送出
         let now = clock.now()
-        if engine.status(at: now) == .running, !engine.isOvertime(at: now) {
-            alarm.schedule(at: engine.endDate)
-        }
-    }
-
-    private func resetCountIfIdle(at now: Date) {
-        guard let idleSince, now.timeIntervalSince(idleSince) >= Self.idleResetInterval else { return }
-        // 只在真的有變化時寫入：閒置期間每次刷新都會走到這裡，避免無謂的觀察通知
-        // 停在休息起點等待的話，改從第 1 次專注開始；暫停中的階段（含自動暫停的超時）保留，由使用者決定
-        if engine.status(at: now) == .idle, cycle.phase != .focus {
-            cycle = PhaseCycle()
-            loadCurrentPhase()
-        } else if cycle.completedFocuses != 0 {
-            cycle.resetCount()
+        if run.engine.status(at: now) == .running, !run.engine.isOvertime(at: now) {
+            alarm.schedule(at: run.engine.endDate)
         }
     }
 
@@ -392,14 +337,6 @@ final class AppModel {
     private func startNextPhaseAutomatically(now: Date) {
         guard settings.autoStartNextPhase else { return }
         startEngine(at: now)
-    }
-
-    /// 改階段長度從下一段生效；停在起點、還沒開始的階段不算在跑，直接換成新長度。
-    private func applyChangedLength(at now: Date) {
-        guard engine.status(at: now) == .idle,
-              engine.duration != configuration.duration(for: engine.phase)
-        else { return }
-        loadCurrentPhase()
     }
 
     // MARK: - 操作意圖
@@ -447,29 +384,28 @@ final class AppModel {
 
     private func startRefreshed() {
         startEngine(at: clock.now())
-        updateIdleSince()
+        run.updateIdle(at: clock.now())
         _ = saveCurrentRecovery()
     }
 
     /// 專注從起點開始時確定當次歸屬。選擇是否已失效由 `FocusLog` 在歷史載入後判定，
     /// 載入失敗時不能把仍有效的選擇當成未分類。
     private func startEngine(at now: Date) {
-        if engine.phase == .focus, engine.status(at: now) == .idle {
+        if run.engine.phase == .focus, run.engine.status(at: now) == .idle {
             focusProjectID = settings.lastProjectID
         }
-        engine.start(at: now)
+        run.engine.start(at: now)
     }
 
     private func pauseRefreshed() {
-        engine.pause(at: clock.now())
-        updateIdleSince()
+        run.engine.pause(at: clock.now())
+        run.updateIdle(at: clock.now())
         _ = saveCurrentRecovery()
     }
 
     private func resumeRefreshed() {
-        engine.resume(at: clock.now())
-        isPausedWhileAway = false
-        updateIdleSince()
+        run.resume(at: clock.now())
+        run.updateIdle(at: clock.now())
         _ = saveCurrentRecovery()
     }
 
@@ -480,14 +416,13 @@ final class AppModel {
         let now = clock.now()
         guard let completion = completion(at: now) else { return }
         closeUndoOffer()
-        let before = snapshot()
+        let before = run
         // 前進後已是下一段的起點，再按一次完成不會重複記錄
         let record = recordIfFocus(completion)
-        cycle.advance(completed: true, longBreakInterval: configuration.longBreakInterval)
-        loadCurrentPhase()
+        run.advance(completed: true, configuration: configuration)
         if let record { presentCompletion(of: record, at: now) }
         startNextPhaseAutomatically(now: now)
-        updateIdleSince()
+        run.updateIdle(at: clock.now())
         offerUndo(.finish, restoring: before)
         _ = saveCurrentRecovery()
     }
@@ -498,10 +433,9 @@ final class AppModel {
         refresh()
         guard !isOvertime else { return }
         closeUndoOffer()
-        let before = snapshot()
-        cycle.advance(completed: false, longBreakInterval: configuration.longBreakInterval)
-        loadCurrentPhase()
-        updateIdleSince()
+        let before = run
+        run.advance(completed: false, configuration: configuration)
+        run.updateIdle(at: clock.now())
         offerUndo(.skip, restoring: before)
         _ = saveCurrentRecovery()
     }
@@ -513,9 +447,9 @@ final class AppModel {
         // 停在起點時重設沒有變化，也就沒有可復原的
         guard !isOvertime, status != .idle else { return }
         closeUndoOffer()
-        let before = snapshot()
-        loadCurrentPhase()
-        updateIdleSince()
+        let before = run
+        run.loadCurrentPhase(configuration)
+        run.updateIdle(at: clock.now())
         offerUndo(.reset, restoring: before)
         _ = saveCurrentRecovery()
     }
@@ -529,8 +463,8 @@ final class AppModel {
         }
         refresh()
         closeUndoOffer()
-        engine.pause(at: clock.now())
-        updateIdleSince()
+        run.engine.pause(at: clock.now())
+        run.updateIdle(at: clock.now())
         let saved = saveCurrentRecovery()
         return saved && !focusLog.hasUnsavedChanges
     }
@@ -545,15 +479,13 @@ final class AppModel {
             let loaded = try recoveryStorage.loadRecovery()
             if let loaded {
                 guard loaded.isValid else { throw FocusStorageError.invalidData }
-                engine = TimerEngine(recovery: loaded)
-                cycle = PhaseCycle(phase: loaded.phase, completedFocuses: loaded.completedFocuses)
+                run = PhaseRun(recovery: loaded)
                 focusProjectID = loaded.projectID
-                reachedZero = loaded.remaining <= 0
             }
             recovery = loaded
             recoveryLoaded = true
             recoveryIssue = nil
-            idleSince = nil
+            run.idleSince = nil
         } catch {
             recoveryIssue = .load
             Self.recoveryLogger.error("載入恢復進度失敗，保留原資料：\(error)")
@@ -562,15 +494,15 @@ final class AppModel {
 
     private func checkpointRecovery(at now: Date, force: Bool) {
         guard recoveryIssue == nil,
-              force || (engine.status(at: now) == .running
+              force || (run.engine.status(at: now) == .running
                         && (lastRecoveryCheckpointAt.map({ now.timeIntervalSince($0) >= Self.recoveryCheckpointInterval }) ?? true))
         else { return }
         _ = saveCurrentRecovery()
     }
 
     private func saveCurrentRecovery() -> Bool {
-        writeRecovery(engine.recovery(at: clock.now(), projectID: focusProjectID,
-                                      completedFocuses: cycle.completedFocuses), action: .save)
+        writeRecovery(run.engine.recovery(at: clock.now(), projectID: focusProjectID,
+                                      completedFocuses: run.cycle.completedFocuses), action: .save)
     }
 
     @discardableResult
@@ -597,18 +529,15 @@ final class AppModel {
         focusLog.retryIfNeeded()
         guard focusLog.issue != .load, writeRecovery(recovery, action: .continueSaved) else { return }
         recovery = nil
-        engine.resume(at: clock.now())
-        idleSince = nil
-        isPausedWhileAway = false
+        run.resume(at: clock.now())
+        run.idleSince = nil
     }
 
     func discardRecovery() {
         guard recovery != nil, recoveryLoaded, writeRecovery(nil, action: .discard) else { return }
         recovery = nil
         focusProjectID = nil
-        cycle = PhaseCycle()
-        loadCurrentPhase()
-        idleSince = clock.now()
+        run = PhaseRun(configuration: configuration, idleSince: clock.now())
     }
 
     func retryRecovery() {
@@ -623,27 +552,6 @@ final class AppModel {
         }
     }
 
-    /// 開始跑或在超時中就不是閒置，離開時自動暫停的超時除外；停下來的那一刻開始閒置。已在閒置中的操作不重新計時。
-    private func updateIdleSince() {
-        let now = clock.now()
-        if engine.status(at: now) == .running || (engine.isOvertime(at: now) && !isPausedWhileAway) {
-            idleSince = nil
-        } else if idleSince == nil {
-            idleSince = now
-        }
-    }
-
-    /// 換上循環目前所在的階段，處於起點、尚未開始。
-    /// 回到專注就離開了緊接完成的那段休息（結束、跳過或閒置歸零），摘要與成果卡入口一併結束。
-    private func loadCurrentPhase() {
-        engine = TimerEngine(phase: cycle.phase, duration: configuration.duration(for: cycle.phase))
-        reachedZero = false
-        isPausedWhileAway = false
-        if cycle.phase == .focus {
-            completionSummary = nil
-            recapShortcut = nil
-        }
-    }
 }
 
 /// 一段倒數到過 0、由「完成」確立完成的階段。
