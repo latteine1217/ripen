@@ -96,12 +96,11 @@
 - 螢幕睡眠：倒數中讓螢幕閒置關閉後回來，`log show --predicate 'subsystem == "com.latteine.ripen" AND category == "presence"' --info` 有 `left screensAsleep …s ago`，離開時刻回推到最後一次輸入。
 - 登入時開啟：設定開啟後登出再登入，Ripen 自動開啟。
 
-### 輔助使用
+### 減少動態效果
 
-觸發：新增或改動按鈕、提示、無障礙標籤與動畫。
+觸發：新增或改動過場與動畫。Ripen 不支援 VoiceOver，不列入驗收。
 
 - 開啟「減少動態效果」後切換形態，過場改為淡入淡出。
-- 以「輔助使用檢查器」或 VoiceOver 確認新控制項有名稱與狀態。實際朗讀是否聆聽，在紀錄中註明。
 
 ## 紀錄範本
 
