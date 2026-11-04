@@ -25,9 +25,9 @@ struct TimerControls: Equatable {
         var isEnabled: Bool { disabledReason == nil }
     }
 
-    /// 等待恢復決定時（ADR-0014），計時按鈕指向做決定的地方。
+    /// 等待恢復決定或載入失敗待重試時（ADR-0014），計時按鈕指向處理它的地方。
     static var awaitingRecoveryReason: LocalizedStringKey {
-        "Choose what to do with the previous timer in the main window"
+        "Handle the previous timer in the main window first"
     }
 
     /// 結束時刻列的內容。
@@ -50,7 +50,8 @@ struct TimerControls: Equatable {
     let undo: Action?
     let endCaption: EndCaption
 
-    init(display: PhaseDisplay, undoOffer: UndoOffer? = nil, requiresRecoveryDecision: Bool = false) {
+    /// 參數都不設預設值：呼叫端不會漏掉閘門。各介面經 `AppModel.timerControls` 取得。
+    init(display: PhaseDisplay, undoOffer: UndoOffer?, requiresRecoveryDecision: Bool) {
         let reason = requiresRecoveryDecision ? Self.awaitingRecoveryReason : nil
         primary = switch display.status {
         case .idle: Action(title: "Start", systemImage: "play.fill", intent: .toggleStartPause, disabledReason: reason)
@@ -63,7 +64,12 @@ struct TimerControls: Equatable {
             : Action(title: "Skip", systemImage: "forward.end.fill", intent: .skipOrFinish, disabledReason: reason)
         isResetEnabled = !requiresRecoveryDecision && !display.isOvertime && display.status != .idle
         undo = undoOffer.map(Self.undo)
-        endCaption = if display.status == .paused {
+        endCaption = Self.endCaption(for: display)
+    }
+
+    /// 只需要結束時刻列時（共用的說明文字）不必組合整份按鈕規則。
+    static func endCaption(for display: PhaseDisplay) -> EndCaption {
+        if display.status == .paused {
             .paused
         } else if display.isOvertime {
             .overtime

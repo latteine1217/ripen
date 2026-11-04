@@ -277,11 +277,11 @@ private struct IslandIconButtonStyle: ButtonStyle {
 
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .opacity(isEnabled ? 1 : 0.35)
             .background(Circle().fill(
                 configuration.isPressed ? palette.buttonPressed : isHovering && isEnabled ? palette.buttonHover
                     : (palette.button ?? Color.primary.opacity(metrics.restingOpacity)).opacity(metrics.restingFill)
             ))
+            .opacity(isEnabled ? 1 : 0.45)
             .scaleEffect(configuration.isPressed ? metrics.pressedScale : 1)
             .animation(.easeOut(duration: 0.1), value: configuration.isPressed)
     }

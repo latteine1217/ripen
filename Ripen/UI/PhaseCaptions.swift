@@ -30,7 +30,7 @@ struct EndCaption: View {
             )
         }
         Group {
-            switch TimerControls(display: display).endCaption {
+            switch TimerControls.endCaption(for: display) {
             case .paused:
                 Text("Paused")
             case .overtime:

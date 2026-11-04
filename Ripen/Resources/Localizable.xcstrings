@@ -2144,18 +2144,18 @@
         }
       }
     },
-    "Choose what to do with the previous timer in the main window": {
+    "Handle the previous timer in the main window first": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Choose what to do with the previous timer in the main window"
+            "value": "Handle the previous timer in the main window first"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "請先到主視窗決定如何處理上次的計時"
+            "value": "請先到主視窗處理上次的計時"
           }
         }
       }
