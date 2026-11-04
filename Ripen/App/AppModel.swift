@@ -30,7 +30,7 @@ final class AppModel {
     @ObservationIgnored private let reminderSound: any ReminderSound
     @ObservationIgnored private let alarm: any PhaseEndAlarm
     private static let recoveryLogger = Logger(subsystem: "com.latteine.ripen", category: "recovery")
-    @ObservationIgnored private let recoveryStorage: (any TimerRecoveryStorage)?
+    @ObservationIgnored private let recoveryStorage: any TimerRecoveryStorage
     private(set) var recovery: TimerRecovery?
     private(set) var recoveryIssue: FocusLogIssue? {
         didSet { if recoveryIssue != nil && recoveryIssue != oldValue { onRecoveryIssue?() } }
@@ -99,25 +99,24 @@ final class AppModel {
         let snapshot: Snapshot
     }
 
-    /// 未指定的依賴一律用不碰系統的版本：測試與預覽不讀寫真正的設定、不出聲。
+    /// 未指定的依賴一律用不碰系統的版本：測試與預覽不讀寫真正的設定與紀錄、不出聲。
     ///
-    /// `recoveryStorage` 與 `focusLog` 的儲存必須是同一個資料庫：檢查點與完成日誌靠同一交易保持一致（ADR-0014）。
+    /// 完成紀錄與恢復進度共用同一份儲存：檢查點與完成日誌靠同一交易保持一致（ADR-0014）。
     init(
         clock: any TimeSource = SystemTimeSource(),
         settings: AppSettings = AppSettings(storage: InMemorySettingsStorage()),
-        focusLog: FocusLog = FocusLog(),
+        storage: any FocusStorage = InMemoryFocusStorage(),
         presence: any UserPresence = AlwaysPresent(),
         reminderSound: any ReminderSound = SilentReminderSound(),
-        alarm: any PhaseEndAlarm = NoPhaseEndAlarm(),
-        recoveryStorage: (any TimerRecoveryStorage)? = nil
+        alarm: any PhaseEndAlarm = NoPhaseEndAlarm()
     ) {
         self.clock = clock
         self.settings = settings
-        self.focusLog = focusLog
+        self.focusLog = FocusLog(storage: storage)
         self.presence = presence
         self.reminderSound = reminderSound
         self.alarm = alarm
-        self.recoveryStorage = recoveryStorage
+        self.recoveryStorage = storage
         let configuration = settings.cycleConfiguration
         cachedConfiguration = (settings.revision, configuration)
         engine = TimerEngine(phase: .focus, duration: configuration.duration(for: .focus))
@@ -127,26 +126,11 @@ final class AppModel {
         alarm.onFire = { [weak self] in self?.alarmDidFire() }
         loadRecovery()
         // 包含歷史頁直接重試在內，正式完成必須先有可重播的保存點。
-        if recoveryStorage != nil {
-            focusLog.persistRecoveryBeforeCommit = { [weak self] in
-                guard let self, self.recoveryLoaded, self.saveCurrentRecovery() else {
-                    throw CocoaError(.fileWriteUnknown)
-                }
+        focusLog.persistRecoveryBeforeCommit = { [weak self] in
+            guard let self, self.recoveryLoaded, self.saveCurrentRecovery() else {
+                throw CocoaError(.fileWriteUnknown)
             }
         }
-    }
-
-    /// 完成紀錄與恢復進度共用同一份儲存。
-    convenience init(
-        clock: any TimeSource = SystemTimeSource(),
-        settings: AppSettings = AppSettings(storage: InMemorySettingsStorage()),
-        storage: any FocusStorage,
-        presence: any UserPresence = AlwaysPresent(),
-        reminderSound: any ReminderSound = SilentReminderSound(),
-        alarm: any PhaseEndAlarm = NoPhaseEndAlarm()
-    ) {
-        self.init(clock: clock, settings: settings, focusLog: FocusLog(storage: storage), presence: presence,
-                  reminderSound: reminderSound, alarm: alarm, recoveryStorage: storage)
     }
 
     /// 只讀取一次注入時鐘；不呼叫 refresh，不發出提醒或確立完成。
@@ -555,10 +539,10 @@ final class AppModel {
 
     private func loadRecovery() {
         do {
-            let completedWereRecovered = try recoveryStorage?.recoverCompletions() == true
+            let completedWereRecovered = try recoveryStorage.recoverCompletions()
             // 先前交易可能已提交但遺失回報；重試也要讀回實際歷史。
             if completedWereRecovered || recoveryIssue == .load { focusLog.retry() }
-            let loaded = try recoveryStorage?.loadRecovery()
+            let loaded = try recoveryStorage.loadRecovery()
             if let loaded {
                 guard loaded.isValid else { throw FocusStorageError.invalidData }
                 engine = TimerEngine(recovery: loaded)
@@ -577,7 +561,7 @@ final class AppModel {
     }
 
     private func checkpointRecovery(at now: Date, force: Bool) {
-        guard recoveryStorage != nil, recoveryIssue == nil,
+        guard recoveryIssue == nil,
               force || (engine.status(at: now) == .running
                         && (lastRecoveryCheckpointAt.map({ now.timeIntervalSince($0) >= Self.recoveryCheckpointInterval }) ?? true))
         else { return }
@@ -594,7 +578,7 @@ final class AppModel {
         _ value: TimerRecovery?, completions: [StoredFocusRecord]? = nil, action: RecoveryAction
     ) -> Bool {
         do {
-            try recoveryStorage?.saveCheckpoint(value, completions: completions ?? focusLog.recoveryCompletions)
+            try recoveryStorage.saveCheckpoint(value, completions: completions ?? focusLog.recoveryCompletions)
             lastRecoveryCheckpointAt = clock.now()
             failedRecoveryAction = nil
             recoveryIssue = nil
