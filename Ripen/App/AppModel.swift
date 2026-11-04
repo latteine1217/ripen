@@ -42,6 +42,9 @@ final class AppModel {
     @ObservationIgnored private var failedRecoveryAction: RecoveryAction?
     /// 尚未決定或載入失敗時，所有入口維持同一份恢復資料，不允許另開計時。
     var requiresRecoveryDecision: Bool { !recoveryLoaded || recovery != nil }
+    /// 恢復進度的提示還在時不另外顯示紀錄的提示：它的重試也會重試紀錄，同一次失敗只有一則提示與一個重試。
+    /// 恢復點之後保存成功、紀錄仍未寫入時，這則提示才接手，未保存的紀錄不會沒有提示。
+    var showsFocusStorageNotice: Bool { recoveryIssue == nil && focusLog.issue != nil }
 
     private var cycle = PhaseCycle()
     private var engine: TimerEngine {
@@ -96,6 +99,8 @@ final class AppModel {
     }
 
     /// 未指定的依賴一律用不碰系統的版本：測試與預覽不讀寫真正的設定、不出聲。
+    ///
+    /// `recoveryStorage` 與 `focusLog` 的儲存必須是同一個資料庫：檢查點與完成日誌靠同一交易保持一致（ADR-0014）。
     init(
         clock: any TimeSource = SystemTimeSource(),
         settings: AppSettings = AppSettings(storage: InMemorySettingsStorage()),
@@ -292,10 +297,16 @@ final class AppModel {
     // MARK: - 復原
 
     /// 復原上一個跳過、重設或完成：換回操作前的狀態，暫存的完成紀錄一併捨棄。期限已過則不做任何事。
+    ///
+    /// 日誌先更新成功才生效（ADR-0014）：否則畫面已復原，當機後這筆完成仍會從日誌確立。
+    /// 保存失敗時狀態與復原機會都不變，可以再按一次；期限到了照一般流程確立。
     func undo() {
         guard !requiresRecoveryDecision else { return }
         refresh()
         guard let snapshot = pendingUndo?.snapshot else { return }
+        let restored = snapshot.engine.recovery(at: clock.now(), projectID: focusProjectID,
+                                                completedFocuses: snapshot.cycle.completedFocuses)
+        guard writeRecovery(restored, completions: focusLog.completionsWithoutStaged, action: .save) else { return }
         focusLog.discardStaged()
         cycle = snapshot.cycle
         engine = snapshot.engine
@@ -307,7 +318,6 @@ final class AppModel {
         // 換回的摘要可能已過了顯示時間，不重播
         expireCompletionSummary(at: clock.now())
         pendingUndo = nil
-        _ = saveCurrentRecovery()
     }
 
     private func snapshot() -> Snapshot {
@@ -515,7 +525,7 @@ final class AppModel {
     /// 退出先暫停目前階段，先前已按完成的紀錄才確立；取消退出也不自動完成或前進。
     @discardableResult
     func prepareToQuit() -> Bool {
-        if focusLog.issue != nil { focusLog.retry() }
+        focusLog.retryIfNeeded()
         if requiresRecoveryDecision {
             return recoveryIssue == nil && !focusLog.hasUnsavedChanges
         }
@@ -566,9 +576,11 @@ final class AppModel {
     }
 
     @discardableResult
-    private func writeRecovery(_ value: TimerRecovery?, action: RecoveryAction) -> Bool {
+    private func writeRecovery(
+        _ value: TimerRecovery?, completions: [StoredFocusRecord]? = nil, action: RecoveryAction
+    ) -> Bool {
         do {
-            try recoveryStorage?.saveCheckpoint(value, completions: focusLog.recoveryCompletions)
+            try recoveryStorage?.saveCheckpoint(value, completions: completions ?? focusLog.recoveryCompletions)
             lastRecoveryCheckpointAt = clock.now()
             failedRecoveryAction = nil
             recoveryIssue = nil
@@ -584,7 +596,7 @@ final class AppModel {
     func continueRecovery() {
         guard recovery != nil, recoveryLoaded else { return }
         // 分類還沒載入時不能把未知分類當作未分類完成。
-        if focusLog.issue != nil { focusLog.retry() }
+        focusLog.retryIfNeeded()
         guard focusLog.issue != .load, writeRecovery(recovery, action: .continueSaved) else { return }
         recovery = nil
         engine.resume(at: clock.now())
@@ -607,7 +619,7 @@ final class AppModel {
         case .continueSaved: continueRecovery()
         case .discard: discardRecovery()
         case .save:
-            if focusLog.issue != nil { focusLog.retry() }
+            focusLog.retryIfNeeded()
             _ = saveCurrentRecovery()
         case nil: break
         }

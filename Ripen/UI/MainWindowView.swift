@@ -14,7 +14,7 @@ struct MainWindowView: View {
         // 介紹蓋在兩頁之上，底下的計時頁保留版面但不定時繪製。
         let showsIntro = !model.settings.gestureIntroSeen
         VStack(spacing: 0) {
-            FocusStorageNotice(log: model.focusLog)
+            if model.showsFocusStorageNotice { FocusStorageNotice(log: model.focusLog) }
             TimerRecoveryStorageNotice(model: model)
             if model.requiresRecoveryDecision {
                 TimerRecoveryView(model: model)

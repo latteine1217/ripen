@@ -21,7 +21,6 @@ struct TimerRecovery: Codable, Equatable, Sendable {
 
 protocol TimerRecoveryStorage {
     func loadRecovery() throws -> TimerRecovery?
-    func saveRecovery(_ recovery: TimerRecovery?) throws
     func saveCheckpoint(_ recovery: TimerRecovery?, completions: [StoredFocusRecord]) throws
     func recoverCompletions() throws -> Bool
 }

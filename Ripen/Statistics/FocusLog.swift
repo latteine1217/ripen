@@ -86,6 +86,8 @@ final class FocusLog {
     var pendingCount: Int { pending.count + (staged == nil ? 0 : 1) }
     /// 尚未確立與未保存的完成，和恢復點一起記日誌，跨啟動依穩定識別碼確立。
     var recoveryCompletions: [StoredFocusRecord] { pending + (staged.map { [$0] } ?? []) }
+    /// 復原時要寫入日誌的內容：捨棄還能復原的那一筆之後，日誌應該剩下的完成。
+    var completionsWithoutStaged: [StoredFocusRecord] { pending }
     /// 依建立順序；尚未保存的分類也可選取，與紀錄一起重試。
     var projects: [FocusProject] {
         (savedProjects + pendingProjects).map { project in
@@ -218,9 +220,14 @@ final class FocusLog {
         append(entry)
     }
 
-    /// 使用者復原了「完成」：暫存尚未寫入正式歷史，恢復日誌隨下一個檢查點一起更新。
+    /// 使用者復原了「完成」：暫存尚未寫入正式歷史。呼叫前日誌必須已移除這一筆（`completionsWithoutStaged`）。
     func discardStaged() {
         staged = nil
+    }
+
+    /// 有錯誤才重試；沒有時不重新讀取歷史。
+    func retryIfNeeded() {
+        if issue != nil { retry() }
     }
 
     /// 先恢復歷史與辨認已提交的重試，再保存待處理紀錄，不能以空歷史覆蓋未知資料。
