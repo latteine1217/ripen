@@ -136,6 +136,19 @@ final class AppModel {
         }
     }
 
+    /// 完成紀錄與恢復進度共用同一份儲存。
+    convenience init(
+        clock: any TimeSource = SystemTimeSource(),
+        settings: AppSettings = AppSettings(storage: InMemorySettingsStorage()),
+        storage: any FocusStorage,
+        presence: any UserPresence = AlwaysPresent(),
+        reminderSound: any ReminderSound = SilentReminderSound(),
+        alarm: any PhaseEndAlarm = NoPhaseEndAlarm()
+    ) {
+        self.init(clock: clock, settings: settings, focusLog: FocusLog(storage: storage), presence: presence,
+                  reminderSound: reminderSound, alarm: alarm, recoveryStorage: storage)
+    }
+
     /// 只讀取一次注入時鐘；不呼叫 refresh，不發出提醒或確立完成。
     var display: PhaseDisplay {
         let now = clock.now()

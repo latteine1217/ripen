@@ -40,14 +40,14 @@ struct RipenApp: App {
             settings.completionSoundEnabled = false
         }
         #endif
-        let storage = validationDirectory.map { SQLiteFocusLogStorage(directory: $0) } ?? .standard
+        let persistent = validationDirectory.map { SQLiteFocusLogStorage(directory: $0) } ?? .standard
+        let storage: any FocusStorage = isTesting ? InMemoryFocusStorage() : persistent
         let model = AppModel(
             settings: settings,
-            focusLog: isTesting ? FocusLog() : FocusLog(storage: storage),
+            storage: storage,
             presence: SystemUserPresence(),
             reminderSound: SystemReminderSound(),
-            alarm: TimerPhaseEndAlarm(),
-            recoveryStorage: isTesting ? nil : storage
+            alarm: TimerPhaseEndAlarm()
         )
         let hotkeys = GlobalHotkeyController(registrar: CarbonHotkeyRegistrar.shared, settings: model.settings) {
             model.toggleStartPause()

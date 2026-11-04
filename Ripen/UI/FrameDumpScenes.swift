@@ -48,7 +48,7 @@ extension FrameDump {
         }
         // 等待恢復決定：計時按鈕停用，回主視窗的按鈕維持可用
         let awaitingRecovery = Scene(name: "island-expanded-awaiting-recovery", size: CGSize(width: 420, height: 200)) { _ in
-            let model = AppModel(clock: FrameClock(), recoveryStorage: SampleRecoveryStorage())
+            let model = AppModel(clock: FrameClock(), storage: InMemoryFocusStorage(recovery: .frameDumpSample))
             return AnyView(
                 NotchIslandView(model: model, presentation: PresentationModel(), state: NotchIslandState(notch: notch, isExpanded: true))
                     .background(Color(white: 0.85))

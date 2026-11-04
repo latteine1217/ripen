@@ -38,11 +38,11 @@ extension FrameDump {
 
     /// 第二次專注、倒數中：同時看得到「2/4」與進度。
     private static func sampleModel(
-        recoveryStorage: (any TimerRecoveryStorage)? = nil,
+        storage: any FocusStorage = InMemoryFocusStorage(),
         _ setUp: (AppModel, FloatingFrameClock) -> Void = { model, _ in model.start() }
     ) -> AppModel {
         let clock = FloatingFrameClock()
-        let model = AppModel(clock: clock, recoveryStorage: recoveryStorage)
+        let model = AppModel(clock: clock, storage: storage)
         model.start()
         clock.current += 25 * 60
         model.finish()
@@ -83,8 +83,8 @@ extension FrameDump {
         return cases.map { item in
             Scene(name: item.name, size: CGSize(width: item.size.width + 2 * margin,
                                                 height: item.size.height + 2 * margin)) { _ in
-                let storage = item.timing == .awaitingRecovery ? SampleRecoveryStorage() : nil
-                let model = sampleModel(recoveryStorage: storage) { model, clock in
+                let storage = InMemoryFocusStorage(recovery: item.timing == .awaitingRecovery ? .frameDumpSample : nil)
+                let model = sampleModel(storage: storage) { model, clock in
                     model.start()
                     switch item.timing {
                     case .running, .awaitingRecovery: break
@@ -228,14 +228,11 @@ private final class FloatingFrameClock: TimeSource {
     func now() -> Date { current }
 }
 
-/// 輸出用的儲存：永遠留著一段未完成的專注，模型啟動後就在等待恢復決定。
-struct SampleRecoveryStorage: TimerRecoveryStorage {
-    func loadRecovery() -> TimerRecovery? {
-        TimerRecovery(phase: .focus, duration: 25 * 60, remaining: 12 * 60,
-                      startedAt: Date(timeIntervalSinceReferenceDate: 800_000_000),
-                      projectID: nil, completedFocuses: 1)
-    }
-    func saveCheckpoint(_ recovery: TimerRecovery?, completions: [StoredFocusRecord]) {}
-    func recoverCompletions() -> Bool { false }
+/// 輸出用的恢復點：一段未完成的專注，模型啟動後就在等待恢復決定。
+extension TimerRecovery {
+    static let frameDumpSample = TimerRecovery(
+        phase: .focus, duration: 25 * 60, remaining: 12 * 60,
+        startedAt: Date(timeIntervalSinceReferenceDate: 800_000_000), projectID: nil, completedFocuses: 1
+    )
 }
 #endif

@@ -62,7 +62,8 @@ extension FrameDump {
             Scene(name: "appearance-\(style)-statistics-filled", size: CGSize(width: 820, height: 620)) { _ in
                 let settings = AppSettings(storage: InMemorySettingsStorage())
                 settings.appearanceStyle = style
-                let log = FocusLog()
+                let storage = InMemoryFocusStorage()
+                let log = FocusLog(storage: storage)
                 let thesis = log.addProject(named: "Thesis", color: ProjectColor.allCases[0])
                 let reading = log.addProject(named: "Reading", color: ProjectColor.allCases[4])
                 let today = Calendar.current.startOfDay(for: Date())
@@ -78,7 +79,7 @@ extension FrameDump {
                                                duration: 25 * 60, projectID: entry.project?.id))
                     }
                 }
-                let model = AppModel(clock: AppearanceFrameClock(), settings: settings, focusLog: log)
+                let model = AppModel(clock: AppearanceFrameClock(), settings: settings, storage: storage)
                 return AnyView(
                     HStack(alignment: .top, spacing: 20) {
                         TimerPageView(model: model).fixedSize().ripenGlass(settings: settings)
