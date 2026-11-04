@@ -9,6 +9,7 @@ Notable changes to Ripen. The format follows [Keep a Changelog](https://keepacha
 - **Check for Updates…** is back in the Ripen menu, below **About Ripen**. It had been missing since 0.1.0, so updates could only be checked from Settings.
 - Undo now takes effect only after the change is saved. If saving failed, the screen used to show the focus as undone while a crash or quitting without saving could still add it to your history; now the timer stays as it was, an error appears, and you can press Undo again.
 - A failed save during a timer checkpoint shows one notice with one Retry button instead of two.
+- While a previous timer is waiting for your decision, the timer buttons in the floating window and notch island are disabled and point you to the main window. They used to look active and do nothing when pressed.
 
 ## [0.2.4] - 2026-11-03
 

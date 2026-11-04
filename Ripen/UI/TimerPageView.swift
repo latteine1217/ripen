@@ -21,7 +21,7 @@ struct TimerPageView: View {
             let status = display.status
             let phase = display.phase
             let isOvertime = display.isOvertime
-            let controls = TimerControls(display: display)
+            let controls = model.timerControls(display: display)
             VStack(spacing: 20) {
                 ProjectPickerView(model: model, showsTotal: !model.isFocusInProgress)
 

@@ -163,7 +163,7 @@ private struct FloatingWindowContent: View {
     var body: some View {
         let status = display.status
         let isPaused = status == .paused
-        let controls = TimerControls(display: display)
+        let controls = model.timerControls(display: display)
         PlacedLayout(placements: placements) {
             ring(isPaused: isPaused)
             // 成果卡入口接在階段後，與復原膠囊同一格：膠囊倒數完才浮現（#25）
@@ -181,7 +181,8 @@ private struct FloatingWindowContent: View {
                                     alignment: layout.caption.anchorX < 0.5 ? .leading : .center)
                 .opacity(layout.caption.opacity)
             timeText(status: status)
-            endCaption
+            // 小尺寸這一格本來就隱藏
+            CompletionOrEndCaption(model: model, display: display)
                 .font(.system(size: layout.end.fontSize, weight: .medium, design: .rounded))
                 .foregroundStyle(palette.secondary)
                 .fixedSize()
@@ -248,35 +249,14 @@ private struct FloatingWindowContent: View {
 
     /// 剩餘時間：三種尺寸共用這一個元件，只換字級與位置。完成專注後約 3 秒換成完成摘要（#25）。
     private func timeText(status: TimerStatus) -> some View {
-        ZStack {
-            if let summary = model.completionSummary {
-                CompletionTimeText(summary: summary)
-                    .transition(.opacity)
-            } else {
-                Text(verbatim: display.timeText)
-                    .foregroundStyle(display.isOvertime ? AnyShapeStyle(.tint)
-                                     : AnyShapeStyle(status == .running ? palette.primary : palette.secondary))
-                    .monospacedDigit()
-                    .transition(.opacity)
-            }
+        CompletionTimeSwap(summary: model.completionSummary) {
+            Text(verbatim: display.timeText)
+                .foregroundStyle(display.isOvertime ? AnyShapeStyle(.tint)
+                                 : AnyShapeStyle(status == .running ? palette.primary : palette.secondary))
+                .monospacedDigit()
         }
         .font(.system(size: layout.time.fontSize, weight: .semibold, design: .rounded))
         .fixedSize()
-        .animation(.easeInOut(duration: 0.25), value: model.completionSummary)
-    }
-
-    /// 結束時刻那一格；完成摘要期間換成分類累積。小尺寸這一格本來就隱藏。
-    private var endCaption: some View {
-        ZStack {
-            if let summary = model.completionSummary {
-                CompletionTotalCaption(summary: summary, project: model.focusLog.project(withID: summary.projectID))
-                    .transition(.opacity)
-            } else {
-                EndCaption(display: display, clockFormat: model.settings.clockFormat)
-                    .transition(.opacity)
-            }
-        }
-        .animation(.easeInOut(duration: 0.25), value: model.completionSummary)
     }
 }
 

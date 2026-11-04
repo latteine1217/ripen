@@ -36,7 +36,8 @@ final class AppModel {
         didSet { if recoveryIssue != nil && recoveryIssue != oldValue { onRecoveryIssue?() } }
     }
     @ObservationIgnored var onRecoveryIssue: (() -> Void)?
-    @ObservationIgnored private var recoveryLoaded = false
+    /// 可觀察：載入失敗時 `requiresRecoveryDecision` 不會讀到 `recovery`，重試成功後靜止的介面要靠它解除閘門。
+    private var recoveryLoaded = false
     @ObservationIgnored private var lastRecoveryCheckpointAt: Date?
     private enum RecoveryAction { case continueSaved, discard, save }
     @ObservationIgnored private var failedRecoveryAction: RecoveryAction?

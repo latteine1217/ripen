@@ -86,7 +86,7 @@ struct NotchIslandView: View {
                 }
                 Spacer(minLength: state.notch.rect.width)
                 if expanded {
-                    endCaption(display)
+                    CompletionOrEndCaption(model: model, display: display)
                         .font(.system(size: 11, weight: .medium, design: .rounded))
                         .foregroundStyle(.secondary)
                 } else {
@@ -100,7 +100,7 @@ struct NotchIslandView: View {
                 VStack(spacing: 10) {
                     timeText(time, size: 34, dimmed: !isRunning, isOvertime: display.isOvertime)
                     ProgressBar(progress: display.phaseProgress)
-                    controls(TimerControls(display: display))
+                    controls(model.timerControls(display: display))
                     // 把手：暗示整條島可以往下拉；游標在島上時變亮，與下垂一起表示拉得動（#45）
                     Capsule().fill(.white.opacity(state.isHovering ? 0.8 : 0.35)).frame(width: 28, height: 4)
                         .animation(.easeOut(duration: 0.15), value: state.isHovering)
@@ -129,35 +129,14 @@ struct NotchIslandView: View {
 
     /// 收合與展開共用的時間；完成專注後約 3 秒換成完成摘要（#25）。
     private func timeText(_ time: String, size: CGFloat, dimmed: Bool, isOvertime: Bool) -> some View {
-        ZStack {
-            if let summary = model.completionSummary {
-                CompletionTimeText(summary: summary)
-                    .transition(.opacity)
-            } else {
-                Text(verbatim: time)
-                    .overtimeStyle(isOvertime)
-                    .monospacedDigit()
-                    .opacity(dimmed ? 0.45 : 1)
-                    .transition(.opacity)
-            }
+        CompletionTimeSwap(summary: model.completionSummary) {
+            Text(verbatim: time)
+                .overtimeStyle(isOvertime)
+                .monospacedDigit()
+                .opacity(dimmed ? 0.45 : 1)
         }
         .font(.system(size: size, weight: .semibold, design: .rounded))
-        .animation(.easeInOut(duration: 0.25), value: model.completionSummary)
         .matchedGeometryEffect(id: "time", in: timeSpace)
-    }
-
-    /// 展開時的結束時刻；完成摘要期間換成分類累積。
-    private func endCaption(_ display: PhaseDisplay) -> some View {
-        ZStack {
-            if let summary = model.completionSummary {
-                CompletionTotalCaption(summary: summary, project: model.focusLog.project(withID: summary.projectID))
-                    .transition(.opacity)
-            } else {
-                EndCaption(display: display, clockFormat: model.settings.clockFormat)
-                    .transition(.opacity)
-            }
-        }
-        .animation(.easeInOut(duration: 0.25), value: model.completionSummary)
     }
 
     private func controls(_ controls: TimerControls) -> some View {
@@ -176,7 +155,11 @@ struct TimerIconButton: View {
     var help: LocalizedStringKey?
 
     var body: some View {
-        IslandIconButton(action.title, systemImage: action.systemImage, help: help) { model.perform(action.intent) }
+        IslandIconButton(action.title, systemImage: action.systemImage, help: action.disabledReason ?? help) {
+            model.perform(action.intent)
+        }
+        .disabled(!action.isEnabled)
+        .accessibilityHint(action.disabledReason.map { Text($0) } ?? Text(verbatim: ""))
     }
 }
 
@@ -288,13 +271,15 @@ struct IslandIconButton: View {
 
 private struct IslandIconButtonStyle: ButtonStyle {
     @Environment(\.appPalette) private var palette
+    @Environment(\.isEnabled) private var isEnabled
     let isHovering: Bool
     let metrics: IconButtonMetrics
 
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
+            .opacity(isEnabled ? 1 : 0.35)
             .background(Circle().fill(
-                configuration.isPressed ? palette.buttonPressed : isHovering ? palette.buttonHover
+                configuration.isPressed ? palette.buttonPressed : isHovering && isEnabled ? palette.buttonHover
                     : (palette.button ?? Color.primary.opacity(metrics.restingOpacity)).opacity(metrics.restingFill)
             ))
             .scaleEffect(configuration.isPressed ? metrics.pressedScale : 1)

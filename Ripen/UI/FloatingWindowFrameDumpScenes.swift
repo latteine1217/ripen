@@ -37,10 +37,12 @@ extension FrameDump {
     }
 
     /// 第二次專注、倒數中：同時看得到「2/4」與進度。
-    private static func sampleModel(_ setUp: (AppModel, FloatingFrameClock) -> Void = { model, _ in model.start() })
-        -> AppModel {
+    private static func sampleModel(
+        recoveryStorage: (any TimerRecoveryStorage)? = nil,
+        _ setUp: (AppModel, FloatingFrameClock) -> Void = { model, _ in model.start() }
+    ) -> AppModel {
         let clock = FloatingFrameClock()
-        let model = AppModel(clock: clock)
+        let model = AppModel(clock: clock, recoveryStorage: recoveryStorage)
         model.start()
         clock.current += 25 * 60
         model.finish()
@@ -55,8 +57,12 @@ extension FrameDump {
     /// 三種尺寸（#15）：預設大小，以及拖角落拖出來的大小（同一尺寸內版面隨大小重新分配），各一張；
     /// 另加暫停中的小與大，以及超時中（#17）的三種尺寸與最窄的小。
     private static var sizeScenes: [Scene] {
-        enum Timing { case running, paused, overtime }
+        enum Timing { case running, paused, overtime, awaitingRecovery }
         let cases: [(name: String, size: CGSize, timing: Timing)] = [
+            // 等待恢復決定：計時按鈕停用，回主視窗的按鈕維持可用
+            ("floating-size-small-awaiting-recovery", FloatingWindowSize.small.defaultSize, .awaitingRecovery),
+            ("floating-size-medium-awaiting-recovery", FloatingWindowSize.medium.defaultSize, .awaitingRecovery),
+            ("floating-size-large-awaiting-recovery", FloatingWindowSize.large.defaultSize, .awaitingRecovery),
             ("floating-size-small", FloatingWindowSize.small.defaultSize, .running),
             ("floating-size-small-min", CGSize(width: 300, height: 56), .running),
             ("floating-size-small-paused", FloatingWindowSize.small.defaultSize, .paused),
@@ -77,10 +83,11 @@ extension FrameDump {
         return cases.map { item in
             Scene(name: item.name, size: CGSize(width: item.size.width + 2 * margin,
                                                 height: item.size.height + 2 * margin)) { _ in
-                let model = sampleModel { model, clock in
+                let storage = item.timing == .awaitingRecovery ? SampleRecoveryStorage() : nil
+                let model = sampleModel(recoveryStorage: storage) { model, clock in
                     model.start()
                     switch item.timing {
-                    case .running: break
+                    case .running, .awaitingRecovery: break
                     case .paused:
                         clock.current += 48
                         model.pause()
@@ -219,5 +226,16 @@ extension FrameDump {
 private final class FloatingFrameClock: TimeSource {
     var current = Date(timeIntervalSinceReferenceDate: 800_000_000)
     func now() -> Date { current }
+}
+
+/// 輸出用的儲存：永遠留著一段未完成的專注，模型啟動後就在等待恢復決定。
+struct SampleRecoveryStorage: TimerRecoveryStorage {
+    func loadRecovery() -> TimerRecovery? {
+        TimerRecovery(phase: .focus, duration: 25 * 60, remaining: 12 * 60,
+                      startedAt: Date(timeIntervalSinceReferenceDate: 800_000_000),
+                      projectID: nil, completedFocuses: 1)
+    }
+    func saveCheckpoint(_ recovery: TimerRecovery?, completions: [StoredFocusRecord]) {}
+    func recoverCompletions() -> Bool { false }
 }
 #endif

@@ -83,6 +83,44 @@ extension FocusTotal {
     }
 }
 
+/// 懸浮窗與瀏海島的時間格：完成摘要期間顯示本次長度，其餘時間顯示倒數。倒數的樣式由介面決定。
+struct CompletionTimeSwap<Countdown: View>: View {
+    let summary: CompletedFocus?
+    @ViewBuilder let countdown: Countdown
+
+    var body: some View {
+        ZStack {
+            if let summary {
+                CompletionTimeText(summary: summary)
+                    .transition(.opacity)
+            } else {
+                countdown
+                    .transition(.opacity)
+            }
+        }
+        .animation(.easeInOut(duration: 0.25), value: summary)
+    }
+}
+
+/// 懸浮窗與瀏海島的結束時刻格：完成摘要期間換成分類累積。
+struct CompletionOrEndCaption: View {
+    let model: AppModel
+    let display: PhaseDisplay
+
+    var body: some View {
+        ZStack {
+            if let summary = model.completionSummary {
+                CompletionTotalCaption(summary: summary, project: model.focusLog.project(withID: summary.projectID))
+                    .transition(.opacity)
+            } else {
+                EndCaption(display: display, clockFormat: model.settings.clockFormat)
+                    .transition(.opacity)
+            }
+        }
+        .animation(.easeInOut(duration: 0.25), value: model.completionSummary)
+    }
+}
+
 /// 完成摘要在懸浮窗與瀏海島的時間格：勾號加本次長度，約 3 秒後換回倒數。字級由所在的格子決定。
 struct CompletionTimeText: View {
     let summary: CompletedFocus

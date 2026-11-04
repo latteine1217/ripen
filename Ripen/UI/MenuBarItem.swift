@@ -99,16 +99,16 @@ private struct MenuBarMenu: View {
         // 超時由時鐘推導、不會通知；讀 `reachedZero` 讓選單在跨過 0 時重建（開著時也會換成「完成」）。
         // 畫面仍可能落後，所以「跳過」點下時若已超時就改為完成
         let _ = model.reachedZero
-        let controls = TimerControls(display: model.display, undoOffer: model.undoOffer)
+        let controls = model.timerControls()
         Button(controls.primary.title) { model.perform(controls.primary.intent) }
-            .disabled(model.requiresRecoveryDecision)
+            .disabled(!controls.primary.isEnabled)
         // ⌘S／⌘R 與主選單「計時」選單相同；這裡只在選單打開時有效
         Button(controls.secondary.title) { model.perform(controls.secondary.intent) }
-            .disabled(model.requiresRecoveryDecision)
+            .disabled(!controls.secondary.isEnabled)
             .keyboardShortcut("s")
         Button("Reset") { model.perform(.reset) }
             .keyboardShortcut("r")
-            .disabled(!controls.isResetEnabled || model.requiresRecoveryDecision)
+            .disabled(!controls.isResetEnabled)
         // 復原期限只有幾秒，選單打開時才看得到；選單開著時過期，點下也不會做任何事
         if let undo = controls.undo {
             Button(undo.title) { model.perform(undo.intent) }

@@ -19,6 +19,15 @@ struct TimerControls: Equatable {
         let title: LocalizedStringKey
         let systemImage: String
         let intent: TimerIntent
+        /// 為何現在不能按；nil 表示可以按。模型的 guard 仍是最後防線，這裡負責給使用者回饋。
+        var disabledReason: LocalizedStringKey?
+
+        var isEnabled: Bool { disabledReason == nil }
+    }
+
+    /// 等待恢復決定時（ADR-0014），計時按鈕指向做決定的地方。
+    static var awaitingRecoveryReason: LocalizedStringKey {
+        "Choose what to do with the previous timer in the main window"
     }
 
     /// 結束時刻列的內容。
@@ -41,17 +50,18 @@ struct TimerControls: Equatable {
     let undo: Action?
     let endCaption: EndCaption
 
-    init(display: PhaseDisplay, undoOffer: UndoOffer? = nil) {
+    init(display: PhaseDisplay, undoOffer: UndoOffer? = nil, requiresRecoveryDecision: Bool = false) {
+        let reason = requiresRecoveryDecision ? Self.awaitingRecoveryReason : nil
         primary = switch display.status {
-        case .idle: Action(title: "Start", systemImage: "play.fill", intent: .toggleStartPause)
-        case .running: Action(title: "Pause", systemImage: "pause.fill", intent: .toggleStartPause)
-        case .paused: Action(title: "Resume", systemImage: "play.fill", intent: .toggleStartPause)
+        case .idle: Action(title: "Start", systemImage: "play.fill", intent: .toggleStartPause, disabledReason: reason)
+        case .running: Action(title: "Pause", systemImage: "pause.fill", intent: .toggleStartPause, disabledReason: reason)
+        case .paused: Action(title: "Resume", systemImage: "play.fill", intent: .toggleStartPause, disabledReason: reason)
         }
         finishes = display.isOvertime
         secondary = finishes
-            ? Action(title: "Done", systemImage: "checkmark", intent: .skipOrFinish)
-            : Action(title: "Skip", systemImage: "forward.end.fill", intent: .skipOrFinish)
-        isResetEnabled = !display.isOvertime && display.status != .idle
+            ? Action(title: "Done", systemImage: "checkmark", intent: .skipOrFinish, disabledReason: reason)
+            : Action(title: "Skip", systemImage: "forward.end.fill", intent: .skipOrFinish, disabledReason: reason)
+        isResetEnabled = !requiresRecoveryDecision && !display.isOvertime && display.status != .idle
         undo = undoOffer.map(Self.undo)
         endCaption = if display.status == .paused {
             .paused
@@ -69,6 +79,12 @@ struct TimerControls: Equatable {
 }
 
 extension AppModel {
+    /// 各介面取得按鈕規則的唯一入口，不會漏掉恢復閘門。已在刷新中取得 `display` 的介面傳入，一次刷新只讀一次時鐘。
+    func timerControls(display: PhaseDisplay? = nil) -> TimerControls {
+        TimerControls(display: display ?? self.display, undoOffer: undoOffer,
+                      requiresRecoveryDecision: requiresRecoveryDecision)
+    }
+
     func perform(_ intent: TimerIntent) {
         switch intent {
         case .toggleStartPause: toggleStartPause()

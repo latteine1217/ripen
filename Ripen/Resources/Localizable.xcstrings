@@ -2144,6 +2144,22 @@
         }
       }
     },
+    "Choose what to do with the previous timer in the main window": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choose what to do with the previous timer in the main window"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "請先到主視窗決定如何處理上次的計時"
+          }
+        }
+      }
+    },
     "Choose the project for the next focus": {
       "localizations": {
         "en": {

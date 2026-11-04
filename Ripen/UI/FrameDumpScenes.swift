@@ -29,7 +29,7 @@ extension FrameDump {
             ("island-collapsed-overtime", false, { model, clock in model.start(); clock.current += 25 * 60 + 83 }),
             ("island-expanded-overtime", true, { model, clock in model.start(); clock.current += 25 * 60 + 83 }),
         ]
-        return states.map { state in
+        let stateScenes = states.map { state in
             Scene(name: state.name, size: CGSize(width: 420, height: 200)) { _ in
                 let clock = FrameClock()
                 let model = AppModel(clock: clock)
@@ -46,6 +46,15 @@ extension FrameDump {
                 )
             }
         }
+        // 等待恢復決定：計時按鈕停用，回主視窗的按鈕維持可用
+        let awaitingRecovery = Scene(name: "island-expanded-awaiting-recovery", size: CGSize(width: 420, height: 200)) { _ in
+            let model = AppModel(clock: FrameClock(), recoveryStorage: SampleRecoveryStorage())
+            return AnyView(
+                NotchIslandView(model: model, presentation: PresentationModel(), state: NotchIslandState(notch: notch, isExpanded: true))
+                    .background(Color(white: 0.85))
+            )
+        }
+        return stateScenes + [awaitingRecovery]
     }
 }
 
