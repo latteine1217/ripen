@@ -34,7 +34,7 @@ swift scripts/update-signing.swift sign dist/Ripen-0.1.0.dmg
 gh release create v0.1.0 dist/Ripen-0.1.0.dmg dist/Ripen-0.1.0.dmg.sig --title "Ripen 0.1.0" --notes "..."
 ```
 
-簽章在上傳前最後一步執行：之後 `dist/` 裡的 dmg 若被改動，簽章就對不上。金鑰由 `update-signing.swift generate` 一次產生並存在登入鑰匙圈，公鑰填入 `Ripen/Update/UpdateSigningKey.swift`，私鑰以 `export` 印出後備份到密碼管理器；決策與遺失時的處理見 [ADR-0017](adr/0017-signed-updates.md)。工具在 App 內建的公鑰與鑰匙圈的金鑰不符時拒絕簽章。
+簽章在上傳前最後一步執行：之後 `dist/` 裡的 dmg 若被改動，簽章就對不上。金鑰由 `update-signing.swift generate` 一次產生並存在登入鑰匙圈，公鑰填入 `Ripen/Update/UpdateSigningKey.swift`，私鑰以 `export` 印出後備份到密碼管理器；換 Mac 或鑰匙圈遺失時以 `import` 從備份放回，輸入不顯示，不符合內建公鑰或鑰匙圈已有金鑰時拒絕。決策與遺失時的處理見 [ADR-0017](adr/0017-signed-updates.md)。工具在 App 內建的公鑰與鑰匙圈的金鑰不符時拒絕簽章。
 
 Release 發佈後更新 [latteine1217/homebrew-tap](https://github.com/latteine1217/homebrew-tap) 的 `Casks/ripen.rb`：把 `version` 改成新版本，`sha256` 改成 GitHub 為 dmg 算出的雜湊（`gh api repos/latteine1217/ripen/releases/latest --jq '.assets[] | select(.name | endswith(".dmg")).digest'`），以 `brew style` 與 `brew audit --cask --online latteine1217/tap/ripen` 檢查後推上。最後以上一版 App 跑清單的 A 層，確認使用者實際的更新路徑。Cask 設定 `auto_updates true`，使用者也可以在 App 內更新。
 

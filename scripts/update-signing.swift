@@ -3,6 +3,7 @@
 //
 //   swift scripts/update-signing.swift generate        產生金鑰，印出要填進 UpdateSigningKey.swift 的公鑰
 //   swift scripts/update-signing.swift export          印出私鑰，只用來備份到密碼管理器
+//   swift scripts/update-signing.swift import          從備份放回私鑰：輸入不顯示，須符合 App 內建的公鑰
 //   swift scripts/update-signing.swift sign <dmg>      簽章並寫出 <dmg>.sig，上傳前執行
 //
 // RIPEN_SIGNING_SERVICE 可改用另一個鑰匙圈項目，只用於測試這個工具本身。
@@ -46,16 +47,20 @@ func embeddedPublicKey() -> String {
     return text[range].split(separator: "\"", omittingEmptySubsequences: false)[1].description
 }
 
-let arguments = Array(CommandLine.arguments.dropFirst())
-switch arguments.first {
-case "generate":
-    guard loadKey() == nil else { fail("a signing key already exists; replacing it would strand installed versions") }
-    let key = Curve25519.Signing.PrivateKey()
+func store(_ key: Curve25519.Signing.PrivateKey) {
     var attributes = baseQuery()
     attributes[kSecValueData as String] = Data(key.rawRepresentation.base64EncodedString().utf8)
     attributes[kSecAttrLabel as String] = "Ripen update signing key"
     let status = SecItemAdd(attributes as CFDictionary, nil)
     guard status == errSecSuccess else { fail("cannot store the key in the keychain (status \(status))") }
+}
+
+let arguments = Array(CommandLine.arguments.dropFirst())
+switch arguments.first {
+case "generate":
+    guard loadKey() == nil else { fail("a signing key already exists; replacing it would strand installed versions") }
+    let key = Curve25519.Signing.PrivateKey()
+    store(key)
     print("Public key (safe to share):")
     print(key.publicKey.rawRepresentation.base64EncodedString())
     print("Next: back up the private key with `export`.")
@@ -63,6 +68,24 @@ case "generate":
 case "export":
     guard let key = loadKey() else { fail("no signing key; run generate first") }
     print(key.rawRepresentation.base64EncodedString())
+
+case "import":
+    guard loadKey() == nil else { fail("a signing key already exists; replacing it would strand installed versions") }
+    // 不接受命令列參數：私鑰不能留在 shell 歷史或行程列表
+    var buffer = [CChar](repeating: 0, count: 256)
+    defer { memset_s(&buffer, buffer.count, 0, buffer.count) }
+    guard let entered = readpassphrase("Private key (input hidden): ", &buffer, buffer.count, 0) else {
+        fail("cannot read the private key")
+    }
+    let text = String(cString: entered).trimmingCharacters(in: .whitespacesAndNewlines)
+    guard let raw = Data(base64Encoded: text), let key = try? Curve25519.Signing.PrivateKey(rawRepresentation: raw) else {
+        fail("this is not a private key from `export`")
+    }
+    guard embeddedPublicKey() == key.publicKey.rawRepresentation.base64EncodedString() else {
+        fail("this key does not match the public key in UpdateSigningKey.swift; nothing was stored")
+    }
+    store(key)
+    print("Imported the signing key. It matches the public key built into the app.")
 
 case "sign":
     guard arguments.count == 2 else { fail("usage: sign <dmg>") }
@@ -85,5 +108,5 @@ case "sign":
     print("Signed \(file.lastPathComponent) -> \(output.lastPathComponent)")
 
 default:
-    fail("usage: update-signing.swift generate | export | sign <dmg>")
+    fail("usage: update-signing.swift generate | export | import | sign <dmg>")
 }
