@@ -4,6 +4,12 @@ Notable changes to Ripen. The format follows [Keep a Changelog](https://keepacha
 
 ## [Unreleased]
 
+## [0.2.6] - 2026-11-05
+
+### Changed
+
+- This release has no changes to the app itself. It is the first in-app update checked against the developer's signature introduced in 0.2.5, confirming that the update path works from here on.
+
 ## [0.2.5] - 2026-11-05
 
 ### Added
@@ -103,7 +109,8 @@ The first release of Ripen, a native macOS Pomodoro timer in frosted glass.
 - Statistics for today and the last 7 days, stored only on your Mac.
 - **Check for Updates…**, which only goes online when you ask.
 
-[Unreleased]: https://github.com/latteine1217/ripen/compare/v0.2.5...HEAD
+[Unreleased]: https://github.com/latteine1217/ripen/compare/v0.2.6...HEAD
+[0.2.6]: https://github.com/latteine1217/ripen/compare/v0.2.5...v0.2.6
 [0.2.5]: https://github.com/latteine1217/ripen/compare/v0.2.4...v0.2.5
 [0.2.4]: https://github.com/latteine1217/ripen/compare/v0.2.3...v0.2.4
 [0.2.3]: https://github.com/latteine1217/ripen/compare/v0.2.2...v0.2.3
