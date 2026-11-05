@@ -13,6 +13,7 @@ struct RipenApp: App {
     @State private var appearance: AppAppearanceController?
     @State private var loginItem = LoginItemController(service: MainAppLoginItem())
     @State private var updater = UpdateChecker()
+    @State private var notifications: PhaseNotificationController
     #if DEBUG
     @State private var glassTuning = GlassTuning()
     #endif
@@ -42,13 +43,19 @@ struct RipenApp: App {
         #endif
         let persistent = validationDirectory.map { SQLiteFocusLogStorage(directory: $0) } ?? .standard
         let storage: any FocusStorage = isTesting ? InMemoryFocusStorage() : persistent
+        // 測試 host 不碰系統通知；真正的物件要在這裡建立，才趕得上點通知開啟 App 的回應
+        let systemNotifier = isTesting ? nil : SystemPhaseNotifier()
         let model = AppModel(
             settings: settings,
             storage: storage,
             presence: SystemUserPresence(),
             reminderSound: SystemReminderSound(),
-            alarm: TimerPhaseEndAlarm()
+            alarm: TimerPhaseEndAlarm(),
+            notifier: systemNotifier ?? NoPhaseNotifier()
         )
+        _notifications = State(initialValue: PhaseNotificationController(
+            settings: settings, service: systemNotifier ?? NoNotificationPermission()
+        ))
         let hotkeys = GlobalHotkeyController(registrar: CarbonHotkeyRegistrar.shared, settings: model.settings) {
             model.toggleStartPause()
         }
@@ -122,6 +129,7 @@ struct RipenApp: App {
                 .tint(.brandAccent)
                 .environment(hotkeys)
                 .environment(loginItem)
+                .environment(notifications)
                 .environment(updater)
         }
         .windowResizability(.contentSize)

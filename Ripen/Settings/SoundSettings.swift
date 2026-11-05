@@ -7,6 +7,12 @@ extension AppSettings {
         set { self[.completionSoundEnabled] = newValue }
     }
 
+    /// 使用者想在階段結束時收到系統通知；實際能否送出另看系統權限（`PhaseNotificationController`）。
+    var phaseEndNotificationEnabled: Bool {
+        get { self[.phaseEndNotificationEnabled] }
+        set { self[.phaseEndNotificationEnabled] = newValue }
+    }
+
     /// 提示音使用的系統音效名稱（`NSSound(named:)` 的名稱）；不是系統音效的值退回 Glass。
     var reminderSoundName: String {
         get { self[.reminderSoundName] }
@@ -31,6 +37,7 @@ enum ReminderSoundCatalog {
 
 private extension SettingKey where Value == Bool {
     static var completionSoundEnabled: Self { Self("completionSoundEnabled", default: true) }
+    static var phaseEndNotificationEnabled: Self { Self("phaseEndNotificationEnabled", default: false) }
 }
 
 private extension SettingKey where Value == String {

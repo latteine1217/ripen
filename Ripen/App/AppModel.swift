@@ -27,6 +27,7 @@ final class AppModel {
     @ObservationIgnored private let presence: any UserPresence
     @ObservationIgnored private let reminderSound: any ReminderSound
     @ObservationIgnored private let alarm: any PhaseEndAlarm
+    @ObservationIgnored private let notifier: any PhaseNotifier
     private static let recoveryLogger = Logger(subsystem: "com.latteine.ripen", category: "recovery")
     @ObservationIgnored private let recoveryStorage: any TimerRecoveryStorage
     private(set) var recovery: TimerRecovery?
@@ -49,6 +50,8 @@ final class AppModel {
         // 結束時刻一變就重排到點計時器；所有操作都經過這裡，不必逐一記得重排。
         // 超時中繼續時結束時刻在過去，不再排：提醒每段只送一次
         didSet {
+            // 離開超時就是這一段結束了；所有操作都經過這裡，通知中心不留下過期的提醒
+            if oldValue.reachedZero && !run.reachedZero { notifier.clearPhaseEndNotification() }
             guard run.engine.endDate != oldValue.engine.endDate else { return }
             alarm.schedule(at: run.engine.endDate.flatMap { $0 > clock.now() ? $0 : nil })
         }
@@ -87,7 +90,8 @@ final class AppModel {
         storage: any FocusStorage = InMemoryFocusStorage(),
         presence: any UserPresence = AlwaysPresent(),
         reminderSound: any ReminderSound = SilentReminderSound(),
-        alarm: any PhaseEndAlarm = NoPhaseEndAlarm()
+        alarm: any PhaseEndAlarm = NoPhaseEndAlarm(),
+        notifier: any PhaseNotifier = NoPhaseNotifier()
     ) {
         self.clock = clock
         self.settings = settings
@@ -95,6 +99,7 @@ final class AppModel {
         self.presence = presence
         self.reminderSound = reminderSound
         self.alarm = alarm
+        self.notifier = notifier
         self.recoveryStorage = storage
         let configuration = settings.cycleConfiguration
         cachedConfiguration = (settings.revision, configuration)
@@ -305,6 +310,7 @@ final class AppModel {
         guard let phase = pendingReminder, !presence.isAway else { return }
         pendingReminder = nil
         if settings.completionSoundEnabled { reminderSound.play(named: settings.reminderSoundName) }
+        if settings.phaseEndNotificationEnabled { notifier.notifyPhaseEnded(phase) }
         lastReminder = PhaseReminder(id: (lastReminder?.id ?? 0) + 1, phase: phase)
     }
 

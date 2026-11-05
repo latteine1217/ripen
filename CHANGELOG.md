@@ -4,6 +4,10 @@ Notable changes to Ripen. The format follows [Keep a Changelog](https://keepacha
 
 ## [Unreleased]
 
+### Added
+
+- **Settings › Reminder** can send a system notification when a phase ends, so you don't miss it when your Mac is muted. It's off until you turn it on, and clicking the notification brings Ripen forward.
+
 ### Security
 
 - In-app updates are now verified against the developer's signature instead of a checksum from GitHub, so a tampered release is not installed even if it comes from the official page. This protects updates from this version onward.

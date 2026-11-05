@@ -73,6 +73,16 @@
 - ⌘Q。出現保持開啟／不儲存並結束／重試三個選項；恢復權限後重試成功。
 - 計時中結束再開啟。出現繼續或捨棄的恢復提示。
 
+### 通知
+
+觸發：`SystemPhaseNotifier`、`PhaseNotificationController`、`SoundSettingsSection`、`deliverPendingReminder`。
+
+- 開啟「階段結束時傳送通知」：出現權限提示，設定說明提示在哪；允許後開關維持開啟。
+- Ripen 不在前景時倒數到 0：顯示橫幅且通知本身不發聲；點擊把 Ripen 帶到前景，形態不變。
+- Ripen 在前景時倒數到 0：不顯示橫幅。
+- 按完成：通知中心的舊通知被移除。
+- 在系統設定關閉通知再回到 Ripen：開關顯示關閉並提供前往系統設定的按鈕。
+
 ### 外觀
 
 觸發：`Ripen/UI/Glass/`、`Assets.xcassets` 的顏色、`AppAppearanceController`、`GlassWindow`、統計頁版面。

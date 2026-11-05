@@ -1,8 +1,10 @@
+import AppKit
 import SwiftUI
 
 /// 設定視窗的「提醒」區塊。
 struct SoundSettingsSection: View {
     @Bindable var settings: AppSettings
+    @Environment(PhaseNotificationController.self) private var notifications
 
     var body: some View {
         Section("Reminder") {
@@ -14,6 +16,29 @@ struct SoundSettingsSection: View {
                 }
             }
             .disabled(!settings.completionSoundEnabled)
+
+            Toggle("Send a Notification When a Phase Ends", isOn: Binding(
+                get: { notifications.isOn },
+                set: { on in Task { await notifications.setOn(on) } }
+            ))
+            if notifications.isRequesting {
+                Text("Choose Allow in the notification at the top right of your screen. If you don’t see it, check Notification Center.")
+                    .foregroundStyle(.secondary)
+                    .font(.callout)
+            }
+            if notifications.showsDeniedHint {
+                LabeledContent {
+                    Button("Open Notification Settings", action: SystemPhaseNotifier.openSystemSettings)
+                } label: {
+                    Text("Allow Ripen in System Settings to send notifications.")
+                        .foregroundStyle(.secondary)
+                }
+            }
+        }
+        .task { await notifications.refresh() }
+        // 從系統設定允許後回到 App，開關要跟著系統更新
+        .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
+            Task { await notifications.refresh() }
         }
     }
 

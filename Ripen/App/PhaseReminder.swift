@@ -30,6 +30,29 @@ protocol ReminderSound: AnyObject {
     func play(named name: String)
 }
 
+/// 階段結束的系統通知。
+@MainActor
+protocol PhaseNotifier: AnyObject {
+    func notifyPhaseEnded(_ phase: Phase)
+    /// 這一段結束後移除還留在通知中心的舊通知。
+    func clearPhaseEndNotification()
+}
+
+/// 通知的文字：只有階段，不含分類名稱，避免在畫面分享時露出（ADR-0018）。
+struct PhaseEndNotificationContent: Equatable {
+    let title: String
+    let body: String
+
+    init(phase: Phase) {
+        switch phase {
+        case .focus: title = String(localized: "Focus Ended")
+        case .shortBreak: title = String(localized: "Short Break Ended")
+        case .longBreak: title = String(localized: "Long Break Ended")
+        }
+        body = phase == .focus ? String(localized: "Press Done to record this focus.") : String(localized: "Press Done to continue.")
+    }
+}
+
 /// 在目前階段的結束時刻喚起 `AppModel`，讓主視窗不在畫面上時完成也能準時確立。
 @MainActor
 protocol PhaseEndAlarm: AnyObject {
@@ -48,6 +71,11 @@ final class AlwaysPresent: UserPresence {
 
 final class SilentReminderSound: ReminderSound {
     func play(named name: String) {}
+}
+
+final class NoPhaseNotifier: PhaseNotifier {
+    func notifyPhaseEnded(_ phase: Phase) {}
+    func clearPhaseEndNotification() {}
 }
 
 final class NoPhaseEndAlarm: PhaseEndAlarm {

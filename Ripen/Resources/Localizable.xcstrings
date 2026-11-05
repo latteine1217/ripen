@@ -688,6 +688,150 @@
         }
       }
     },
+    "Send a Notification When a Phase Ends": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Send a Notification When a Phase Ends"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "階段結束時傳送通知"
+          }
+        }
+      }
+    },
+    "Choose Allow in the notification at the top right of your screen. If you don’t see it, check Notification Center.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choose Allow in the notification at the top right of your screen. If you don’t see it, check Notification Center."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在螢幕右上角的通知中選擇「允許」；沒看到的話，請打開通知中心查看。"
+          }
+        }
+      }
+    },
+    "Allow Ripen in System Settings to send notifications.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Allow Ripen in System Settings to send notifications."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "請在系統設定允許 Ripen 傳送通知。"
+          }
+        }
+      }
+    },
+    "Open Notification Settings": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open Notification Settings"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "打開通知設定"
+          }
+        }
+      }
+    },
+    "Focus Ended": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Focus Ended"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "專注結束"
+          }
+        }
+      }
+    },
+    "Short Break Ended": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Short Break Ended"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "短休息結束"
+          }
+        }
+      }
+    },
+    "Long Break Ended": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Long Break Ended"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "長休息結束"
+          }
+        }
+      }
+    },
+    "Press Done to record this focus.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Press Done to record this focus."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "按「完成」來記錄這次專注。"
+          }
+        }
+      }
+    },
+    "Press Done to continue.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Press Done to continue."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "按「完成」繼續下一段。"
+          }
+        }
+      }
+    },
     "Play Sound When a Phase Ends": {
       "localizations": {
         "en": {
