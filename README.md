@@ -111,7 +111,7 @@ The main window, floating window and notch island briefly show the time you just
 | Appearance and reminders | Black, White, or Glass appearance; glass can follow the system or stay light or dark, with adjustable opacity and blur. System reminder sounds or silence, an optional menu bar countdown, and 12- or 24-hour end times. |
 | Startup and guidance | Optional auto-start for the next phase and open at login. A first-launch intro shows the tear-off, notch and resize gestures; replay it from Settings. |
 | Back up and export | **Settings › Data** saves a backup of your focus history and projects, restores from one, or exports every completed focus as a CSV for Numbers or Excel. Settings aren't included in backups, and CSV files can't be imported. |
-| Local and private | No account needed. Focus history stays in `~/Library/Application Support/Ripen`, with English and Traditional Chinese interfaces. Ripen only goes online when you click **Check for Updates…**; updates are downloaded after confirmation and verified against GitHub's checksum before installation. |
+| Local and private | No account needed. Focus history stays in `~/Library/Application Support/Ripen`, with English and Traditional Chinese interfaces. Ripen only goes online when you click **Check for Updates…**; updates are downloaded after confirmation and verified against the developer's signature before installation. |
 
 ### Move to another Mac
 

@@ -2000,18 +2000,18 @@
         }
       }
     },
-    "The download didn’t match the release and was not installed.": {
+    "This download couldn’t be confirmed as an official Ripen release and was not installed.": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "The download didn’t match the release and was not installed."
+            "value": "This download couldn’t be confirmed as an official Ripen release and was not installed."
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "下載內容與版本資訊不符，已停止安裝。"
+            "value": "無法確認這份下載是 Ripen 的正式版本，已停止安裝。"
           }
         }
       }

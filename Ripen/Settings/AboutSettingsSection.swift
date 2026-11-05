@@ -84,7 +84,7 @@ struct AboutSettingsSection: View {
         switch failure {
         case .network: "Couldn’t reach GitHub. Check your connection and try again."
         case .cannotVerify: "This release can’t be verified, so it won’t be installed automatically."
-        case .verificationFailed: "The download didn’t match the release and was not installed."
+        case .verificationFailed: "This download couldn’t be confirmed as an official Ripen release and was not installed."
         case .installFailed: "Couldn’t install the update."
         }
     }

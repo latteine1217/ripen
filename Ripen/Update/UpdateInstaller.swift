@@ -5,25 +5,30 @@ import os
 
 /// 下載、驗證並安裝新版的 dmg。
 ///
-/// Ripen 只有 ad-hoc 簽章，無法以開發者身分驗證新版；改以 GitHub 為檔案算出的 SHA-256 核對下載內容，
-/// 再確認 dmg 裡的 App 是同一個 bundle id、版本與 Release 相符、簽章完整。任何一項不符就停止，不安裝。
+/// Ripen 只有 ad-hoc 簽章，無法靠系統驗證開發者身分；改以 App 內建的公鑰驗證作者對 dmg 的簽章（ADR-0017），
+/// 再確認 dmg 裡的 App 是同一個 bundle id、版本與 Release 相符、程式碼簽章完整。任何一項不符就停止，不安裝。
 enum UpdateInstaller {
     private static let logger = Logger(subsystem: "com.latteine.ripen", category: "update")
 
     enum Failure: Error, Equatable {
-        case missingDigest
-        case digestMismatch
+        case signatureMismatch
         case mountFailed
         case unexpectedApp
         case cannotReplace
         case commandFailed(String)
     }
 
-    /// 核對下載的檔案；`expected` 為小寫十六進位。
-    static func verify(_ file: URL, sha256 expected: String) throws {
+    /// 確認 `file` 正是持有私鑰的作者簽過的內容。
+    static func verify(_ file: URL, signature: Data, publicKey: Curve25519.Signing.PublicKey) throws {
         let data = try Data(contentsOf: file, options: .mappedIfSafe)
-        let actual = SHA256.hash(data: data).map { String(format: "%02x", $0) }.joined()
-        guard actual == expected else { throw Failure.digestMismatch }
+        guard publicKey.isValidSignature(signature, for: data) else { throw Failure.signatureMismatch }
+    }
+
+    /// 簽章檔的內容是 base64 文字（`scripts/update-signing.swift` 產生）；不是 64 位元組的 Ed25519 簽章時為 nil。
+    static func signature(fromFile contents: Data) -> Data? {
+        let text = String(decoding: contents, as: UTF8.self).trimmingCharacters(in: .whitespacesAndNewlines)
+        guard let signature = Data(base64Encoded: text), signature.count == 64 else { return nil }
+        return signature
     }
 
     /// 掛載 dmg、取出並檢查其中的 Ripen.app，複製到 `workDirectory` 後卸載；回傳複製出的 App。
@@ -64,7 +69,7 @@ enum UpdateInstaller {
 
     /// 交給背景的 shell：等本 App 結束後換上新版並重新開啟。換新失敗時放回舊版。
     ///
-    /// 路徑以參數傳入，不內插進指令稿。下載內容已核對雜湊，才移除可能存在的隔離屬性，
+    /// 路徑以參數傳入，不內插進指令稿。下載內容已通過作者簽章驗證，才移除可能存在的隔離屬性，
     /// 否則 ad-hoc 簽章的新版會被 Gatekeeper 擋下、使用者卡在無法開啟的 App。
     static func scheduleReplacement(of target: URL, with staged: URL, in workDirectory: URL) throws {
         let script = workDirectory.appending(path: "install.sh")

@@ -12,4 +12,4 @@ You can expect an acknowledgement within 7 days. Once a fix is released, the adv
 
 ## Scope
 
-Ripen has no account and stores focus history only in `~/Library/Application Support/Ripen`. It goes online only when you choose **Check for Updates…**, which downloads a release from GitHub, verifies it against GitHub's SHA-256 checksum, bundle identifier, version and signature, and installs it after you confirm. Reports about that update path, local data handling, or anything that lets another process tamper with Ripen are especially welcome.
+Ripen has no account and stores focus history only in `~/Library/Application Support/Ripen`. It goes online only when you choose **Check for Updates…**, which downloads a release from GitHub, verifies the developer's Ed25519 signature, the bundle identifier, version and code signature, and installs it after you confirm. Reports about that update path, local data handling, or anything that lets another process tamper with Ripen are especially welcome.

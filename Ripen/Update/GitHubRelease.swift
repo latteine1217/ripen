@@ -6,11 +6,9 @@ struct GitHubRelease: Decodable, Equatable, Sendable {
         let name: String
         let browserDownloadURL: URL
         let size: Int
-        /// GitHub 為上傳的檔案算出的雜湊，形如 `sha256:<hex>`；較舊的檔案沒有。
-        let digest: String?
 
         enum CodingKeys: String, CodingKey {
-            case name, size, digest
+            case name, size
             case browserDownloadURL = "browser_download_url"
         }
     }
@@ -38,14 +36,10 @@ struct GitHubRelease: Decodable, Equatable, Sendable {
         guard let version else { return nil }
         return assets.first { $0.name == "Ripen-\(version).dmg" }
     }
-}
 
-extension GitHubRelease.Asset {
-    /// `digest` 中的 SHA-256（小寫十六進位）；不是 SHA-256 或格式不對時為 nil。
-    var sha256: String? {
-        guard let digest, digest.hasPrefix("sha256:") else { return nil }
-        let hex = digest.dropFirst("sha256:".count).lowercased()
-        guard hex.count == 64, hex.allSatisfy(\.isHexDigit) else { return nil }
-        return hex
+    /// `scripts/update-signing.swift` 為 `diskImage` 產生的簽章檔。
+    var diskImageSignature: Asset? {
+        guard let diskImage else { return nil }
+        return assets.first { $0.name == diskImage.name + ".sig" }
     }
 }

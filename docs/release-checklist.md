@@ -24,7 +24,7 @@
 
 在日常安裝位置以真實資料進行，約 5 分鐘（含 1 分鐘專注）。開始前保留上一版 DMG，並以「設定 › 資料 › 備份…」備份。
 
-1. 從 GitHub Release 下載新版 DMG，SHA-256 與 API 的 `digest` 一致。
+1. 從 GitHub Release 下載新版 DMG，SHA-256 與 API 的 `digest` 一致；Release 同時附有 `Ripen-<版本>.dmg.sig`。
 2. 以上一版 App 打開「設定 › 關於 › 檢查更新⋯」，顯示新版本。
 3. 按「下載並安裝」：App 自動結束、替換並重新開啟。
 4. 版本與 build 號正確，`codesign --verify --deep --strict /Applications/Ripen.app` 通過，`/Applications` 沒有 `.Ripen-update.*` 殘留。

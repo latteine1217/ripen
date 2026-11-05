@@ -4,6 +4,10 @@ Notable changes to Ripen. The format follows [Keep a Changelog](https://keepacha
 
 ## [Unreleased]
 
+### Security
+
+- In-app updates are now verified against the developer's signature instead of a checksum from GitHub, so a tampered release is not installed even if it comes from the official page. This protects updates from this version onward.
+
 ### Fixed
 
 - **Check for Updates…** is back in the Ripen menu, below **About Ripen**. It had been missing since 0.1.0, so updates could only be checked from Settings.

@@ -1,4 +1,5 @@
 import AppKit
+import CryptoKit
 import Foundation
 import Observation
 import os
@@ -13,7 +14,7 @@ protocol ReleaseSource: Sendable {
 
 /// 手動檢查更新：只在使用者按下「檢查更新」時連網，從不自動檢查（README「本機與隱私」）。
 ///
-/// 有新版時由使用者決定是否下載安裝；下載後核對雜湊、換上新版並重新開啟（`UpdateInstaller`）。
+/// 有新版時由使用者決定是否下載安裝；下載後驗證作者簽章、換上新版並重新開啟（`UpdateInstaller`）。
 @MainActor
 @Observable
 final class UpdateChecker {
@@ -32,9 +33,9 @@ final class UpdateChecker {
 
     enum Failure: Equatable {
         case network
-        /// Release 裡沒有預期的 dmg 或沒有雜湊，無法安全地自動安裝。
+        /// Release 裡沒有預期的 dmg 或簽章檔，或 App 沒有可信任的公鑰，無法安全地自動安裝。
         case cannotVerify
-        /// 下載內容與雜湊或 App 資訊不符，已停止安裝。
+        /// 下載內容與作者簽章或 App 資訊不符，已停止安裝。
         case verificationFailed
         case installFailed
     }
@@ -44,16 +45,19 @@ final class UpdateChecker {
     private(set) var state = State.idle
     let currentVersion: AppVersion?
     @ObservationIgnored private let source: any ReleaseSource
+    @ObservationIgnored private let publicKey: Curve25519.Signing.PublicKey?
     /// 換上新版的實際動作；測試以假的取代，不碰檔案系統與 App 生命週期。
     @ObservationIgnored private let install: @MainActor (GitHubRelease, URL) async throws -> State
 
     init(
         source: any ReleaseSource = GitHubReleaseSource(),
         currentVersion: AppVersion? = .current,
+        publicKey: Curve25519.Signing.PublicKey? = UpdateSigningKey.trusted,
         install: @escaping @MainActor (GitHubRelease, URL) async throws -> State = UpdateChecker.installDownloadedImage
     ) {
         self.source = source
         self.currentVersion = currentVersion
+        self.publicKey = publicKey
         self.install = install
     }
 
@@ -83,23 +87,31 @@ final class UpdateChecker {
 
     func downloadAndInstall() async {
         guard case .available(let release) = state else { return }
-        guard let asset = release.diskImage, let digest = asset.sha256 else {
+        // 缺簽章一律不裝，不退回其他檢查：否則刪掉簽章檔就能繞過驗證
+        guard let asset = release.diskImage, let signatureAsset = release.diskImageSignature, let publicKey else {
             state = .failed(.cannotVerify)
             return
         }
         state = .downloading
         let file: URL
+        let signatureFile: URL
         do {
             file = try await source.download(asset)
+            signatureFile = try await source.download(signatureAsset)
         } catch {
             Self.logger.error("下載更新失敗：\(error)")
             state = .failed(.network)
             return
         }
         do {
-            try await Task.detached { try UpdateInstaller.verify(file, sha256: digest) }.value
+            try await Task.detached {
+                guard let signature = UpdateInstaller.signature(fromFile: try Data(contentsOf: signatureFile)) else {
+                    throw UpdateInstaller.Failure.signatureMismatch
+                }
+                try UpdateInstaller.verify(file, signature: signature, publicKey: publicKey)
+            }.value
             state = try await install(release, file)
-        } catch UpdateInstaller.Failure.digestMismatch, UpdateInstaller.Failure.unexpectedApp {
+        } catch UpdateInstaller.Failure.signatureMismatch, UpdateInstaller.Failure.unexpectedApp {
             state = .failed(.verificationFailed)
         } catch {
             Self.logger.error("安裝更新失敗：\(error)")
