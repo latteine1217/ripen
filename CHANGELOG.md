@@ -4,6 +4,8 @@ Notable changes to Ripen. The format follows [Keep a Changelog](https://keepacha
 
 ## [Unreleased]
 
+## [0.2.5] - 2026-11-05
+
 ### Added
 
 - **Settings › Reminder** can send a system notification when a phase ends, so you don't miss it when your Mac is muted. It's off until you turn it on, and clicking the notification brings Ripen forward.
@@ -14,7 +16,8 @@ Notable changes to Ripen. The format follows [Keep a Changelog](https://keepacha
 
 ### Fixed
 
-- **Check for Updates…** is back in the Ripen menu, below **About Ripen**. It had been missing since 0.1.0, so updates could only be checked from Settings.
+- **Check for Updates…** is back in the Ripen menu, below **About Ripen**. It had been missing since 0.1.0, so updates could only be checked from Settings. Settings now scrolls to the result, so a new version's install button is in view.
+- The "not saved" notice in English no longer cuts off its heading.
 - Undo now takes effect only after the change is saved. If saving failed, the screen used to show the focus as undone while a crash or quitting without saving could still add it to your history; now the timer stays as it was, an error appears, and you can press Undo again.
 - A failed save during a timer checkpoint shows one notice with one Retry button instead of two.
 - While a previous timer is waiting for your decision, the timer buttons in the floating window and notch island are disabled and point you to the main window. They used to look active and do nothing when pressed.
@@ -100,7 +103,8 @@ The first release of Ripen, a native macOS Pomodoro timer in frosted glass.
 - Statistics for today and the last 7 days, stored only on your Mac.
 - **Check for Updates…**, which only goes online when you ask.
 
-[Unreleased]: https://github.com/latteine1217/ripen/compare/v0.2.4...HEAD
+[Unreleased]: https://github.com/latteine1217/ripen/compare/v0.2.5...HEAD
+[0.2.5]: https://github.com/latteine1217/ripen/compare/v0.2.4...v0.2.5
 [0.2.4]: https://github.com/latteine1217/ripen/compare/v0.2.3...v0.2.4
 [0.2.3]: https://github.com/latteine1217/ripen/compare/v0.2.2...v0.2.3
 [0.2.2]: https://github.com/latteine1217/ripen/compare/v0.2.1...v0.2.2
