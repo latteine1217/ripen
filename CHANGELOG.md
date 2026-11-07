@@ -4,6 +4,10 @@ Notable changes to Ripen. The format follows [Keep a Changelog](https://keepacha
 
 ## [Unreleased]
 
+### Fixed
+
+- The Timer and Statistics switcher in the main window now responds to clicks. It sits below the title bar instead of beside the window buttons, so the window is slightly taller.
+
 ## [0.2.6] - 2026-11-05
 
 ### Changed
