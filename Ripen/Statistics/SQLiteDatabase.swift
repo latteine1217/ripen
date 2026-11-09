@@ -150,6 +150,50 @@ final class SQLiteDatabase {
         }
     }
 
+    /// 名稱與新增時同樣須已正規化；分類不存在時不影響任何列。
+    func rename(_ names: [UUID: String]) throws {
+        let query = try statement("UPDATE projects SET name = ? WHERE id = ?")
+        defer { sqlite3_finalize(query) }
+        for (id, name) in names {
+            guard FocusProject.normalizedName(name) == name else { throw FocusStorageError.invalidData }
+            sqlite3_reset(query)
+            sqlite3_clear_bindings(query)
+            guard bind(name, to: query, at: 1) == SQLITE_OK,
+                  bind(id.uuidString, to: query, at: 2) == SQLITE_OK,
+                  sqlite3_step(query) == SQLITE_DONE
+            else { throw error }
+        }
+    }
+
+    /// 只改開始時刻、長度與分類，完成順序鍵不變；紀錄不存在時不影響任何列。
+    func update(_ entries: [StoredFocusRecord]) throws {
+        guard Self.isSupported(entries) else { throw FocusStorageError.invalidData }
+        let query = try statement("UPDATE focus_records SET started_at = ?, duration = ?, project_id = ? WHERE id = ?")
+        defer { sqlite3_finalize(query) }
+        for entry in entries {
+            sqlite3_reset(query)
+            sqlite3_clear_bindings(query)
+            let boundProject = entry.record.projectID.map { bind($0.uuidString, to: query, at: 3) }
+                ?? sqlite3_bind_null(query, 3)
+            guard sqlite3_bind_double(query, 1, entry.record.startedAt.timeIntervalSinceReferenceDate) == SQLITE_OK,
+                  sqlite3_bind_double(query, 2, entry.record.duration) == SQLITE_OK,
+                  boundProject == SQLITE_OK,
+                  bind(entry.id.uuidString, to: query, at: 4) == SQLITE_OK,
+                  sqlite3_step(query) == SQLITE_DONE
+            else { throw error }
+        }
+    }
+
+    func deleteRecords(_ ids: Set<UUID>) throws {
+        let query = try statement("DELETE FROM focus_records WHERE id = ?")
+        defer { sqlite3_finalize(query) }
+        for id in ids {
+            sqlite3_reset(query)
+            sqlite3_clear_bindings(query)
+            guard bind(id.uuidString, to: query, at: 1) == SQLITE_OK, sqlite3_step(query) == SQLITE_DONE else { throw error }
+        }
+    }
+
     /// 分類的紀錄改為未分類後刪除分類；分類已不存在時兩句都不影響任何列，重試照樣成功。
     func deleteProjects(_ ids: Set<UUID>) throws {
         let uncategorize = try statement("UPDATE focus_records SET project_id = NULL WHERE project_id = ?")

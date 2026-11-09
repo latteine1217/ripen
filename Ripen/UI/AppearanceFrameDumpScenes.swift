@@ -27,7 +27,7 @@ extension FrameDump {
                         .environment(\.colorScheme, scheme).background(desktop))
                 },
                 Scene(name: "appearance-\(name)-statistics", size: CGSize(width: 380, height: 340)) { _ in
-                    AnyView(StatisticsPageView(focusLog: model.focusLog, deleteProject: model.deleteProject)
+                    AnyView(StatisticsPageView(focusLog: model.focusLog, actions: StatisticsActions(model: model))
                         .ripenGlass(settings: settings)
                         .environment(\.colorScheme, scheme).background(desktop))
                 },
@@ -83,7 +83,7 @@ extension FrameDump {
                 return AnyView(
                     HStack(alignment: .top, spacing: 20) {
                         TimerPageView(model: model).fixedSize().ripenGlass(settings: settings)
-                        StatisticsPageView(focusLog: log, deleteProject: { _ in }).fixedSize().ripenGlass(settings: settings)
+                        StatisticsPageView(focusLog: log).fixedSize().ripenGlass(settings: settings)
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .background(Color(white: 0.5))

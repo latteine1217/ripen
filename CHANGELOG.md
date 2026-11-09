@@ -4,6 +4,12 @@ Notable changes to Ripen. The format follows [Keep a Changelog](https://keepacha
 
 ## [Unreleased]
 
+### Added
+
+- Rename a project by clicking its name on the project's detail page. Its focuses stay with it.
+- Click a single focus in a project's detail page to correct its start time or length, move it to another project or Uncategorized, or delete it. Deleting asks first and can't be undone. A focus can be edited once it's saved, after the undo button disappears.
+- Restoring an older backup keeps your corrections and renames. A focus you deleted comes back if the backup still has it, like a deleted project.
+
 ### Fixed
 
 - The Timer and Statistics switcher in the main window now responds to clicks. It sits below the title bar instead of beside the window buttons, so the window is slightly taller.

@@ -18,6 +18,20 @@ struct FocusRecord: Codable, Equatable, Sendable {
     var isValid: Bool { startedAt.timeIntervalSinceReferenceDate.isFinite && duration.isFinite && duration >= 0 }
 }
 
+/// 更正後的時間不可接受的原因（ADR-0019）。
+enum FocusCorrectionIssue: Equatable {
+    case nonPositiveDuration
+    case endsAfterNow
+}
+
+extension FocusRecord {
+    /// 更正的允許範圍：長度大於 0，結束時刻不晚於現在；不檢查與其他紀錄重疊。nil 是可以。
+    static func correctionIssue(startedAt: Date, duration: TimeInterval, now: Date) -> FocusCorrectionIssue? {
+        guard duration > 0 else { return .nonPositiveDuration }
+        return startedAt.addingTimeInterval(duration) <= now ? nil : .endsAfterNow
+    }
+}
+
 /// 識別碼只供保存與重試使用；相同內容的兩次專注仍是兩筆不同紀錄。
 struct StoredFocusRecord: Codable, Equatable, Sendable {
     let id: UUID
@@ -37,6 +51,13 @@ protocol FocusLogStorage {
     func updateProjectColors(_ colors: [UUID: ProjectColor]) throws
     /// 分類的紀錄改為未分類後刪除分類；已不存在的分類略過，重試不會失敗。
     func deleteProjects(_ ids: Set<UUID>) throws
+    /// 改名；識別碼與代表色不變，已不存在的分類略過，重試不會失敗（ADR-0019）。
+    func renameProjects(_ names: [UUID: String]) throws
+    /// 以同一識別碼改寫紀錄內容，完成順序不變；已不存在的紀錄略過。完成日誌中的同一筆一併改寫，
+    /// 重啟確立時不會與歷史衝突。
+    func updateRecords(_ records: [StoredFocusRecord]) throws
+    /// 刪除紀錄；已不存在的略過。完成日誌中的同一筆一併移除，重啟後不會被確立回來。
+    func deleteRecords(_ ids: Set<UUID>) throws
 }
 
 /// 一筆紀錄目前的保存階段；只有 `.saved` 可以輸出成果（#22）。
@@ -65,8 +86,14 @@ final class FocusLog {
     /// 尚未寫入的換色，覆蓋在分類上呈現；分類本身保留建立時的顏色，
     /// 已提交但未確認的分類重試時才會與資料庫一致，換色另外寫入。
     private var pendingColors: [UUID: ProjectColor] = [:]
+    /// 尚未寫入的改名，與換色同樣覆蓋在分類上呈現（ADR-0019）。
+    private var pendingNames: [UUID: String] = [:]
     /// 尚未寫入的刪除；重新讀取歷史時先套用，已刪除的分類不會因讀回舊資料而復活。
     private var pendingDeletions: Set<UUID> = []
+    /// 已保存紀錄尚未寫入的更正與重新歸類；`saved` 已是更正後的內容，重新讀取歷史時再套用一次。
+    private var pendingRecordUpdates: [UUID: FocusRecord] = [:]
+    /// 已保存紀錄尚未寫入的刪除；`saved` 已移除，重新讀取歷史時先排除，不會復活。
+    private var pendingRecordDeletions: Set<UUID> = []
     /// 還能復原的完成紀錄：計入統計，期限過後才寫入正式歷史；恢復日誌另行保存。
     private var staged: StoredFocusRecord?
     private var hasLoaded = false
@@ -90,13 +117,19 @@ final class FocusLog {
     var completionsWithoutStaged: [StoredFocusRecord] { pending }
     /// 依建立順序；尚未保存的分類也可選取，與紀錄一起重試。
     var projects: [FocusProject] {
-        (savedProjects + pendingProjects).map { project in
-            pendingColors[project.id].map { FocusProject(id: project.id, name: project.name, color: $0) } ?? project
-        }
+        (savedProjects + pendingProjects).map { Self.overlaying($0, name: pendingNames[$0.id], color: pendingColors[$0.id]) }
+    }
+
+    private static func overlaying(_ project: FocusProject, name: String? = nil, color: ProjectColor? = nil) -> FocusProject {
+        FocusProject(id: project.id, name: name ?? project.name, color: color ?? project.color)
     }
     /// 退出前必須為空，否則會失去尚未保存的紀錄或分類。
-    var hasUnsavedChanges: Bool {
-        pendingCount > 0 || !pendingProjects.isEmpty || !pendingColors.isEmpty || !pendingDeletions.isEmpty
+    var hasUnsavedChanges: Bool { staged != nil || hasChangesToWrite }
+
+    /// 待寫入的變更；還能復原的暫存紀錄不在其中，期限過後才寫入。
+    private var hasChangesToWrite: Bool {
+        !pending.isEmpty || !pendingProjects.isEmpty || !pendingColors.isEmpty || !pendingNames.isEmpty
+            || !pendingDeletions.isEmpty || !pendingRecordUpdates.isEmpty || !pendingRecordDeletions.isEmpty
     }
 
     /// 只有歷史已載入且所有變更都已保存時，備份與 CSV 才不會缺資料（#32、#34）；
@@ -176,16 +209,57 @@ final class FocusLog {
         if hasLoaded { savePending() }
     }
 
+    /// 改名（ADR-0019）：識別碼與代表色不變，所有紀錄仍屬同一分類。名稱規則與新增相同，空白不改；同名可並存。
+    @discardableResult
+    func renameProject(_ id: UUID, to name: String) -> Bool {
+        guard let project = project(withID: id), let name = FocusProject.normalizedName(name) else { return false }
+        guard name != project.name else { return true }
+        pendingNames[id] = name
+        if hasLoaded { savePending() }
+        return true
+    }
+
+    /// 只有已保存的紀錄能編輯（ADR-0019）：還能復原與尚未寫入的仍在完成日誌，重試又以內容比對已提交的紀錄。
+    func canEditRecord(_ id: UUID) -> Bool {
+        hasLoaded && status(ofRecord: id) == .saved
+    }
+
+    /// 更正或重新歸類一筆已保存的紀錄，識別碼不變。分類必須存在或為未分類；時間的允許範圍由呼叫端判斷。
+    @discardableResult
+    func updateRecord(_ id: UUID, to record: FocusRecord) -> Bool {
+        guard canEditRecord(id), record.isValid, record.projectID == nil || project(withID: record.projectID) != nil
+        else { return false }
+        saved = saved.map { $0.id == id ? StoredFocusRecord(id: id, record: record) : $0 }
+        pendingRecordUpdates[id] = record
+        if hasLoaded { savePending() }
+        return true
+    }
+
+    /// 刪除一筆已保存的紀錄，不能復原（ADR-0019）。
+    @discardableResult
+    func deleteRecord(_ id: UUID) -> Bool {
+        guard canEditRecord(id) else { return false }
+        saved.removeAll { $0.id == id }
+        pendingRecordUpdates[id] = nil
+        pendingRecordDeletions.insert(id)
+        if hasLoaded { savePending() }
+        return true
+    }
+
     /// 刪除分類：它的紀錄（含還能復原與尚未寫入的）改為未分類，時間與統計都保留。不能復原（ADR-0012）。
     func deleteProject(_ id: UUID) {
         guard project(withID: id) != nil else { return }
         savedProjects.removeAll { $0.id == id }
         pendingProjects.removeAll { $0.id == id }
         pendingColors[id] = nil
+        pendingNames[id] = nil
         let deleted: Set = [id]
         saved = saved.map { Self.uncategorizing($0, from: deleted) }
         pending = pending.map { Self.uncategorizing($0, from: deleted) }
         staged = staged.map { Self.uncategorizing($0, from: deleted) }
+        pendingRecordUpdates = pendingRecordUpdates.mapValues { record in
+            Self.uncategorizing(StoredFocusRecord(record: record), from: deleted).record
+        }
         // 分類可能已寫入卻沒收到確認，一律向儲存送出刪除
         pendingDeletions.insert(id)
         if hasLoaded { savePending() }
@@ -226,7 +300,10 @@ final class FocusLog {
     /// 先恢復歷史與辨認已提交的重試，再保存待處理紀錄，不能以空歷史覆蓋未知資料。
     func retry() {
         do {
-            let loaded = try storage.load().map { Self.uncategorizing($0, from: pendingDeletions) }
+            let loaded = try storage.load()
+                .filter { !pendingRecordDeletions.contains($0.id) }
+                .map { entry in pendingRecordUpdates[entry.id].map { StoredFocusRecord(id: entry.id, record: $0) } ?? entry }
+                .map { Self.uncategorizing($0, from: pendingDeletions) }
             let loadedProjects = try storage.loadProjects().filter { !pendingDeletions.contains($0.id) }
             let byID = Dictionary(uniqueKeysWithValues: loaded.map { ($0.id, $0.record) })
             let projectsByID = Dictionary(uniqueKeysWithValues: loadedProjects.map { ($0.id, $0) })
@@ -241,6 +318,9 @@ final class FocusLog {
             // 換色對象既不在資料庫也不待建立，就沒有可改的分類
             let known = Set(loadedProjects.map(\.id) + pendingProjects.map(\.id))
             pendingColors = pendingColors.filter { known.contains($0.key) }
+            pendingNames = pendingNames.filter { known.contains($0.key) }
+            // 歷史中已沒有的紀錄就沒有可改的內容
+            pendingRecordUpdates = pendingRecordUpdates.filter { byID[$0.key] != nil }
             pending.removeAll { byID[$0.id] != nil }
             pendingProjects.removeAll { projectsByID[$0.id] != nil }
             hasLoaded = true
@@ -260,11 +340,10 @@ final class FocusLog {
         return FocusRecord(startedAt: record.startedAt, duration: record.duration)
     }
 
-    /// 分類先於紀錄保存，讓已保存的紀錄不會指向尚未保存的分類；換色與刪除最後寫入，失敗不擋住紀錄。
+    /// 分類先於紀錄保存，讓已保存的紀錄不會指向尚未保存的分類；換色、改名、編輯與刪除最後寫入，失敗不擋住新完成的紀錄。
     private func savePending() {
         // 還能復原的暫存紀錄不在此寫入
-        guard !pending.isEmpty || !pendingProjects.isEmpty || !pendingColors.isEmpty || !pendingDeletions.isEmpty
-        else { return }
+        guard hasChangesToWrite else { return }
         // 歷史載入前加入的紀錄，到此才能確認所屬分類是否存在
         pending = pending.map { StoredFocusRecord(id: $0.id, record: resolvingProject($0.record)) }
         do {
@@ -279,11 +358,25 @@ final class FocusLog {
                 saved.append(contentsOf: pending)
                 pending.removeAll()
             }
+            // 此時待建立的分類都已寫入，換色與改名直接套到已保存的分類
             if !pendingColors.isEmpty {
                 try storage.updateProjectColors(pendingColors)
-                // 此時待建立的分類都已寫入，`projects` 就是套用換色後的已保存分類
-                savedProjects = projects
+                savedProjects = savedProjects.map { Self.overlaying($0, color: pendingColors[$0.id]) }
                 pendingColors.removeAll()
+            }
+            if !pendingNames.isEmpty {
+                try storage.renameProjects(pendingNames)
+                savedProjects = savedProjects.map { Self.overlaying($0, name: pendingNames[$0.id]) }
+                pendingNames.removeAll()
+            }
+            // 紀錄的編輯在分類刪除之前：刪除會把仍指向該分類的紀錄改為未分類
+            if !pendingRecordUpdates.isEmpty {
+                try storage.updateRecords(pendingRecordUpdates.map { StoredFocusRecord(id: $0.key, record: $0.value) })
+                pendingRecordUpdates.removeAll()
+            }
+            if !pendingRecordDeletions.isEmpty {
+                try storage.deleteRecords(pendingRecordDeletions)
+                pendingRecordDeletions.removeAll()
             }
             if !pendingDeletions.isEmpty {
                 try storage.deleteProjects(pendingDeletions)

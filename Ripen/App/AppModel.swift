@@ -180,6 +180,35 @@ final class AppModel {
         _ = saveCurrentRecovery()
     }
 
+    /// 分類改名（ADR-0019）；空白名稱或不存在的分類不改。
+    @discardableResult
+    func renameProject(_ id: UUID, to name: String) -> Bool {
+        guard !requiresRecoveryDecision else { return false }
+        return focusLog.renameProject(id, to: name)
+    }
+
+    /// 更正或重新歸類一筆已保存的紀錄（ADR-0019）。開始時刻或長度有變時才檢查時間：
+    /// 時鐘被往回調過的舊紀錄，只換分類時不該被擋下。完成摘要維持完成那一刻的數字。
+    @discardableResult
+    func editRecord(_ id: UUID, to record: FocusRecord) -> Bool {
+        guard !requiresRecoveryDecision,
+              let current = focusLog.entries.first(where: { $0.id == id })?.record
+        else { return false }
+        let timeChanged = record.startedAt != current.startedAt || record.duration != current.duration
+        if timeChanged,
+           FocusRecord.correctionIssue(startedAt: record.startedAt, duration: record.duration, now: clock.now()) != nil {
+            return false
+        }
+        return focusLog.updateRecord(id, to: record)
+    }
+
+    /// 刪除一筆已保存的紀錄，不能復原（ADR-0019）。
+    @discardableResult
+    func deleteRecord(_ id: UUID) -> Bool {
+        guard !requiresRecoveryDecision else { return false }
+        return focusLog.deleteRecord(id)
+    }
+
     /// 這一次的長度不變；分類累積改為未分類的最新累積。
     private func movingToUncategorized(_ completed: CompletedFocus?, from id: UUID) -> CompletedFocus? {
         guard let completed, completed.projectID == id else { return completed }

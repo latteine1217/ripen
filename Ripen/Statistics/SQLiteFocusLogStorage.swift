@@ -74,6 +74,28 @@ struct SQLiteFocusLogStorage: FocusLogStorage, TimerRecoveryStorage, FocusBackup
         }
     }
 
+    func renameProjects(_ names: [UUID: String]) throws {
+        let database = try open()
+        try database.transaction { try database.rename(names) }
+    }
+
+    func updateRecords(_ records: [StoredFocusRecord]) throws {
+        let database = try open()
+        try database.transaction {
+            try database.update(records)
+            let updated = Dictionary(uniqueKeysWithValues: records.map { ($0.id, $0) })
+            try database.saveCompletionJournal(try database.completionJournal().map { updated[$0.id] ?? $0 })
+        }
+    }
+
+    func deleteRecords(_ ids: Set<UUID>) throws {
+        let database = try open()
+        try database.transaction {
+            try database.deleteRecords(ids)
+            try database.saveCompletionJournal(try database.completionJournal().filter { !ids.contains($0.id) })
+        }
+    }
+
     func loadRecovery() throws -> TimerRecovery? {
         try open().recovery()
     }

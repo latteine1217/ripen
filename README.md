@@ -39,7 +39,7 @@ You can start with Uncategorized. Change projects during a focus to move the who
 
 Statistics shows your focus time and count for the last 7 or 30 days. Seven days are stacked by project color; thirty days appear as one square per day, darker on busier days. Below, each project's time in that range is listed from most to least with a bar. Open a project to see its total time, its last week and its completed focuses grouped by day; expand a day for each focus, or click the color dot beside the name to choose another color.
 
-If you no longer need a project, delete it from its detail page. After you confirm, its records move to Uncategorized, keeping their time and counts.
+Click a project's name to rename it; its focuses stay with it. Click a single focus to correct its start time or length, move it to another project or Uncategorized, or delete it. A focus can be edited once it is saved, after the undo button disappears. If you no longer need a project, delete it from its detail page. After you confirm, its records move to Uncategorized, keeping their time and counts. Deleting a project or a focus can't be undone.
 
 <p align="center">
   <img src="docs/images/en/projects.png" width="1000" alt="Weekly statistics and project details; demonstration data">
@@ -119,7 +119,7 @@ The main window, floating window and notch island briefly show the time you just
 2. Install Ripen on the new Mac, open **Settings › Data** and choose **Restore from Backup…**.
 3. Check the preview, which lists how many focuses and which projects will be added, then choose **Restore**.
 
-Restoring only adds focuses and projects that aren't already there and never changes existing ones, so restoring the same backup twice adds nothing. A project you deleted after making the backup comes back and can be deleted again. Before restoring, Ripen keeps a copy of your current data. Settings such as lengths, shortcut and appearance aren't in the backup; set them again on the new Mac.
+Restoring only adds focuses and projects that aren't already there and never changes existing ones, so restoring the same backup twice adds nothing. Corrections and renames you made after the backup stay as they are. A project or focus you deleted after making the backup comes back and can be deleted again. Before restoring, Ripen keeps a copy of your current data. Settings such as lengths, shortcut and appearance aren't in the backup; set them again on the new Mac.
 
 ## Install
 

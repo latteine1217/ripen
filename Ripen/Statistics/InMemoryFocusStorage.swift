@@ -38,6 +38,23 @@ final class InMemoryFocusStorage: FocusStorage {
         journal = journal.map { Self.uncategorizing($0, from: ids) }
     }
 
+    func renameProjects(_ names: [UUID: String]) {
+        projects = projects.map { project in
+            names[project.id].map { FocusProject(id: project.id, name: $0, color: project.color) } ?? project
+        }
+    }
+
+    func updateRecords(_ records: [StoredFocusRecord]) {
+        let updated = Dictionary(records.map { ($0.id, $0) }, uniquingKeysWith: { _, last in last })
+        entries = entries.map { updated[$0.id] ?? $0 }
+        journal = journal.map { updated[$0.id] ?? $0 }
+    }
+
+    func deleteRecords(_ ids: Set<UUID>) {
+        entries.removeAll { ids.contains($0.id) }
+        journal.removeAll { ids.contains($0.id) }
+    }
+
     func loadRecovery() -> TimerRecovery? { recovery }
 
     /// 分類尚未保存時整批不寫，保留上一個有效點。

@@ -7,8 +7,9 @@ struct RecapCard: Equatable {
     /// nil 是未分類。
     let projectID: UUID?
     let project: FocusProject?
-    /// 建立時納入的紀錄；輸出前用來確認分類沒有變動（`exportability(in:)`）。
-    let recordIDs: Set<UUID>
+    /// 建立時納入的紀錄與內容；輸出前用來確認分類沒有變動（`exportability(in:)`）。
+    /// 比對內容是因為更正與重新歸類不改識別碼（ADR-0019）。
+    let records: [UUID: FocusRecord]
     let total: FocusTotal
     /// 有專注的日子數。
     let activeDays: Int
@@ -25,7 +26,7 @@ struct RecapCard: Equatable {
         let statistics = FocusStatistics(records: entries.map(\.record), calendar: calendar)
         self.projectID = projectID
         project = focusLog.project(withID: projectID)
-        recordIDs = Set(entries.map(\.id))
+        records = Dictionary(uniqueKeysWithValues: entries.map { ($0.id, $0.record) })
         total = statistics.total
         activeDays = statistics.activeDays
         today = statistics.summary(on: now)
@@ -41,7 +42,7 @@ enum RecapExportability: Equatable {
     case undoable
     /// 有紀錄尚未成功寫入。
     case unsaved
-    /// 開卡後分類的紀錄有變動（復原或新完成），要重新整理才能輸出。
+    /// 開卡後分類的紀錄有變動（復原、新完成或編輯），要重新整理才能輸出。
     case changed
 }
 
@@ -56,9 +57,10 @@ extension RecapCard {
     /// 預覽可以顯示尚未確立的紀錄，但輸出前卡片納入的紀錄必須都已保存，且分類沒有變動。
     @MainActor
     func exportability(in focusLog: FocusLog) -> RecapExportability {
-        let current = Set(focusLog.entries.filter { $0.record.projectID == projectID }.map(\.id))
-        guard current == recordIDs else { return .changed }
-        let statuses = recordIDs.map(focusLog.status(ofRecord:))
+        let current = Dictionary(uniqueKeysWithValues: focusLog.entries.filter { $0.record.projectID == projectID }
+            .map { ($0.id, $0.record) })
+        guard current == records else { return .changed }
+        let statuses = records.keys.map(focusLog.status(ofRecord:))
         if statuses.contains(.undoable) { return .undoable }
         if statuses.contains(.unsaved) { return .unsaved }
         return .ready
