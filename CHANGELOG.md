@@ -4,6 +4,10 @@ Notable changes to Ripen. The format follows [Keep a Changelog](https://keepacha
 
 ## [Unreleased]
 
+### Added
+
+- Choose English or Traditional Chinese for Ripen in Settings › General, or follow the system language. Ripen asks to restart, since the new language applies the next time it opens. A running timer is saved and can be continued after it reopens. The choice is the same one as System Settings › General › Language & Region › Applications.
+
 ## [0.3.0] - 2026-11-09
 
 ### Added

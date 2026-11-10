@@ -9,6 +9,8 @@ final class AppLifecycleDelegate: NSObject, NSApplicationDelegate {
     var onLaunch: (() -> Void)?
     /// 在仍可取消退出時保存並確認，不能等到 applicationWillTerminate 才詢問。
     var onShouldTerminate: (() -> Bool)?
+    /// 確定結束時呼叫；退出已不能取消。
+    var onWillTerminate: (() -> Void)?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         onLaunch?()
@@ -22,5 +24,9 @@ final class AppLifecycleDelegate: NSObject, NSApplicationDelegate {
 
     func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
         onShouldTerminate?() == false ? .terminateCancel : .terminateNow
+    }
+
+    func applicationWillTerminate(_ notification: Notification) {
+        onWillTerminate?()
     }
 }

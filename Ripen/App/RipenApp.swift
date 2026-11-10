@@ -12,6 +12,8 @@ struct RipenApp: App {
     @State private var hotkeys: GlobalHotkeyController
     @State private var appearance: AppAppearanceController?
     @State private var loginItem = LoginItemController(service: MainAppLoginItem())
+    @State private var interfaceLanguage: InterfaceLanguageController
+    @State private var relauncher: AppRelauncher
     @State private var updater = UpdateChecker()
     @State private var notifications: PhaseNotificationController
     #if DEBUG
@@ -35,6 +37,8 @@ struct RipenApp: App {
         let isolated = isTesting || validationDirectory != nil
         let settings = AppSettings(storage: isolated ? InMemorySettingsStorage() : UserDefaults.standard)
         _appearance = State(initialValue: isTesting ? nil : AppAppearanceController(settings: settings))
+        // 語言要在啟動前從 defaults 讀出，不能放在驗收模式的記憶體設定；驗收版的 bundle id 已隔離，只有測試 host 不碰
+        _interfaceLanguage = State(initialValue: .live(storage: isTesting ? InMemorySettingsStorage() : UserDefaults.standard))
         #if DEBUG
         if validationDirectory != nil {
             settings.focusMinutes = 1
@@ -68,6 +72,8 @@ struct RipenApp: App {
         _presentation = State(initialValue: presentation)
         _presenter = State(initialValue: presenter)
         _hotkeys = State(initialValue: hotkeys)
+        let relauncher = AppRelauncher()
+        _relauncher = State(initialValue: relauncher)
         model.focusLog.onIssue = { [weak presenter] in
             presenter?.showMainWindow()
         }
@@ -77,6 +83,7 @@ struct RipenApp: App {
         // 在 init 接上：主視窗上次退出時是隱藏的就不會建立，接在 onWindowAttach 會漏掉
         lifecycle.onShouldTerminate = { FocusStorageQuitConfirmation.confirm(model: model) }
         lifecycle.onReopen = presenter.handleReopen
+        lifecycle.onWillTerminate = relauncher.appWillTerminate
         lifecycle.onLaunch = {
             presenter.ensureInterfaceVisible()
             if model.focusLog.issue != nil || model.requiresRecoveryDecision || model.recoveryIssue != nil {
@@ -128,6 +135,8 @@ struct RipenApp: App {
                 .tint(.brandAccent)
                 .environment(hotkeys)
                 .environment(loginItem)
+                .environment(interfaceLanguage)
+                .environment(relauncher)
                 .environment(notifications)
                 .environment(updater)
         }
