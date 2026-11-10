@@ -75,7 +75,7 @@ enum UpdateInstaller {
         let script = workDirectory.appending(path: "install.sh")
         try """
         #!/bin/sh
-        pid="$1"; target="$2"; staged="$3"
+        pid="$1"; target="$2"; staged="$3"; workDirectory="$4"
         while kill -0 "$pid" 2>/dev/null; do sleep 0.2; done
         /usr/bin/xattr -dr com.apple.quarantine "$staged" 2>/dev/null
         \(replacementCommands)
@@ -85,13 +85,14 @@ enum UpdateInstaller {
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/bin/sh")
         process.arguments = [script.path, String(ProcessInfo.processInfo.processIdentifier),
-                             target.path, staged.path]
+                             target.path, staged.path, workDirectory.path]
         try process.run()
         logger.info("已排定更新：\(target.path, privacy: .public)")
     }
 
     /// 在 App 同目錄預留獨立備份資料夾，避免 mv 將 App 放進殘留備份，也避免跨檔案系統更名。
     /// 舊版仍完好時（無法預留備份或無法移開舊版）照常往下重新開啟；只有還原失敗才以非 0 結束、不開啟。
+    /// 有指定 `workDirectory`（下載的 dmg、取出的新版與本指令稿）時，換新結束後一併清除；還原失敗時保留。
     /// 正式更新與隔離檔案測試共用此指令，測試不會結束或重新開啟 App。
     static let replacementCommands = """
     if backupDirectory=$(/usr/bin/mktemp -d "${target%/*}/.Ripen-update.XXXXXX"); then
@@ -108,6 +109,7 @@ enum UpdateInstaller {
         /bin/rmdir "$backupDirectory"
       fi
     fi
+    if [ -n "$workDirectory" ]; then /bin/rm -rf "$workDirectory"; fi
     """
 
     private static func run(_ executable: String, _ arguments: [String]) throws {

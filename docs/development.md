@@ -42,6 +42,8 @@ Release 發佈後更新 [latteine1217/homebrew-tap](https://github.com/latteine1
 
 App 內的「檢查更新⋯」依賴這個格式（ADR-0009、ADR-0017）：標籤為 `v<版本>`、不是 draft 或 prerelease，附件必須有 `Ripen-<版本>.dmg` 與其簽章檔 `Ripen-<版本>.dmg.sig`，dmg 根目錄有 `Ripen.app`，其 bundle id 與 `CFBundleShortVersionString` 與標籤一致。安裝前以 App 內建的公鑰驗證簽章；缺少簽章檔或任何一項不符時不自動安裝，設定裡改提供下載頁連結。
 
+下載的 dmg 與簽章放在同一個 `$TMPDIR/RipenUpdate-<UUID>/` 工作資料夾，新版也在此取出。排定換新後由安裝指令稿在替換結束後刪除整個資料夾（還原失敗時保留）；下載、驗證或安裝失敗時由 App 當場刪除；無法原地取代而改在 Finder 打開 dmg 時只留下 dmg，交給系統清理暫存。下載前先確認暫存所在磁碟的可用空間（含系統可清除的空間）至少是 dmg 的 4 倍，可放下 dmg 與取出的新版；不足時不下載，顯示大約需要的空間。量不到可用空間時照常下載。替換時才發生的複製失敗仍由指令稿放回舊版。
+
 替換 App 時，在安裝目錄以 `mktemp -d` 預留獨立的 `.Ripen-update.XXXXXX` 資料夾，將本次舊版改名移入；新版複製成功後才刪除本次備份，複製失敗則移除不完整新版並還原本次舊版。無法預留資料夾或無法移開舊版時不替換，照常重新開啟舊版。既有 `.Ripen-previous.app` 或其他更新的備份不會被覆蓋、合併或清除；還原失敗時停止並保留備份，不繼續開啟不完整的 App。`UpdateInstallerTests` 直接執行正式替換指令，以隔離檔案檢查成功替換、失敗回滾、無法預留或移開時保留舊版，以及殘留備份保留；不啟動或結束 App；完整下載、替換與重開由發行驗收清單的 A 層實機確認。
 
 ## 專案結構
@@ -111,7 +113,7 @@ xcodegen generate
 xcodebuild test -project Ripen.xcodeproj -scheme Ripen -destination 'platform=macOS' -only-testing:RipenTests/FocusLogPersistenceTests -only-testing:RipenTests/FocusLogTests -only-testing:RipenTests/AppModelOvertimeTests -only-testing:RipenTests/AppModelProjectTests -only-testing:RipenTests/FocusBackupTests -only-testing:RipenTests/FocusRestoreTests -only-testing:RipenTests/FocusCSVTests
 ```
 
-測試以 `upgrades:` 模擬更新版本時，須以 `SQLiteFocusLogStorage.schemaUpgrades` 加上額外步驟，代表沿著正式版本鏈往後升級。固定歷史樣本在 `RipenTests/Fixtures/`；不可用當前 encoder 重建或覆寫已發佈格式的樣本。版本 1 的 SQL 用於解釋同名 SQLite 樣本，不在測試時由正式 schema 即時生成。驗收包括舊 JSON、小數與重複紀錄、跨版升級、未知版本拒寫、WAL 備份可重開、遷移失敗回滾、鎖定重試及提交回報不確定時不重複。最後跑完整回歸，並實機檢查英／繁中錯誤狀態、重試、取消退出與放棄退出。
+測試以 `upgrades:` 模擬更新版本時，須以 `SQLiteFocusLogStorage.schemaUpgrades` 加上額外步驟，代表沿著正式版本鏈往後升級。固定歷史樣本在 `RipenTests/Fixtures/`；不可用當前 encoder 重建或覆寫已發佈格式的樣本。版本 1 到 3 各有一份 SQLite 樣本與解釋它的同名 SQL，不在測試時由正式 schema 即時生成；版本 2、3 為合成資料，含一個分類、一筆已分類與一筆未分類的紀錄，版本 3 另有恢復點，測試確認升到最新後逐筆不變。驗收包括舊 JSON、小數與重複紀錄、跨版升級、未知版本拒寫、WAL 備份可重開、遷移失敗回滾、鎖定重試及提交回報不確定時不重複。最後跑完整回歸，並實機檢查英／繁中錯誤狀態、重試、取消退出與放棄退出。
 
 測試 scheme 設定 `RIPEN_TESTING=1`，測試 host 使用記憶體設定與儲存，不碰真正的使用者資料。Debug 建置以 `RIPEN_DATA_DIRECTORY` 指向隔離目錄；驗收工具可能自行重新啟動 App、不保留環境變數時，可在驗收 App 的 Info.plist 固定 `RipenValidationDataDirectory`，環境變數仍優先。直接修改隔離驗收 bundle 的 Info.plist 後須重新簽章、驗證簽章並讀回該 key；不能假定任意 Xcode build setting 會自動寫入產物。兩者都只在 Debug 生效，會使用記憶體設定、一分鐘專注、靜音且不註冊全域快速鍵；Release 忽略這些覆寫。驗收版必須使用不同 bundle id，啟動前核對實際 Info.plist 的隔離目錄及資料庫位置，不能只靠啟動命令推定隔離已生效，也不能取代正在使用的 App。
 

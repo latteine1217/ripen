@@ -4383,6 +4383,22 @@
           }
         }
       }
+    },
+    "There isn’t enough free space to download the update. Ripen needs about %@ free.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "There isn’t enough free space to download the update. Ripen needs about %@ free."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "可用空間不足，無法下載更新。Ripen 大約需要 %@ 的可用空間。"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

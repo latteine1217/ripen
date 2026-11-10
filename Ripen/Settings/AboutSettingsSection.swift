@@ -86,6 +86,8 @@ struct AboutSettingsSection: View {
         case .cannotVerify: "This release can’t be verified, so it won’t be installed automatically."
         case .verificationFailed: "This download couldn’t be confirmed as an official Ripen release and was not installed."
         case .installFailed: "Couldn’t install the update."
+        case .notEnoughSpace(let required):
+            "There isn’t enough free space to download the update. Ripen needs about \(required.formatted(.byteCount(style: .file))) free."
         }
     }
 }

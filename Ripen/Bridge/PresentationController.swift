@@ -19,6 +19,8 @@ final class PresentationController {
     private let logger = Logger(subsystem: "com.latteine.ripen", category: "presentation")
     /// 上一次套用到畫面上的形態；用來判斷過場的方向。
     private var applied = Presentation.mainWindowOnly
+    /// 一台螢幕都沒有時暫緩套用，等螢幕回來再套用（#64）。
+    private var screenWait: NSObjectProtocol?
 
     /// - Parameter model: 計時；只轉交給各介面顯示時間與階段色，形態不依賴它。
     init(model: AppModel, presentation: PresentationModel) {
@@ -77,8 +79,24 @@ final class PresentationController {
         }
     }
 
+    /// 一台螢幕都沒有（例如外接螢幕拔除的瞬間）時無處擺放視窗；`applied` 不前進，螢幕回來後從原形態套用。
+    private func applyOnceAScreenExists() {
+        guard screenWait == nil else { return }
+        screenWait = NotificationCenter.default.addObserver(
+            forName: NSApplication.didChangeScreenParametersNotification, object: nil, queue: .main
+        ) { [weak self] _ in
+            MainActor.assumeIsolated {
+                guard let self, !NSScreen.screens.isEmpty, let screenWait = self.screenWait else { return }
+                NotificationCenter.default.removeObserver(screenWait)
+                self.screenWait = nil
+                self.apply()
+            }
+        }
+    }
+
     /// 讀出畫面實況、選過場（`PresentationTransition.choose`）、照選到的過場執行。
     private func apply() {
+        guard !NSScreen.screens.isEmpty else { return applyOnceAScreenExists() }
         let change = presentationModel.change
         let next = change.presentation
         let transition = PresentationTransition.choose(from: applied, to: next, action: change.action, facts: facts())
@@ -104,7 +122,7 @@ final class PresentationController {
         case .collapseFromFloatingWindow:
             // 懸浮窗的 ✕（主視窗不在）：懸浮窗吸入瀏海
             guard let panel = floating.window else { return assertionFailure("吸入時懸浮窗 panel 應已建立") }
-            let screen = floating.screen ?? NSScreen.main ?? NSScreen.screens[0]
+            guard let screen = floating.screen ?? NSScreen.main ?? NSScreen.screens.first else { return }
             // 第一格與真懸浮窗同形：靜止時尺寸就是玻璃高度所屬的那一級
             let glass = floating.glassFrame.size
             let size = FloatingWindowSize(height: glass.height)
@@ -115,13 +133,15 @@ final class PresentationController {
         case .collapseFromMainWindow:
             // 懸浮窗原地淡出：與瀏海沒有空間關係，不飛向瀏海（懸浮窗與瀏海島互斥，ADR-0001）
             guard let window else { return assertionFailure("吸入時主視窗應已建立") }
+            guard let screen = collapseScreen(releaseScreen) else { return }
             floating.dismiss()
-            island.collapse(from: window, on: collapseScreen(releaseScreen)) { [weak self] fade in
+            island.collapse(from: window, on: screen) { [weak self] fade in
                 self?.mainWindow.hide(fadeDuration: fade)
             }
         case .showIsland:
+            guard let screen = collapseScreen(releaseScreen) else { return }
             floating.dismiss()
-            island.show(on: collapseScreen(releaseScreen))
+            island.show(on: screen)
             mainWindow.hide()
         case .tearOffLanding:
             if !next.showsNotchIsland { island.hide() }
@@ -152,9 +172,9 @@ final class PresentationController {
         }
     }
 
-    /// 拖曳放開時收進游標附近的那個瀏海；紅色按鈕收進主視窗所在那台螢幕的瀏海。
-    private func collapseScreen(_ releaseScreen: NSScreen?) -> NSScreen {
-        releaseScreen ?? mainWindow.window?.screen ?? NSScreen.main ?? NSScreen.screens[0]
+    /// 拖曳放開時收進游標附近的那個瀏海；紅色按鈕收進主視窗所在那台螢幕的瀏海。沒有任何螢幕時為 nil。
+    private func collapseScreen(_ releaseScreen: NSScreen?) -> NSScreen? {
+        releaseScreen ?? mainWindow.window?.screen ?? NSScreen.main ?? NSScreen.screens.first
     }
 
     private func facts() -> PresentationFacts {

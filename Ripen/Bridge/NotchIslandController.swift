@@ -248,10 +248,11 @@ final class NotchIslandController {
         self.panel = nil
     }
 
-    /// 解析度或排列變了：留在原螢幕重算瀏海；原螢幕不在了就移到主螢幕。
+    /// 解析度或排列變了：留在原螢幕重算瀏海；原螢幕不在了就移到主螢幕。一台螢幕都沒有時等下一次變更。
     private func screensChanged() {
-        guard isVisible else { return }
-        let screen = NSScreen.screens.first { $0.displayID == displayID } ?? NSScreen.main ?? NSScreen.screens[0]
+        guard isVisible,
+              let screen = NSScreen.screens.first(where: { $0.displayID == displayID }) ?? NSScreen.main ?? NSScreen.screens.first
+        else { return }
         displayID = screen.displayID
         state.notch = NotchGeometry.notch(for: screen.metrics)
         panel?.setFrame(NotchGeometry.panelFrame(notch: state.notch, expanded: state.isExpanded), display: true)

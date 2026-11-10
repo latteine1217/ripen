@@ -8,8 +8,8 @@ import os
 protocol ReleaseSource: Sendable {
     /// 最新的正式版；還沒有發佈任何版本時為 nil。
     func latest() async throws -> GitHubRelease?
-    /// 下載到暫存位置，回傳檔案。
-    func download(_ asset: GitHubRelease.Asset) async throws -> URL
+    /// 下載到 `directory`（呼叫端建立並負責清除的工作資料夾），回傳檔案。
+    func download(_ asset: GitHubRelease.Asset, into directory: URL) async throws -> URL
 }
 
 /// 手動檢查更新：只在使用者按下「檢查更新」時連網，從不自動檢查（README「本機與隱私」）。
@@ -38,7 +38,12 @@ final class UpdateChecker {
         /// 下載內容與作者簽章或 App 資訊不符，已停止安裝。
         case verificationFailed
         case installFailed
+        /// 暫存所在的磁碟放不下這次更新；`required` 是大約需要的可用空間（位元組）。
+        case notEnoughSpace(required: Int64)
     }
+
+    /// dmg 之外還要放取出的新版：0.3.1 的 dmg 約 5 MB、App 約 13 MB，取 dmg 的 4 倍留餘裕。
+    static let spaceFactor: Int64 = 4
 
     private static let logger = Logger(subsystem: "com.latteine.ripen", category: "update")
 
@@ -46,6 +51,8 @@ final class UpdateChecker {
     let currentVersion: AppVersion?
     @ObservationIgnored private let source: any ReleaseSource
     @ObservationIgnored private let publicKey: Curve25519.Signing.PublicKey?
+    /// 某個位置所在磁碟的可用空間；量不到時為 nil，照常下載。
+    @ObservationIgnored private let availableSpace: @Sendable (URL) -> Int64?
     /// 換上新版的實際動作；測試以假的取代，不碰檔案系統與 App 生命週期。
     @ObservationIgnored private let install: @MainActor (GitHubRelease, URL) async throws -> State
 
@@ -53,11 +60,13 @@ final class UpdateChecker {
         source: any ReleaseSource = GitHubReleaseSource(),
         currentVersion: AppVersion? = .current,
         publicKey: Curve25519.Signing.PublicKey? = UpdateSigningKey.trusted,
+        availableSpace: @escaping @Sendable (URL) -> Int64? = { UpdateChecker.availableSpace(at: $0) },
         install: @escaping @MainActor (GitHubRelease, URL) async throws -> State = UpdateChecker.installDownloadedImage
     ) {
         self.source = source
         self.currentVersion = currentVersion
         self.publicKey = publicKey
+        self.availableSpace = availableSpace
         self.install = install
     }
 
@@ -92,15 +101,26 @@ final class UpdateChecker {
             state = .failed(.cannotVerify)
             return
         }
+        // 下載前先檢查：空間不足時下載會被誤報成網路錯誤（#64）。替換時的複製失敗另由安裝指令稿放回舊版。
+        let temporary = FileManager.default.temporaryDirectory
+        let required = Int64(asset.size) * Self.spaceFactor
+        if let available = availableSpace(temporary), available < required {
+            state = .failed(.notEnoughSpace(required: required))
+            return
+        }
         state = .downloading
+        // dmg 與簽章放同一個工作資料夾；排定換新後由安裝指令稿在換完後清除，其他結果在這裡清除
+        let workDirectory = temporary.appending(path: "RipenUpdate-\(UUID().uuidString)")
         let file: URL
         let signatureFile: URL
         do {
-            file = try await source.download(asset)
-            signatureFile = try await source.download(signatureAsset)
+            try FileManager.default.createDirectory(at: workDirectory, withIntermediateDirectories: true)
+            file = try await source.download(asset, into: workDirectory)
+            signatureFile = try await source.download(signatureAsset, into: workDirectory)
         } catch {
             Self.logger.error("下載更新失敗：\(error)")
             state = .failed(.network)
+            Self.remove(workDirectory)
             return
         }
         do {
@@ -116,6 +136,26 @@ final class UpdateChecker {
         } catch {
             Self.logger.error("安裝更新失敗：\(error)")
             state = .failed(.installFailed)
+        }
+        switch state {
+        // 指令稿等 App 結束才換新，還要用到工作資料夾；結束被取消時要留到下次結束
+        case .restarting: break
+        // dmg 已在 Finder 打開，使用者還要從裡面拖出 App；交給系統清理暫存
+        case .openedDiskImage: Self.remove(signatureFile)
+        default: Self.remove(workDirectory)
+        }
+    }
+
+    /// 以「重要用途」的可用空間計算，包含系統可清出的可清除空間，與 Finder 顯示的一致。
+    nonisolated static func availableSpace(at url: URL) -> Int64? {
+        try? url.resourceValues(forKeys: [.volumeAvailableCapacityForImportantUsageKey]).volumeAvailableCapacityForImportantUsage
+    }
+
+    private static func remove(_ url: URL) {
+        do {
+            try FileManager.default.removeItem(at: url)
+        } catch {
+            logger.error("清除更新暫存失敗：\(error)")
         }
     }
 
@@ -152,12 +192,10 @@ struct GitHubReleaseSource: ReleaseSource {
         return release.draft || release.prerelease ? nil : release
     }
 
-    func download(_ asset: GitHubRelease.Asset) async throws -> URL {
+    func download(_ asset: GitHubRelease.Asset, into directory: URL) async throws -> URL {
         let (temporary, response) = try await URLSession.shared.download(from: asset.browserDownloadURL)
         guard (response as? HTTPURLResponse)?.statusCode == 200 else { throw URLError(.badServerResponse) }
-        // 系統會清掉回傳的暫存檔，先搬到自己的工作資料夾
-        let directory = FileManager.default.temporaryDirectory.appending(path: "RipenUpdate-\(UUID().uuidString)")
-        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        // 系統會清掉回傳的暫存檔，先搬到工作資料夾
         let destination = directory.appending(path: asset.name)
         try FileManager.default.moveItem(at: temporary, to: destination)
         return destination

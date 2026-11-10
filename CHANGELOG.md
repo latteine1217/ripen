@@ -4,6 +4,12 @@ Notable changes to Ripen. The format follows [Keep a Changelog](https://keepacha
 
 ## [Unreleased]
 
+### Fixed
+
+- Updating from within Ripen no longer leaves the downloaded files (about 16 MB each time) in the temporary folder, whether the update succeeds or fails. When Ripen opens the disk image for you to install by hand, only the disk image is kept.
+- When the disk is too full to download an update, Ripen now says so and shows roughly how much free space it needs, instead of reporting a connection problem. Nothing is downloaded and the current app is left as it is.
+- Switching between the main window, floating window and notch island while no display is connected now waits for a display to return instead of risking a crash.
+
 ## [0.3.1] - 2026-11-10
 
 ### Added

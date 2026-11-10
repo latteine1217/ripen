@@ -27,7 +27,7 @@
 1. 從 GitHub Release 下載新版 DMG，SHA-256 與 API 的 `digest` 一致；Release 同時附有 `Ripen-<版本>.dmg.sig`。
 2. 以上一版 App 打開「設定 › 關於 › 檢查更新⋯」，顯示新版本。
 3. 按「下載並安裝」：App 自動結束、替換並重新開啟。上一版為 0.2.5 以後時，這一步同時走簽章驗證（ADR-0017）。
-4. 版本與 build 號正確，`codesign --verify --deep --strict /Applications/Ripen.app` 通過，`/Applications` 沒有 `.Ripen-update.*` 殘留。
+4. 版本與 build 號正確，`codesign --verify --deep --strict /Applications/Ripen.app` 通過，`/Applications` 沒有 `.Ripen-update.*` 殘留；上一版為 0.3.2 以後時，`$TMPDIR` 也沒有這次更新的 `RipenUpdate-*` 資料夾。
 5. 完成紀錄筆數、分類與設定和升級前相同；有資料格式升級時，`PRAGMA user_version` 為新版本且 `integrity_check` 為 ok。
 6. 完成一次專注，統計頁 +1。升級前已開啟「階段結束時傳送通知」時，升級後開關維持開啟、不再跳權限提示，Ripen 在背景時仍顯示橫幅。
 7. 再檢查更新，顯示已是最新版本。
