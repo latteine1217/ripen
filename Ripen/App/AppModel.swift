@@ -335,7 +335,7 @@ final class AppModel {
     }
 
     private func expireUndoOffer(at now: Date) {
-        guard let undoOffer, now >= undoOffer.expiresAt else { return }
+        guard let pendingUndo, now >= pendingUndo.offer.expiresAt else { return }
         closeUndoOffer()
     }
 

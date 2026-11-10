@@ -4,14 +4,13 @@ Notable changes to Ripen. The format follows [Keep a Changelog](https://keepacha
 
 ## [Unreleased]
 
+## [0.3.3] - 2026-11-11
+
 ### Fixed
 
 - Changing the Mac's clock, by hand or when it syncs, no longer disturbs a running timer. Before, turning the clock back could make the remaining time exceed the phase length and stop progress from being saved, and turning it forward added the skipped time to the focus length. The countdown now keeps going by the time that actually passes, including while the Mac sleeps, and the end time, reminder and saved start time follow the corrected clock.
 
-## [0.3.2] - 2026-11-11
-
-### Fixed
-
+- Undo stays available for five seconds even after the Mac's clock changes. Completed focuses are saved when those five seconds pass.
 - Updating from within Ripen no longer leaves the downloaded files (about 16 MB each time) in the temporary folder, whether the update succeeds or fails. When Ripen opens the disk image for you to install by hand, only the disk image is kept.
 - When the disk is too full to download an update, Ripen now says so and shows roughly how much free space it needs, instead of reporting a connection problem. Nothing is downloaded and the current app is left as it is.
 - Switching between the main window, floating window and notch island while no display is connected now waits for a display to return instead of risking a crash.
@@ -140,8 +139,8 @@ The first release of Ripen, a native macOS Pomodoro timer in frosted glass.
 - Statistics for today and the last 7 days, stored only on your Mac.
 - **Check for Updates…**, which only goes online when you ask.
 
-[Unreleased]: https://github.com/latteine1217/ripen/compare/v0.3.2...HEAD
-[0.3.2]: https://github.com/latteine1217/ripen/compare/v0.3.1...v0.3.2
+[Unreleased]: https://github.com/latteine1217/ripen/compare/v0.3.3...HEAD
+[0.3.3]: https://github.com/latteine1217/ripen/compare/v0.3.1...v0.3.3
 [0.3.1]: https://github.com/latteine1217/ripen/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/latteine1217/ripen/compare/v0.2.6...v0.3.0
 [0.2.6]: https://github.com/latteine1217/ripen/compare/v0.2.5...v0.2.6

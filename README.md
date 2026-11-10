@@ -19,7 +19,7 @@ English · [繁體中文](README.zh-Hant.md)
 
 </div>
 
-> v0.3.2 is out · [Release notes](https://github.com/latteine1217/ripen/releases/tag/v0.3.2)
+> v0.3.3 is out · [Release notes](https://github.com/latteine1217/ripen/releases/tag/v0.3.3)
 
 <p align="center">
   <img src="docs/images/en/presentation.png" width="1000" alt="Ripen main window, floating window and notch island">
