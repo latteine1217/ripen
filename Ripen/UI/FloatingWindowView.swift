@@ -43,7 +43,7 @@ struct FloatingWindowView: View {
     var onResize: (ResizeCorner?) -> Void = { _ in }
 
     var body: some View {
-        TimelineView(CountdownTickSchedule(paused: model.status != .running)) { _ in
+        TimelineView(CountdownTickSchedule(paused: model.status != .running, clockRevision: model.systemClockRevision)) { _ in
             FloatingWindowGlass(
                 model: model, presentation: presentation, display: model.display, blend: FloatingWindowSizeBlend(state.size), frame: state.glassFrame,
                 widensLeftward: state.widensLeftward,

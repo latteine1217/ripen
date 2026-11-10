@@ -19,6 +19,14 @@ struct TimerRecovery: Codable, Equatable, Sendable {
     }
 }
 
+extension TimerRecovery {
+    /// 開始時刻換到另一套時間（系統時間與計時時鐘之間，ADR-0020）；其餘不變。
+    func shiftingStart(by offset: TimeInterval) -> TimerRecovery {
+        TimerRecovery(phase: phase, duration: duration, remaining: remaining, startedAt: startedAt + offset,
+                      projectID: projectID, completedFocuses: completedFocuses)
+    }
+}
+
 protocol TimerRecoveryStorage {
     func loadRecovery() throws -> TimerRecovery?
     func saveCheckpoint(_ recovery: TimerRecovery?, completions: [StoredFocusRecord]) throws

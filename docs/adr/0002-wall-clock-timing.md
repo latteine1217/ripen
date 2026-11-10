@@ -1,5 +1,5 @@
 ---
-superseded_in_part_by: 0014-resume-after-quit.md
+superseded_in_part_by: 0014-resume-after-quit.md, 0020-steady-clock-timing.md
 ---
 
 # 計時一律以真實時間計算，退出即取消

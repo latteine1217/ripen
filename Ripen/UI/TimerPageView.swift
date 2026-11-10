@@ -16,7 +16,7 @@ struct TimerPageView: View {
     private static let ringDiameter: CGFloat = 220
 
     var body: some View {
-        TimelineView(CountdownTickSchedule(paused: !isPresented || model.status != .running)) { _ in
+        TimelineView(CountdownTickSchedule(paused: !isPresented || model.status != .running, clockRevision: model.systemClockRevision)) { _ in
             let display = model.display
             let status = display.status
             let phase = display.phase

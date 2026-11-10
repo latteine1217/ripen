@@ -49,7 +49,7 @@ App 內的「檢查更新⋯」依賴這個格式（ADR-0009、ADR-0017）：標
 ## 專案結構
 
 - `Ripen/App/`：`@main` App 與 `AppModel`（唯一的可觀察狀態根）
-- `Ripen/Timer/`：計時引擎、階段循環與時鐘注入（`TimeSource`），純邏輯
+- `Ripen/Timer/`：計時引擎、階段循環與時鐘注入（`TimeSource`），純邏輯。正式時鐘不受系統時間調動影響，交給畫面與儲存的時刻換算成目前的系統時間（ADR-0020）
 - `Ripen/UI/`：SwiftUI 畫面
 - `Ripen/Presentation/`：形態狀態機（畫面上有哪些介面），純邏輯
 - `Ripen/Geometry/`：瀏海與版面的幾何計算，純函式

@@ -9,6 +9,9 @@ import os
 ///
 /// 倒數到 0 只是由時間推導出的超時（ADR-0006）：`refresh()` 發現時送出提醒，階段不前進；
 /// 使用者按「完成」（`finish()`）才確立完成、記錄並前進到下一段。
+///
+/// 內部時刻都在 `clock.now()` 那一套不受系統時間調動的時間裡；交給畫面、提醒與儲存的時刻
+/// 換算成目前的系統時間，讀回儲存時反向換算（ADR-0020）。
 @MainActor
 @Observable
 final class AppModel {
@@ -53,7 +56,7 @@ final class AppModel {
             // 離開超時就是這一段結束了；所有操作都經過這裡，通知中心不留下過期的提醒
             if oldValue.reachedZero && !run.reachedZero { notifier.clearPhaseEndNotification() }
             guard run.engine.endDate != oldValue.engine.endDate else { return }
-            alarm.schedule(at: run.engine.endDate.flatMap { $0 > clock.now() ? $0 : nil })
+            scheduleAlarm()
         }
     }
     /// 可觀察：每段只在跨過 0 時變一次，選單列選單靠它在那一刻換成「完成」，不必隨時間文字重建。
@@ -64,8 +67,10 @@ final class AppModel {
     @ObservationIgnored private var awaySince: Date?
     /// 最後一次播出的提醒；各介面觀察它的 `id` 播提醒動畫。
     private(set) var lastReminder: PhaseReminder?
-    /// 目前可以復原的操作；各介面依它顯示復原膠囊。
-    var undoOffer: UndoOffer? { pendingUndo?.offer }
+    /// 目前可以復原的操作；各介面依它顯示復原膠囊，期限以系統時間表示。
+    var undoOffer: UndoOffer? {
+        pendingUndo.map { UndoOffer(action: $0.offer.action, expiresAt: clock.systemDate(for: $0.offer.expiresAt)) }
+    }
     /// 可以復原的操作與操作前的狀態，同生同滅；結束時一併確立（期限過了、有其他操作）或捨棄（復原）暫存的完成紀錄。
     private var pendingUndo: PendingUndo?
     /// 進行中專注的歸屬；開始專注時取自下次選擇，途中更正時一併改寫（ADR-0010）。
@@ -122,7 +127,7 @@ final class AppModel {
         return PhaseDisplay(
             phase: run.engine.phase, status: run.engine.status(at: now), remaining: run.engine.remaining(at: now),
             isOvertime: run.engine.isOvertime(at: now), overtime: run.engine.overtime(at: now),
-            phaseDuration: run.engine.duration, endDate: run.engine.endDate,
+            phaseDuration: run.engine.duration, endDate: run.engine.endDate.map(clock.systemDate(for:)),
             completedFocusesInCycle: run.cycle.completedFocuses, longBreakInterval: configuration.longBreakInterval
         )
     }
@@ -196,7 +201,8 @@ final class AppModel {
         else { return false }
         let timeChanged = record.startedAt != current.startedAt || record.duration != current.duration
         if timeChanged,
-           FocusRecord.correctionIssue(startedAt: record.startedAt, duration: record.duration, now: clock.now()) != nil {
+           FocusRecord.correctionIssue(startedAt: record.startedAt, duration: record.duration,
+                                       now: clock.systemDate(for: clock.now())) != nil {
             return false
         }
         return focusLog.updateRecord(id, to: record)
@@ -279,7 +285,8 @@ final class AppModel {
     @discardableResult
     private func recordIfFocus(_ completion: PhaseCompletion) -> FocusRecord? {
         guard completion.phase == .focus else { return nil }
-        let record = FocusRecord(startedAt: completion.startedAt, duration: completion.duration, projectID: focusProjectID)
+        let record = FocusRecord(startedAt: clock.systemDate(for: completion.startedAt), duration: completion.duration,
+                                 projectID: focusProjectID)
         return focusLog.stage(record)
     }
 
@@ -305,8 +312,8 @@ final class AppModel {
         guard !requiresRecoveryDecision else { return }
         refresh()
         guard let snapshot = pendingUndo?.snapshot else { return }
-        let restored = snapshot.engine.recovery(at: clock.now(), projectID: focusProjectID,
-                                                completedFocuses: snapshot.cycle.completedFocuses)
+        let restored = storable(snapshot.engine.recovery(at: clock.now(), projectID: focusProjectID,
+                                                         completedFocuses: snapshot.cycle.completedFocuses))
         guard writeRecovery(restored, completions: focusLog.completionsWithoutStaged, action: .save) else { return }
         focusLog.discardStaged()
         run = snapshot
@@ -357,13 +364,28 @@ final class AppModel {
         deliverPendingReminder()
     }
 
+    /// 系統時間被調動的次數；畫面的刷新節拍以系統時間排格線，帶上它才會在時間變更後重排（ADR-0020）。
+    private(set) var systemClockRevision = 0
+
+    /// 系統時間被調動（`NSSystemClockDidChange`）：倒數不受影響，到點提醒與畫面節拍依新的系統時間重排。
+    func systemClockDidChange() {
+        refresh()
+        scheduleAlarm()
+        systemClockRevision += 1
+    }
+
     private func alarmDidFire() {
         refresh()
         // 計時器可能比結束時刻早一點觸發；還沒到 0 就重排，否則視窗關閉時提醒永遠不會送出
         let now = clock.now()
         if run.engine.status(at: now) == .running, !run.engine.isOvertime(at: now) {
-            alarm.schedule(at: run.engine.endDate)
+            alarm.schedule(at: run.engine.endDate.map(clock.systemDate(for:)))
         }
+    }
+
+    /// 超時中繼續時結束時刻在過去，不再排：提醒每段只送一次。到點計時器以系統時間排定。
+    private func scheduleAlarm() {
+        alarm.schedule(at: run.engine.endDate.flatMap { $0 > clock.now() ? clock.systemDate(for: $0) : nil })
     }
 
     // MARK: - 設定的套用
@@ -514,7 +536,7 @@ final class AppModel {
             let loaded = try recoveryStorage.loadRecovery()
             if let loaded {
                 guard loaded.isValid else { throw FocusStorageError.invalidData }
-                run = PhaseRun(recovery: loaded)
+                run = PhaseRun(recovery: loaded.shiftingStart(by: -clock.systemClockOffset))
                 focusProjectID = loaded.projectID
             }
             recovery = loaded
@@ -536,8 +558,13 @@ final class AppModel {
     }
 
     private func saveCurrentRecovery() -> Bool {
-        writeRecovery(run.engine.recovery(at: clock.now(), projectID: focusProjectID,
-                                      completedFocuses: run.cycle.completedFocuses), action: .save)
+        writeRecovery(storable(run.engine.recovery(at: clock.now(), projectID: focusProjectID,
+                                               completedFocuses: run.cycle.completedFocuses)), action: .save)
+    }
+
+    /// 存下的開始時刻是系統時間，重新開啟後才不會依上次啟動的時間解讀。
+    private func storable(_ recovery: TimerRecovery?) -> TimerRecovery? {
+        recovery?.shiftingStart(by: clock.systemClockOffset)
     }
 
     @discardableResult

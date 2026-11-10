@@ -9,6 +9,9 @@ import SwiftUI
 struct CountdownTickSchedule: TimelineSchedule {
     static let interval: TimeInterval = 0.25
     var paused = false
+    /// `AppModel.systemClockRevision`。系統時間往回撥時，已排的格線落在未來、畫面會停住；
+    /// 值一變，TimelineView 就從新的系統時間重排（ADR-0020）。
+    var clockRevision = 0
 
     /// 第一格是不晚於 `startDate` 的格線時刻，TimelineView 立即以它繪製，之後每格加一個間隔。
     func entries(from startDate: Date, mode: TimelineScheduleMode) -> UnfoldFirstSequence<Date> {
@@ -45,9 +48,14 @@ extension CountdownTickSchedule {
 @MainActor
 final class ModelRefreshDriver {
     private let subscription: AnyCancellable
+    private let clockChanges: AnyCancellable
 
     init(model: AppModel) {
         subscription = CountdownTickSchedule.ticks.sink { [weak model] _ in model?.refresh() }
+        // 系統時間被調動時重排到點提醒（ADR-0020）；通知不保證在主執行緒送出
+        clockChanges = NotificationCenter.default.publisher(for: .NSSystemClockDidChange)
+            .receive(on: DispatchQueue.main)
+            .sink { [weak model] _ in MainActor.assumeIsolated { model?.systemClockDidChange() } }
     }
 }
 

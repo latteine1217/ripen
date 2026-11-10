@@ -4,6 +4,10 @@ Notable changes to Ripen. The format follows [Keep a Changelog](https://keepacha
 
 ## [Unreleased]
 
+### Fixed
+
+- Changing the Mac's clock, by hand or when it syncs, no longer disturbs a running timer. Before, turning the clock back could make the remaining time exceed the phase length and stop progress from being saved, and turning it forward added the skipped time to the focus length. The countdown now keeps going by the time that actually passes, including while the Mac sleeps, and the end time, reminder and saved start time follow the corrected clock.
+
 ## [0.3.2] - 2026-11-11
 
 ### Fixed

@@ -32,7 +32,7 @@ struct NotchIslandView: View {
     static func cornerRadius(expanded: Bool) -> CGFloat { expanded ? 22 : 12 }
 
     var body: some View {
-        TimelineView(CountdownTickSchedule(paused: model.status != .running)) { _ in
+        TimelineView(CountdownTickSchedule(paused: model.status != .running, clockRevision: model.systemClockRevision)) { _ in
             island(model.display)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
