@@ -10,7 +10,11 @@ import SwiftUI
 final class MainWindowBridge {
     /// 保留主窗內容時仍能停止隱藏畫面的排程；首次由 SwiftUI 顯示，預設允許繪製。
     private(set) var isPresented = true
+    /// 主視窗或它的 sheet 是 key。計時選單依此啟用：收進瀏海或懸浮窗後沒有 key 視窗，
+    /// SwiftUI 的 focused value 仍保留主視窗最後提供的值，不能拿來判斷。
+    private(set) var isKey = false
     private(set) weak var window: NSWindow?
+    private var keyObservers: [NSObjectProtocol] = []
     private var closeInterceptor: CloseInterceptor?
     /// 黃色按鈕的新 target；按鈕只弱參照 target，要由這裡持有。
     private let miniaturizeTarget = ButtonActionTarget()
@@ -39,6 +43,8 @@ final class MainWindowBridge {
         window.isReleasedWhenClosed = false
         installCloseInterceptor(on: window)
         installMiniaturizeInterceptor(on: window)
+        observeKeyWindowChanges()
+        isKey = window.isKeyWindow
         isWindowRequested = false
         let pending = pendingUntilAttach
         guard !pending.isEmpty else { return }
@@ -99,6 +105,30 @@ final class MainWindowBridge {
                 window.orderOut(nil)
                 self.isPresented = false
                 window.alphaValue = 1
+            }
+        }
+    }
+
+    /// 任一視窗成為或不再是 key 時更新 `isKey`；sheet 算它所屬的視窗。
+    func keyWindowChanged(_ changed: NSWindow, becameKey: Bool) {
+        guard let window else { return }
+        let isMain = (changed.sheetParent ?? changed) === window
+        if becameKey {
+            isKey = isMain
+        } else if isMain {
+            isKey = false
+        }
+    }
+
+    private func observeKeyWindowChanges() {
+        guard keyObservers.isEmpty else { return }
+        let center = NotificationCenter.default
+        keyObservers = [
+            (NSWindow.didBecomeKeyNotification, true), (NSWindow.didResignKeyNotification, false),
+        ].map { name, becameKey in
+            center.addObserver(forName: name, object: nil, queue: .main) { [weak self] notification in
+                guard let changed = notification.object as? NSWindow else { return }
+                MainActor.assumeIsolated { self?.keyWindowChanged(changed, becameKey: becameKey) }
             }
         }
     }

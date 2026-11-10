@@ -12,6 +12,7 @@ Notable changes to Ripen. The format follows [Keep a Changelog](https://keepacha
 
 ### Fixed
 
+- The Timer menu is disabled while Ripen is in the notch or the floating window, as intended. Before, Skip stayed clickable after collapsing the main window and didn't change to Done in overtime, so choosing it could finish the focus.
 - The Timer and Statistics switcher in the main window now responds to clicks. It sits below the title bar instead of beside the window buttons, so the window is slightly taller.
 
 ## [0.2.6] - 2026-11-05
