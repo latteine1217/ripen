@@ -4,6 +4,8 @@ Notable changes to Ripen. The format follows [Keep a Changelog](https://keepacha
 
 ## [Unreleased]
 
+## [0.3.2] - 2026-11-11
+
 ### Fixed
 
 - Updating from within Ripen no longer leaves the downloaded files (about 16 MB each time) in the temporary folder, whether the update succeeds or fails. When Ripen opens the disk image for you to install by hand, only the disk image is kept.
@@ -134,7 +136,8 @@ The first release of Ripen, a native macOS Pomodoro timer in frosted glass.
 - Statistics for today and the last 7 days, stored only on your Mac.
 - **Check for Updates…**, which only goes online when you ask.
 
-[Unreleased]: https://github.com/latteine1217/ripen/compare/v0.3.1...HEAD
+[Unreleased]: https://github.com/latteine1217/ripen/compare/v0.3.2...HEAD
+[0.3.2]: https://github.com/latteine1217/ripen/compare/v0.3.1...v0.3.2
 [0.3.1]: https://github.com/latteine1217/ripen/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/latteine1217/ripen/compare/v0.2.6...v0.3.0
 [0.2.6]: https://github.com/latteine1217/ripen/compare/v0.2.5...v0.2.6
