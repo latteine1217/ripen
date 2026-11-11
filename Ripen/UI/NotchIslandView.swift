@@ -15,6 +15,12 @@ final class NotchIslandState {
         self.notch = notch
         self.isExpanded = isExpanded
     }
+
+    /// 「往下拉」一次性提示的出現條件：游標停在已展開的島上，使用者才看得到（#82）。
+    /// 換階段自動展開時游標多半不在島上，不顯示也不記為看過；等待恢復決定時把手那一行讓給停用原因。
+    func showsPullOutHint(controlsEnabled: Bool) -> Bool {
+        isExpanded && isHovering && controlsEnabled
+    }
 }
 
 /// 瀏海島：純黑、貼合瀏海（ADR-0004）。收合時左翼是進度圈、右翼是剩餘時間；展開時顯示階段、
@@ -123,7 +129,7 @@ struct NotchIslandView: View {
                         }
                         .accessibilityHidden(true)
                         .oneTimeHint(.notchPullOut, "Pull down to open the main window", settings: model.settings,
-                                     isActive: disabledReason == nil)
+                                     isActive: state.showsPullOutHint(controlsEnabled: disabledReason == nil))
                         .font(.system(size: 11, weight: .medium, design: .rounded))
                 }
                 .padding(.horizontal, 18)
