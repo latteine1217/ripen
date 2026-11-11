@@ -444,11 +444,13 @@ private struct PhaseRipple: View {
 
     var body: some View {
         // 只在 reminderID 改變時播放；初次出現（例如重新顯示懸浮窗）不重播舊的提醒
-        shape.stroke(tint, lineWidth: 2)
+        // 動畫閉包可能在主執行緒外呼叫，先取出值，不在閉包裡讀 MainActor 的環境值
+        let hidden = reduceMotion
+        return shape.stroke(tint, lineWidth: 2)
             .keyframeAnimator(initialValue: Frame(), trigger: reminderID) { content, frame in
                 content
                     .scaleEffect(frame.scale)
-                    .opacity(reduceMotion ? 0 : frame.opacity)
+                    .opacity(hidden ? 0 : frame.opacity)
             } keyframes: { _ in
                 KeyframeTrack(\.scale) {
                     MoveKeyframe(1)

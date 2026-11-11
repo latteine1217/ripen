@@ -216,7 +216,7 @@ struct RecapPreviewView: View {
 ///
 /// 取消選單或在服務中取消都不回報；只有服務回報完成或失敗時才通知，打開選單本身不算分享成功。
 @MainActor
-final class RecapSharing: NSObject, @preconcurrency NSSharingServicePickerDelegate, @preconcurrency NSSharingServiceDelegate {
+final class RecapSharing: NSObject, @preconcurrency NSSharingServicePickerDelegate, NSSharingServiceDelegate {
     enum Outcome {
         case shared(String)
         case failed
