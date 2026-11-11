@@ -9,29 +9,30 @@ enum ClockFormat: String, CaseIterable, SettingValue {
 }
 
 extension AppSettings {
-    /// 階段長度可設定的分鐘數範圍；設定頁的控制項與讀取時的檢查共用。
+    /// 階段長度可設定的分鐘數範圍；設定頁的控制項、寫入時的夾回與讀取時的檢查共用。
+    /// 設定頁可直接輸入數字，寫入時夾回範圍；否則超出的值會存下去，下次讀取卻退回預設值。
     nonisolated static let phaseMinutesRange = 1...180
     nonisolated static let longBreakIntervalRange = 1...12
 
     var focusMinutes: Int {
         get { self[.focusMinutes] }
-        set { self[.focusMinutes] = newValue }
+        set { self[.focusMinutes] = AppSettings.phaseMinutesRange.clamp(newValue) }
     }
 
     var shortBreakMinutes: Int {
         get { self[.shortBreakMinutes] }
-        set { self[.shortBreakMinutes] = newValue }
+        set { self[.shortBreakMinutes] = AppSettings.phaseMinutesRange.clamp(newValue) }
     }
 
     var longBreakMinutes: Int {
         get { self[.longBreakMinutes] }
-        set { self[.longBreakMinutes] = newValue }
+        set { self[.longBreakMinutes] = AppSettings.phaseMinutesRange.clamp(newValue) }
     }
 
     /// 兩次長休息之間需完成的專注次數。
     var longBreakInterval: Int {
         get { self[.longBreakInterval] }
-        set { self[.longBreakInterval] = newValue }
+        set { self[.longBreakInterval] = AppSettings.longBreakIntervalRange.clamp(newValue) }
     }
 
     /// 按「完成」後下一段自動開始（ADR-0006）。儲存鍵沿用舊名 autoStartBreaks，保留使用者原本的選擇。
@@ -53,6 +54,11 @@ extension AppSettings {
             longBreakInterval: longBreakInterval
         )
     }
+}
+
+private extension ClosedRange where Bound == Int {
+    /// 超出範圍的值改成最近的邊界。
+    func clamp(_ value: Int) -> Int { Swift.min(Swift.max(value, lowerBound), upperBound) }
 }
 
 // 預設值與 CycleConfiguration.standard 一致（25 / 5 / 15 / 4）。
