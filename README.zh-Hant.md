@@ -123,7 +123,7 @@
 
 ## 安裝
 
-需要 macOS 14 Sonoma 以上。
+需要 macOS 14 Sonoma 以上。每個版本都在 macOS 27 實機測試；macOS 14 到 26 仍支援，但沒有在實機上測試。
 
 1. 以 [Homebrew](https://brew.sh) 安裝：
 

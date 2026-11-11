@@ -123,7 +123,7 @@ Restoring only adds focuses and projects that aren't already there and never cha
 
 ## Install
 
-Ripen requires macOS 14 Sonoma or later.
+Ripen requires macOS 14 Sonoma or later. Each release is tested on macOS 27; macOS 14 to 26 are supported but not tested on a real Mac.
 
 1. Install with [Homebrew](https://brew.sh):
 
