@@ -82,6 +82,9 @@ final class MainWindowBridge {
         let wasHidden = !window.isVisible || window.alphaValue < 1
         if !window.isVisible { window.alphaValue = 0 }
         window.makeKeyAndOrderFront(nil)
+        // 從懸浮窗或瀏海島叫回時 Ripen 通常不在前景：系統可以拒絕 activate()（macOS 14 起的協同啟用），
+        // 只 makeKeyAndOrderFront 會停在其他 App 的視窗後面，這裡不論是否啟用都排到最上層
+        window.orderFrontRegardless()
         NSApp.activate()
         guard wasHidden else { return }
         NSAnimationContext.runAnimationGroup { context in

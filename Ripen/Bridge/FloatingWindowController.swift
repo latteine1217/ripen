@@ -524,6 +524,9 @@ final class FloatingWindowController {
     /// 以全域＋本地滑鼠監聽判斷 hover：不搶焦點的 panel 在 App 非作用中時，
     /// SwiftUI 的 onHover 不一定收得到事件（瀏海島原型）。監聽滑鼠移動不需要輔助使用權限。
     private func installMouseMonitors() {
+        // 每次出現都先整塊接收：Ripen 仍在前景時收不到游標移動，不能沿用上次留下的放行
+        //（淡出途中叫回會沿用同一個 panel 與監聽）
+        panel?.ignoresMouseEvents = false
         guard mouseMonitors.isEmpty else { return }
         let events: NSEvent.EventTypeMask = [.mouseMoved, .leftMouseDragged]
         if let monitor = NSEvent.addGlobalMonitorForEvents(matching: events, handler: { [weak self] _ in
@@ -551,6 +554,17 @@ final class FloatingWindowController {
         if ignoresCornerUntilRelease, NSEvent.pressedMouseButtons & 1 == 0 { ignoresCornerUntilRelease = false }
         let inside = isVisible && glassFrame.contains(NSEvent.mouseLocation)
         if state.isHovering != inside { state.isHovering = inside }
+        updateMouseCapture(inside: inside)
+    }
+
+    /// 由這裡決定 panel 哪裡接收點擊：游標在玻璃上（或正在調整大小、panel 撐滿螢幕）時明確接收，
+    /// 在外圍留給陰影的 `margin` 時放行給後面的 App。
+    /// 交給系統依內容判斷時，黑白外觀的角落熱區會被當成可穿透，拖不動。
+    /// 不在畫面上時一律接收：過場結束後 panel 出現在不動的游標底下，不能停在放行狀態。
+    private func updateMouseCapture(inside: Bool) {
+        guard let panel else { return }
+        let ignores = panel.isVisible && !(inside || resizing != nil)
+        if panel.ignoresMouseEvents != ignores { panel.ignoresMouseEvents = ignores }
     }
 
     private func makePanel() -> FloatingWindowPanel {
@@ -562,6 +576,8 @@ final class FloatingWindowController {
         // panel 的大小由擺放決定，不讓 SwiftUI 依內容改動
         hosting.sizingOptions = []
         let panel = FloatingWindowPanel(contentView: .sizingContainer(for: hosting))
+        // 明確設定才會整塊接收點擊；沒設過時交給系統依內容判斷，黑白外觀的角落會穿透（見 `updateMouseCapture`）
+        panel.ignoresMouseEvents = false
         self.panel = panel
         screenObserver = NotificationCenter.default.addObserver(
             forName: NSApplication.didChangeScreenParametersNotification, object: nil, queue: .main

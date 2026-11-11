@@ -4,6 +4,12 @@ Notable changes to Ripen. The format follows [Keep a Changelog](https://keepacha
 
 ## [Unreleased]
 
+### Fixed
+
+- The floating window can be resized by dragging a corner in the Black and White appearances. Before, the drag went through to the window behind it.
+- The floating window responds to the first click right after it appears, instead of letting that click through to the app behind it.
+- Opening the main window from the floating window or pulling it out of the notch now brings it in front of other apps' windows.
+
 ## [0.3.3] - 2026-11-11
 
 ### Fixed
