@@ -1264,18 +1264,18 @@
         }
       }
     },
-    "Drag the ring out of the window to make a floating window": {
+    "Drag the ring outward to make a floating window": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Drag the ring out of the window to make a floating window"
+            "value": "Drag the ring outward to make a floating window"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "按住圓環拖到視窗外，產生懸浮窗"
+            "value": "按住圓環往外拖，產生懸浮窗"
           }
         }
       }
@@ -1696,18 +1696,18 @@
         }
       }
     },
-    "Drag the timer ring out of the window, or click the yellow button, to get a small window that stays on top.": {
+    "Drag the timer ring outward, or click the yellow button, to get a small window that stays on top.": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Drag the timer ring out of the window, or click the yellow button, to get a small window that stays on top."
+            "value": "Drag the timer ring outward, or click the yellow button, to get a small window that stays on top."
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "把計時圓環拖到視窗外，或按黃色按鈕，就會變成永遠置頂的小視窗。"
+            "value": "把計時圓環往外拖，或按黃色按鈕，就會變成永遠置頂的小視窗。"
           }
         }
       }

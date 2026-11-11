@@ -18,7 +18,7 @@ struct GestureIntroView: View {
 
     private let pages = [
         Page(title: "Tear Off a Floating Window",
-             message: "Drag the timer ring out of the window, or click the yellow button, to get a small window that stays on top.",
+             message: "Drag the timer ring outward, or click the yellow button, to get a small window that stays on top.",
              illustration: .tearOff),
         Page(title: "Tuck It into the Notch",
              message: "Drag the main window up into the notch, or click the red button. Pull the island down to bring the main window back.",

@@ -206,13 +206,13 @@ private struct TearOffRing: ViewModifier {
     func body(content: Content) -> some View {
         VStack(spacing: 10) {
             ring(content)
-            Text("Drag the ring out of the window to make a floating window")
+            Text("Drag the ring outward to make a floating window")
                 .font(.caption)
                 .foregroundStyle(palette.secondary)
                 .opacity(isLifted ? 1 : 0)
                 // 圓環已帶同一句 accessibilityHint，不重複朗讀
                 .accessibilityHidden(true)
-                .oneTimeHint(.ringTearOff, "Drag the ring out of the window to make a floating window",
+                .oneTimeHint(.ringTearOff, "Drag the ring outward to make a floating window",
                              settings: settings, isActive: offersHint)
                 .font(.caption)
         }
@@ -252,7 +252,7 @@ private struct TearOffRing: ViewModifier {
                         }
                         .onEnded { _ in tearOff.dragEnded() }
                 )
-                .accessibilityHint(Text("Drag the ring out of the window to make a floating window"))
+                .accessibilityHint(Text("Drag the ring outward to make a floating window"))
         } else {
             content
         }
