@@ -38,6 +38,8 @@ final class AppModel {
         didSet { if recoveryIssue != nil && recoveryIssue != oldValue { onRecoveryIssue?() } }
     }
     @ObservationIgnored var onRecoveryIssue: (() -> Void)?
+    /// 等待恢復決定時按了全域熱鍵；App 叫出主視窗的恢復畫面並發出提示音（#79）。
+    @ObservationIgnored var onHotkeyBlockedByRecovery: (() -> Void)?
     /// 可觀察：載入失敗時 `requiresRecoveryDecision` 不會讀到 `recovery`，重試成功後靜止的介面要靠它解除閘門。
     private var recoveryLoaded = false
     @ObservationIgnored private var lastRecoveryCheckpointAt: Date?
@@ -435,6 +437,16 @@ final class AppModel {
         case .running: pauseRefreshed()
         case .paused: resumeRefreshed()
         }
+    }
+
+    /// 全域熱鍵的開始／暫停。其他入口在畫面上顯示停用原因，熱鍵按下時畫面可能不在，
+    /// 等待恢復決定時改請 App 叫出恢復畫面，不默默失效（#79）；其餘狀態與 `toggleStartPause()` 相同。
+    func toggleStartPauseFromHotkey() {
+        guard !requiresRecoveryDecision else {
+            onHotkeyBlockedByRecovery?()
+            return
+        }
+        toggleStartPause()
     }
 
     // 以下是已刷新過的意圖本體，讓 toggleStartPause() 只刷新一次。

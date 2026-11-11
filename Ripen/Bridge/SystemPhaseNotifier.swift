@@ -13,6 +13,8 @@ final class SystemPhaseNotifier: NSObject, PhaseNotifier, NotificationPermission
     private static let settingsURL = URL(string: "x-apple.systempreferences:com.apple.Notifications-Settings.extension")!
 
     private var center: UNUserNotificationCenter { .current() }
+    /// 點通知時叫出主視窗；由 App 接上 `PresentationController.showMainWindow()`，不繞過形態（#77）。
+    var onOpen: (() -> Void)?
 
     /// 必須在啟動完成前建立：點通知開啟 App 時，系統要有 delegate 才送得到回應。
     override init() {
@@ -59,8 +61,11 @@ final class SystemPhaseNotifier: NSObject, PhaseNotifier, NotificationPermission
 }
 
 extension SystemPhaseNotifier: UNUserNotificationCenterDelegate {
-    /// 點通知：把 Ripen 帶到前景，不切換形態（懸浮窗或瀏海島已在畫面上）。
+    /// 點通知：等同點 Dock 圖示，叫出主視窗並把 Ripen 帶到前景（ADR-0018）。
     nonisolated func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse) async {
-        await MainActor.run { NSApp.activate(ignoringOtherApps: true) }
+        await MainActor.run {
+            onOpen?()
+            NSApp.activate(ignoringOtherApps: true)
+        }
     }
 }

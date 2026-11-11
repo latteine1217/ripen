@@ -94,7 +94,7 @@
 觸發：`SystemPhaseNotifier`、`PhaseNotificationController`、`SoundSettingsSection`、`deliverPendingReminder`。
 
 - 開啟「階段結束時傳送通知」：出現權限提示，設定說明提示在哪；允許後開關維持開啟。
-- Ripen 不在前景時倒數到 0：顯示橫幅且通知本身不發聲；點擊把 Ripen 帶到前景，形態不變。
+- Ripen 不在前景時倒數到 0：顯示橫幅且通知本身不發聲；點擊等同點 Dock 圖示，叫出主視窗並帶到前景（只有懸浮窗時懸浮窗保留）。
 - Ripen 在前景時倒數到 0：不顯示橫幅。
 - 按完成：通知中心的舊通知被移除。
 - 在系統設定關閉通知再回到 Ripen：開關顯示關閉並提供前往系統設定的按鈕。

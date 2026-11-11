@@ -61,7 +61,7 @@ struct RipenApp: App {
             settings: settings, service: systemNotifier ?? NoNotificationPermission()
         ))
         let hotkeys = GlobalHotkeyController(registrar: CarbonHotkeyRegistrar.shared, settings: model.settings) {
-            model.toggleStartPause()
+            model.toggleStartPauseFromHotkey()
         }
         // 啟動就註冊，主視窗沒開也能用熱鍵
         if !isolated { hotkeys.activate() }
@@ -78,6 +78,16 @@ struct RipenApp: App {
             presenter?.showMainWindow()
         }
         model.onRecoveryIssue = { [weak presenter] in
+            presenter?.showMainWindow()
+        }
+        // 熱鍵在其他 App 前景時也會觸發，要強制帶到前面才看得到恢復畫面
+        model.onHotkeyBlockedByRecovery = { [weak presenter] in
+            NSSound.beep()
+            presenter?.showMainWindow()
+            NSApp.activate(ignoringOtherApps: true)
+        }
+        // 點階段結束的通知等同點 Dock 圖示：經形態狀態機叫出主視窗（#77、ADR-0018）
+        systemNotifier?.onOpen = { [weak presenter] in
             presenter?.showMainWindow()
         }
         // 在 init 接上：主視窗上次退出時是隱藏的就不會建立，接在 onWindowAttach 會漏掉
