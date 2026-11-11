@@ -4,6 +4,10 @@ Notable changes to Ripen. The format follows [Keep a Changelog](https://keepacha
 
 ## [Unreleased]
 
+### Added
+
+- When phase-end notifications are on, Settings › Reminder explains how to keep them on screen: notifications close after a few seconds unless their Alert Style is set to Persistent in System Settings, and a button opens that setting.
+
 ### Fixed
 
 - The floating window can be resized by dragging a corner in the Black and White appearances. Before, the drag went through to the window behind it.

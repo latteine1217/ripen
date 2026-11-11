@@ -4399,6 +4399,22 @@
           }
         }
       }
+    },
+    "Notifications go away after a few seconds. To keep them until you close them, set Alert Style to Persistent in System Settings.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Notifications go away after a few seconds. To keep them until you close them, set Alert Style to Persistent in System Settings."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "通知幾秒後會自動收起。想讓它留到你關閉為止，請在系統設定把「提示樣式」改成「持續」。"
+          }
+        }
+      }
     }
   },
   "version": "1.0"
