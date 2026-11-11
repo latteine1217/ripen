@@ -141,17 +141,33 @@ final class FocusLog {
     /// 合併後要重新讀取歷史，不能蓋過尚未保存的變更，條件與備份相同（#33）。
     var canRestoreBackup: Bool { canExportBackup }
 
+    // 備份與還原的錯誤由呼叫端轉成畫面訊息；這裡只記下原因（例如磁碟滿、權限、檔案損毀）後原樣拋出（#75）
     func exportBackup(to url: URL) throws {
-        try backupStorage().exportBackup(to: url)
+        do {
+            try backupStorage().exportBackup(to: url)
+        } catch {
+            Self.logger.error("輸出備份失敗：\(error)")
+            throw error
+        }
     }
 
     func previewRestore(from url: URL) throws -> FocusRestore {
-        try backupStorage().previewRestore(from: url)
+        do {
+            return try backupStorage().previewRestore(from: url)
+        } catch {
+            Self.logger.error("讀取備份失敗，未變更任何資料：\(error)")
+            throw error
+        }
     }
 
     /// 成功後重新讀取，統計、分類清單與成果卡直接反映新增的資料。
     func restore(_ restore: FocusRestore) throws {
-        try backupStorage().restore(restore)
+        do {
+            try backupStorage().restore(restore)
+        } catch {
+            Self.logger.error("從備份還原失敗：\(error)")
+            throw error
+        }
         retry()
     }
 
