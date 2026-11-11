@@ -348,7 +348,9 @@ private struct ProjectDetailView: View {
                     .help(Text("Rename Project"))
                     .accessibilityHint(Text("Rename Project"))
                     .popover(isPresented: $renames, arrowEdge: .bottom) {
-                        ProjectRenameForm(name: project.name) { name in
+                        ProjectRenameForm(name: project.name, isNameTaken: {
+                            focusLog.isProjectNameTaken($0, renaming: project.id)
+                        }) { name in
                             if actions.renameProject(project.id, name) { renames = false }
                         } cancel: {
                             renames = false
@@ -554,12 +556,14 @@ private struct RecordList: View {
     }
 }
 
-/// 改名表單：規則與新增分類相同，空白名稱不能送出；Esc 或取消放棄（ADR-0019）。
+/// 改名表單：規則與新增分類相同，空白或與其他分類同名不能送出，同名時在名稱欄下方說明；Esc 或取消放棄（ADR-0019）。
 private struct ProjectRenameForm: View {
     @State var name: String
+    let isNameTaken: (String) -> Bool
     let rename: (String) -> Void
     let cancel: () -> Void
 
+    @Environment(\.appPalette) private var palette
     @FocusState private var focused: Bool
 
     var body: some View {
@@ -569,6 +573,13 @@ private struct ProjectRenameForm: View {
                 .frame(width: 200)
                 .focused($focused)
                 .onSubmit { if canRename { rename(name) } }
+            if isNameTaken(name) {
+                Text("Another project already has this name.")
+                    .font(.callout)
+                    .foregroundStyle(palette.secondary)
+                    .frame(width: 200, alignment: .leading)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
             HStack {
                 Spacer()
                 Button("Cancel", action: cancel)
@@ -581,7 +592,7 @@ private struct ProjectRenameForm: View {
         .onAppear { focused = true }
     }
 
-    private var canRename: Bool { FocusProject.normalizedName(name) != nil }
+    private var canRename: Bool { FocusProject.normalizedName(name) != nil && !isNameTaken(name) }
 }
 
 /// 單筆紀錄的更正、重新歸類與刪除（ADR-0019）。開始時刻與長度以分鐘編輯，沒改的欄位保留原始精度；

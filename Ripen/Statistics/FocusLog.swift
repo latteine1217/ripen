@@ -209,9 +209,18 @@ final class FocusLog {
     /// 新分類預設的代表色：色盤中尚未使用的第一個。
     var suggestedProjectColor: ProjectColor { .next(avoiding: projects.map(\.color)) }
 
-    /// 建立分類；未指定代表色時用建議色。空白名稱不建立。
+    /// 正規化後的名稱是否與其他分類相同（不分大小寫）；同名的分類只能靠代表色分辨，新增與改名都不接受。
+    /// 改名時傳入該分類：改成自己原本的名稱（含只改大小寫）不算重複，已同名的舊資料因此仍能照常改名。
+    func isProjectNameTaken(_ name: String, renaming id: UUID? = nil) -> Bool {
+        guard let name = FocusProject.normalizedName(name) else { return false }
+        let sameName = { (project: FocusProject) in project.name.compare(name, options: .caseInsensitive) == .orderedSame }
+        if let current = project(withID: id), sameName(current) { return false }
+        return projects.contains { $0.id != id && sameName($0) }
+    }
+
+    /// 建立分類；未指定代表色時用建議色。空白或與其他分類同名的名稱不建立。
     func addProject(named name: String, color: ProjectColor? = nil) -> FocusProject? {
-        guard let name = FocusProject.normalizedName(name) else { return nil }
+        guard let name = FocusProject.normalizedName(name), !isProjectNameTaken(name) else { return nil }
         let project = FocusProject(name: name, color: color ?? suggestedProjectColor)
         pendingProjects.append(project)
         if hasLoaded { savePending() }
@@ -225,10 +234,12 @@ final class FocusLog {
         if hasLoaded { savePending() }
     }
 
-    /// 改名（ADR-0019）：識別碼與代表色不變，所有紀錄仍屬同一分類。名稱規則與新增相同，空白不改；同名可並存。
+    /// 改名（ADR-0019）：識別碼與代表色不變，所有紀錄仍屬同一分類。名稱規則與新增相同，空白或與其他分類同名不改。
     @discardableResult
     func renameProject(_ id: UUID, to name: String) -> Bool {
-        guard let project = project(withID: id), let name = FocusProject.normalizedName(name) else { return false }
+        guard let project = project(withID: id), let name = FocusProject.normalizedName(name),
+              !isProjectNameTaken(name, renaming: id)
+        else { return false }
         guard name != project.name else { return true }
         pendingNames[id] = name
         if hasLoaded { savePending() }

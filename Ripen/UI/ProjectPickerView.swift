@@ -119,7 +119,9 @@ private struct ProjectMenu: View {
     private static let visibleRows = 7
 
     private var entries: [UUID?] { [nil] + model.focusLog.projects.map(\.id) }
-    private var canCreate: Bool { FocusProject.normalizedName(name) != nil }
+    /// 同名的分類只能靠代表色分辨（#78）；名稱欄下方說明，Return 與「Add」都不送出。
+    private var isNameTaken: Bool { model.focusLog.isProjectNameTaken(name) }
+    private var canCreate: Bool { FocusProject.normalizedName(name) != nil && !isNameTaken }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
@@ -215,6 +217,12 @@ private struct ProjectMenu: View {
                         collapse()
                         return .handled
                     }
+            }
+            if isNameTaken {
+                Text("Another project already has this name.")
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
             }
             ColorSwatches(selection: color) { color = $0 }
             HStack {

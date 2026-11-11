@@ -2256,6 +2256,22 @@
         }
       }
     },
+    "Another project already has this name.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Another project already has this name."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已有其他分類使用這個名稱。"
+          }
+        }
+      }
+    },
     "Cancel": {
       "localizations": {
         "en": {
