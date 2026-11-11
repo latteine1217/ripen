@@ -19,7 +19,7 @@
 
 </div>
 
-> v0.3.3 已發布 · [更新內容](https://github.com/latteine1217/ripen/releases/tag/v0.3.3)
+> v0.3.4 已發布 · [更新內容](https://github.com/latteine1217/ripen/releases/tag/v0.3.4)
 
 <p align="center">
   <img src="docs/images/zh-Hant/presentation.png" width="1000" alt="主視窗、懸浮窗與瀏海島的整體展示">

@@ -4,12 +4,23 @@ Notable changes to Ripen. The format follows [Keep a Changelog](https://keepacha
 
 ## [Unreleased]
 
+## [0.3.4] - 2026-11-12
+
 ### Added
 
+- Phase lengths and the long break interval can be typed in Settings, next to the steppers. Values outside the allowed range are set to the nearest limit, and full-width digits from Chinese input methods are accepted.
 - When phase-end notifications are on, Settings › Reminder explains how to keep them on screen: notifications close after a few seconds unless their Alert Style is set to Persistent in System Settings, and a button opens that setting.
+
+### Changed
+
+- Clicking a phase-end notification opens the main window, as clicking the Dock icon does. A floating window that is already open stays.
+- A project can no longer be added or renamed to the name of another project, ignoring case. The name field explains why. Projects that already share a name are left as they are.
+- The hints for tearing off the timer ring now say to drag it outward, which is how the gesture works; it never had to leave the main window.
 
 ### Fixed
 
+- Pressing the start/pause shortcut while Ripen waits for you to continue or discard the previous timer now plays the alert sound and brings up the main window, instead of doing nothing.
+- The notch island's one-time "Pull down to open the main window" hint appears only while the pointer is on the island, so it is no longer used up when the island expands on its own at a phase change.
 - The floating window can be resized by dragging a corner in the Black and White appearances. Before, the drag went through to the window behind it.
 - The floating window responds to the first click right after it appears, instead of letting that click through to the app behind it.
 - Opening the main window from the floating window or pulling it out of the notch now brings it in front of other apps' windows.
@@ -149,7 +160,8 @@ The first release of Ripen, a native macOS Pomodoro timer in frosted glass.
 - Statistics for today and the last 7 days, stored only on your Mac.
 - **Check for Updates…**, which only goes online when you ask.
 
-[Unreleased]: https://github.com/latteine1217/ripen/compare/v0.3.3...HEAD
+[Unreleased]: https://github.com/latteine1217/ripen/compare/v0.3.4...HEAD
+[0.3.4]: https://github.com/latteine1217/ripen/compare/v0.3.3...v0.3.4
 [0.3.3]: https://github.com/latteine1217/ripen/compare/v0.3.1...v0.3.3
 [0.3.1]: https://github.com/latteine1217/ripen/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/latteine1217/ripen/compare/v0.2.6...v0.3.0

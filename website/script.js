@@ -80,7 +80,7 @@ const englishTranslations = new Map(Object.entries({
   "Mac 版現已開放下載": "Available now for Mac",
   "下載後打開 DMG，將 Ripen 拖進「應用程式」。": "Open the DMG and drag Ripen into Applications.",
   "安裝後可從 App 選單手動檢查更新。": "Once installed, check for updates from the app menu.",
-  "下載 Ripen 0.3.3": "Download Ripen 0.3.3",
+  "下載 Ripen 0.3.4": "Download Ripen 0.3.4",
   "適用系統": "Requires",
   "macOS 14 Sonoma 以上": "macOS 14 Sonoma or later",
   "支援晶片": "Processors",
