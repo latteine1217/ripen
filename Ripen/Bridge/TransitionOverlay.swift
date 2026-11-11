@@ -18,15 +18,10 @@ final class TransitionOverlay {
         screenFrame = screen.frame
         hosting = NSHostingView(rootView: AnyView(EmptyView()))
         hosting.sizingOptions = []
-        // hosting view 不當 contentView：是的話，內容在動畫中改變大小時 SwiftUI 會把 panel 縮成內容的
-        // 理想大小（sizingOptions 為空也一樣，`updateAnimatedWindowSize`），擺到螢幕左上角，液體被切掉
-        let container = NSView()
-        panel = NotchIslandPanel(contentView: container)
+        // 不放容器的話，液體在動畫中改變大小時 panel 會被縮小並擺到螢幕左上角，液體被切掉
+        panel = NotchIslandPanel(contentView: .sizingContainer(for: hosting))
         panel.ignoresMouseEvents = true
         panel.setFrame(screen.frame, display: false)
-        hosting.frame = container.bounds
-        hosting.autoresizingMask = [.width, .height]
-        container.addSubview(hosting)
     }
 
     var isVisible: Bool { panel.isVisible }

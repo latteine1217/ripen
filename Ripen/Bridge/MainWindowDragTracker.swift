@@ -122,7 +122,7 @@ final class MainWindowDragTracker {
     private func makeHintPanel() -> NotchIslandPanel {
         let hosting = NSHostingView(rootView: hintView(notch: NotchFrame(rect: .zero, isSimulated: true)))
         hosting.sizingOptions = []
-        let panel = NotchIslandPanel(contentView: hosting)
+        let panel = NotchIslandPanel(contentView: .sizingContainer(for: hosting))
         panel.ignoresMouseEvents = true
         hintHosting = hosting
         hintPanel = panel

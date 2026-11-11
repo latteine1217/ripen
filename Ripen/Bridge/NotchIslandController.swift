@@ -223,7 +223,7 @@ final class NotchIslandController {
         let hosting = NSHostingView(rootView: NotchIslandView(model: model, presentation: presentation, state: state))
         // panel 的大小由幾何決定，不讓 SwiftUI 依內容改動
         hosting.sizingOptions = []
-        let panel = NotchIslandPanel(contentView: hosting)
+        let panel = NotchIslandPanel(contentView: .sizingContainer(for: hosting))
         self.panel = panel
         screenObserver = NotificationCenter.default.addObserver(
             forName: NSApplication.didChangeScreenParametersNotification, object: nil, queue: .main

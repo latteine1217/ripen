@@ -561,7 +561,7 @@ final class FloatingWindowController {
         let hosting = NSHostingView(rootView: view)
         // panel 的大小由擺放決定，不讓 SwiftUI 依內容改動
         hosting.sizingOptions = []
-        let panel = FloatingWindowPanel(contentView: hosting)
+        let panel = FloatingWindowPanel(contentView: .sizingContainer(for: hosting))
         self.panel = panel
         screenObserver = NotificationCenter.default.addObserver(
             forName: NSApplication.didChangeScreenParametersNotification, object: nil, queue: .main
