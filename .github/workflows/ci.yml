@@ -48,3 +48,17 @@ jobs:
         with:
           name: test-results
           path: build/ci/Tests.xcresult
+
+  # 以發行用的 make-dmg.sh 打包並核對 dmg，提早發現只在 Release／universal 建置才出現的問題。
+  # 產物未簽章，不上傳；正式簽章只在本機執行（ADR-0017）。
+  release-build:
+    runs-on: xcode-27
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - name: Install tools
+        run: brew install xcodegen uv
+      - name: Package dmg
+        run: ./scripts/make-dmg.sh
+      - name: Verify dmg
+        run: ./scripts/verify-dmg.sh dist/Ripen-*.dmg

@@ -1,0 +1,106 @@
+name: Release
+
+# scripts/release.sh 在本機簽章並建立 Release 後接手：驗證附件符合 App 內更新的格式，
+# 再把 Homebrew tap 的 cask 更新到新版本。私鑰不進 CI（ADR-0017），這裡只用公鑰驗證。
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Release tag, e.g. v0.3.4
+        required: true
+      push_tap:
+        description: Push the cask update to the tap (off = check only)
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.event.release.tag_name || inputs.tag }}
+  cancel-in-progress: false
+
+env:
+  TAG: ${{ github.event.release.tag_name || inputs.tag }}
+  GH_TOKEN: ${{ github.token }}
+
+jobs:
+  verify:
+    if: ${{ !github.event.release.prerelease }}
+    runs-on: macos-latest
+    timeout-minutes: 15
+    outputs:
+      version: ${{ steps.assets.outputs.version }}
+      sha256: ${{ steps.assets.outputs.sha256 }}
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          ref: ${{ env.TAG }}
+      - name: Download assets
+        id: assets
+        run: |
+          [[ "$TAG" =~ ^v([0-9]+\.[0-9]+\.[0-9]+)$ ]] || { echo "::error::tag $TAG is not v<major>.<minor>.<patch>"; exit 1; }
+          VERSION="${BASH_REMATCH[1]}"
+          DMG="Ripen-$VERSION.dmg"
+          mkdir -p assets
+          gh release download "$TAG" -D assets -p "$DMG" -p "$DMG.sig"
+          # 與 App 下載時相同：GitHub 回報的雜湊須等於實際檔案
+          DIGEST="$(gh api "repos/$GITHUB_REPOSITORY/releases/tags/$TAG" --jq ".assets[] | select(.name == \"$DMG\") | .digest")"
+          SHA="$(shasum -a 256 "assets/$DMG" | cut -d' ' -f1)"
+          [[ "$DIGEST" == "sha256:$SHA" ]] || { echo "::error::digest $DIGEST does not match sha256:$SHA"; exit 1; }
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "sha256=$SHA" >> "$GITHUB_OUTPUT"
+      - name: Verify dmg
+        run: ./scripts/verify-dmg.sh "assets/Ripen-${{ steps.assets.outputs.version }}.dmg"
+      - name: Verify signature
+        run: swift scripts/update-signing.swift verify "assets/Ripen-${{ steps.assets.outputs.version }}.dmg"
+
+  update-tap:
+    needs: verify
+    runs-on: macos-latest
+    timeout-minutes: 15
+    env:
+      VERSION: ${{ needs.verify.outputs.version }}
+      SHA256: ${{ needs.verify.outputs.sha256 }}
+      # 只能寫 latteine1217/homebrew-tap 的 fine-grained token（Contents: Read and write）
+      TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+      PUSH: ${{ github.event_name == 'release' || inputs.push_tap }}
+      HOMEBREW_NO_AUTO_UPDATE: '1'
+      HOMEBREW_NO_INSTALL_FROM_API: '1'
+    steps:
+      - name: Check out tap
+        run: |
+          [[ -n "$TAP_TOKEN" ]] || { echo "::error::secret HOMEBREW_TAP_TOKEN is not set"; exit 1; }
+          TAP_DIR="$(brew --repository)/Library/Taps/latteine1217/homebrew-tap"
+          rm -rf "$TAP_DIR"
+          git clone --quiet "https://x-access-token:$TAP_TOKEN@github.com/latteine1217/homebrew-tap.git" "$TAP_DIR"
+          echo "TAP_DIR=$TAP_DIR" >> "$GITHUB_ENV"
+      - name: Update cask
+        run: |
+          CASK="$TAP_DIR/Casks/ripen.rb"
+          sed -i '' -E \
+            -e "s/^  version \"[^\"]*\"$/  version \"$VERSION\"/" \
+            -e "s/^  sha256 \"[0-9a-f]*\"$/  sha256 \"$SHA256\"/" \
+            "$CASK"
+          if ! grep -qx "  version \"$VERSION\"" "$CASK" || ! grep -qx "  sha256 \"$SHA256\"" "$CASK"; then
+            echo "::error::could not update version/sha256 in ripen.rb"; exit 1
+          fi
+          git -C "$TAP_DIR" diff
+      - name: Check cask
+        run: |
+          brew style --cask latteine1217/tap/ripen
+          brew audit --cask --online latteine1217/tap/ripen
+      - name: Push
+        run: |
+          if git -C "$TAP_DIR" diff --quiet; then
+            echo "Cask already at $VERSION; nothing to push."
+          elif [[ "$PUSH" == true ]]; then
+            git -C "$TAP_DIR" -c user.name=latteine -c user.email=98538439+latteine1217@users.noreply.github.com \
+              commit --quiet -am "chore: 更新 Ripen 至 $VERSION"
+            git -C "$TAP_DIR" push --quiet origin HEAD
+            echo "Pushed cask $VERSION."
+          else
+            echo "Check only: not pushing."
+          fi

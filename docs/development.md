@@ -27,18 +27,20 @@ xcodebuild test -project Ripen.xcodeproj -scheme Ripen -destination 'platform=ma
 
 腳本會以 Release 設定建置 universal（arm64 + x86_64）的 `Ripen.app`，產生 `dist/Ripen-<version>.dmg`，內含拖到 `Applications` 的捷徑。安裝視窗的排版（600×400 背景、圖示位置、上方的安裝說明）由 `dmgbuild` 依 `scripts/dmg-settings.py` 直接寫入，不操作 Finder；腳本以 `uv` 取得固定版本的 dmgbuild。背景改動時執行 `swift scripts/generate-dmg-background.swift` 重建 `scripts/dmg/` 的 1x／2x 圖，圖示座標須與設定檔一致。上傳前重新掛載 dmg 核對版本與簽章，並比對 SHA-256，`dist/` 裡的檔案可能在安裝測試時被 Finder 改動。中間產物在 `build/release/`，`build/` 與 `dist/` 都不進 git。
 
-腳本不會上傳。發佈前先在 `CHANGELOG.md` 加上新版本的段落，並依 [發行驗收清單](release-checklist.md) 跑該版受影響的 B 層區域；再簽章 dmg、手動建立 GitHub Release 並附上 dmg 與簽章檔，release notes 取自該段落，例如：
+`make-dmg.sh` 不會上傳。發佈前先在 `CHANGELOG.md` 加上 `## [<版本>] - <日期>` 段落，並依 [發行驗收清單](release-checklist.md) 跑該版受影響的 B 層區域；提交並推上 `main` 後執行：
 
 ```sh
-swift scripts/update-signing.swift sign dist/Ripen-0.1.0.dmg
-gh release create v0.1.0 dist/Ripen-0.1.0.dmg dist/Ripen-0.1.0.dmg.sig --title "Ripen 0.1.0" --notes "..."
+./scripts/release.sh --dry-run
+./scripts/release.sh
 ```
+
+`release.sh` 依序確認 CHANGELOG 有該版段落、位於 `main`、工作區乾淨、`HEAD` 已推上且標籤與 Release 都不存在，接著執行 `make-dmg.sh`，以 `scripts/verify-dmg.sh` 重新掛載 dmg 核對 bundle id、版本與 `codesign`，再簽章並以內建公鑰驗證。詢問確認後才建立 `v<版本>` Release，附上 dmg 與簽章檔，release notes 取自該段落本文；上傳後比對 GitHub 回報的雜湊與本機檔案。`--dry-run` 做到核對 dmg 為止，不簽章、不上傳，git 狀態不符時只警告。
 
 簽章在上傳前最後一步執行：之後 `dist/` 裡的 dmg 若被改動，簽章就對不上。金鑰由 `update-signing.swift generate` 一次產生並存在登入鑰匙圈，公鑰填入 `Ripen/Update/UpdateSigningKey.swift`，私鑰以 `export` 印出後備份到密碼管理器；換 Mac 或鑰匙圈遺失時以 `import` 從備份放回，輸入不顯示，不符合內建公鑰或鑰匙圈已有金鑰時拒絕。決策與遺失時的處理見 [ADR-0017](adr/0017-signed-updates.md)。工具在 App 內建的公鑰與鑰匙圈的金鑰不符時拒絕簽章。
 
-Release 發佈後更新 [latteine1217/homebrew-tap](https://github.com/latteine1217/homebrew-tap) 的 `Casks/ripen.rb`：把 `version` 改成新版本，`sha256` 改成 GitHub 為 dmg 算出的雜湊（`gh api repos/latteine1217/ripen/releases/latest --jq '.assets[] | select(.name | endswith(".dmg")).digest'`），以 `brew style` 與 `brew audit --cask --online latteine1217/tap/ripen` 檢查後推上。最後以上一版 App 跑清單的 A 層，確認使用者實際的更新路徑。Cask 設定 `auto_updates true`，使用者也可以在 App 內更新。
+Release 發佈後由 `.github/workflows/release.yml` 接手：下載附件，核對 GitHub 雜湊、dmg 格式（同一支 `verify-dmg.sh`）與簽章（`update-signing.swift verify`，只用原始碼裡的公鑰）；通過後把 [latteine1217/homebrew-tap](https://github.com/latteine1217/homebrew-tap) 的 `Casks/ripen.rb` 改為新版本與 dmg 雜湊，以 `brew style` 與 `brew audit --cask --online` 檢查後推上。推送 tap 使用 repo secret `HOMEBREW_TAP_TOKEN`：只授權 `homebrew-tap`、權限 Contents: Read and write 的 fine-grained token。私鑰不進 CI（ADR-0017）。prerelease 不觸發；也可從 Actions 手動執行並指定標籤，`push_tap` 關閉時只檢查不推送。workflow 失敗時 tap 不會更新，修正後重新執行即可。最後以上一版 App 跑清單的 A 層，確認使用者實際的更新路徑。Cask 設定 `auto_updates true`，使用者也可以在 App 內更新。
 
-每次 push 與 pull request 由 `.github/workflows/ci.yml` 在 macOS runner 上產生專案並執行完整測試；只改 `website/`、`docs/` 或 Markdown 時不觸發。失敗時 xcresult 會上傳為 `test-results` artifact。
+每次 push 與 pull request 由 `.github/workflows/ci.yml` 在 macOS runner 上產生專案並執行完整測試，同時以 `make-dmg.sh` 打包並用 `verify-dmg.sh` 核對未簽章的 dmg（不上傳）；只改 `website/`、`docs/` 或 Markdown 時不觸發。失敗時 xcresult 會上傳為 `test-results` artifact。
 
 App 內的「檢查更新⋯」依賴這個格式（ADR-0009、ADR-0017）：標籤為 `v<版本>`、不是 draft 或 prerelease，附件必須有 `Ripen-<版本>.dmg` 與其簽章檔 `Ripen-<版本>.dmg.sig`，dmg 根目錄有 `Ripen.app`，其 bundle id 與 `CFBundleShortVersionString` 與標籤一致。安裝前以 App 內建的公鑰驗證簽章；缺少簽章檔或任何一項不符時不自動安裝，設定裡改提供下載頁連結。
 
@@ -57,7 +59,7 @@ App 內的「檢查更新⋯」依賴這個格式（ADR-0009、ADR-0017）：標
 - `Ripen/Bridge/`：AppKit 橋接（主視窗、瀏海島 panel、App 生命週期、系統事件）
 - `Ripen/Resources/`：String Catalog（`Localizable.xcstrings`，英文與繁體中文）與 `Assets.xcassets`（應用程式圖標）
 - `RipenTests/`：Swift Testing 測試；`Support/` 放假時鐘等測試替身
-- `scripts/`：打包腳本（`make-dmg.sh`）
+- `scripts/`：打包與發版腳本（`make-dmg.sh`、`verify-dmg.sh`、`release.sh`、`update-signing.swift`）
 - `docs/images/`：README 截圖（`en/`、`zh-Hant/`）
 
 ## 圖標與產品展示

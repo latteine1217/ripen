@@ -5,6 +5,7 @@
 //   swift scripts/update-signing.swift export          印出私鑰，只用來備份到密碼管理器
 //   swift scripts/update-signing.swift import          從備份放回私鑰：輸入不顯示，須符合 App 內建的公鑰
 //   swift scripts/update-signing.swift sign <dmg>      簽章並寫出 <dmg>.sig，上傳前執行
+//   swift scripts/update-signing.swift verify <dmg>    以 App 內建的公鑰驗證 <dmg>.sig，不需要私鑰（CI 用）
 //
 // RIPEN_SIGNING_SERVICE 可改用另一個鑰匙圈項目，只用於測試這個工具本身。
 import CryptoKit
@@ -107,6 +108,23 @@ case "sign":
     }
     print("Signed \(file.lastPathComponent) -> \(output.lastPathComponent)")
 
+case "verify":
+    // 與 App 內更新相同的判準：只信任原始碼裡的公鑰，不碰鑰匙圈
+    guard arguments.count == 2 else { fail("usage: verify <dmg>") }
+    guard let raw = Data(base64Encoded: embeddedPublicKey()),
+          let publicKey = try? Curve25519.Signing.PublicKey(rawRepresentation: raw)
+    else { fail("UpdateSigningKey.swift does not contain a valid public key") }
+    let file = URL(fileURLWithPath: arguments[1])
+    let sigFile = file.appendingPathExtension("sig")
+    guard let data = try? Data(contentsOf: file, options: .mappedIfSafe) else { fail("cannot read \(file.path)") }
+    guard let text = try? String(contentsOf: sigFile, encoding: .utf8),
+          let signature = Data(base64Encoded: text.trimmingCharacters(in: .whitespacesAndNewlines))
+    else { fail("cannot read \(sigFile.path)") }
+    guard publicKey.isValidSignature(signature, for: data) else {
+        fail("\(sigFile.lastPathComponent) is not a valid signature of \(file.lastPathComponent) for the built-in public key")
+    }
+    print("Signature ok: \(file.lastPathComponent)")
+
 default:
-    fail("usage: update-signing.swift generate | export | import | sign <dmg>")
+    fail("usage: update-signing.swift generate | export | import | sign <dmg> | verify <dmg>")
 }
