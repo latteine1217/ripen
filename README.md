@@ -27,35 +27,30 @@ English · [繁體中文](README.zh-Hant.md)
 
 Keep your timer in view and your attention on your work. Ripen follows your focus-and-break rhythm, organizes your time by project, and turns your progress into a recap card. Your focus history stays on your Mac.
 
+## Install
+
+Requires macOS 14 Sonoma or later. Supports Apple silicon and Intel. Each release is tested on macOS 27; macOS 14 to 26 are supported but not tested on a real Mac.
+
+**[Download the latest DMG](https://github.com/latteine1217/ripen/releases/latest)**, open it, and drag **Ripen** onto the **Applications** shortcut.
+
+Or install with [Homebrew](https://brew.sh):
+
+```sh
+brew install --cask latteine1217/tap/ripen
+```
+
+### First launch
+
+Ripen is ad-hoc signed and not notarized by Apple, so Gatekeeper blocks the first launch:
+
+- **macOS 14**: in the Applications folder, right-click (or Control-click) Ripen, choose **Open**, then click **Open** in the dialog.
+- **macOS 15 and later**: double-click Ripen so macOS blocks it, then open **System Settings › Privacy & Security**, find Ripen near the bottom, click **Open Anyway**, and confirm.
+
+After that, Ripen opens normally. Release notes for every version are in the [changelog](CHANGELOG.md).
+
 ## Features
 
-### Give each kind of work a project
-
-Work, reading, or something you are learning can each have a project and a color. Open the menu above the timer ring to choose a project, or type a name and choose a color to add one. Before you start, its total time and completed focus count appear below the menu.
-
-You can start with Uncategorized. Change projects during a focus to move the whole focus to the new project; a choice made during a break applies to the next focus.
-
-### See where your time goes
-
-Statistics shows your focus time and count for the last 7 or 30 days. Seven days are stacked by project color; thirty days appear as one square per day, darker on busier days. Below, each project's time in that range is listed from most to least with a bar. Open a project to see its total time, its last week and its completed focuses grouped by day; expand a day for each focus, or click the color dot beside the name to choose another color.
-
-Click a project's name to rename it; its focuses stay with it. Click a single focus to correct its start time or length, move it to another project or Uncategorized, or delete it. A focus can be edited once it is saved, after the undo button disappears. If you no longer need a project, delete it from its detail page. After you confirm, its records move to Uncategorized, keeping their time and counts. Deleting a project or a focus can't be undone.
-
-<p align="center">
-  <img src="docs/images/en/projects.png" width="1000" alt="Weekly statistics and project details; demonstration data">
-  <br><sub>Illustrative focus history for demonstration, not real user data.</sub>
-</p>
-
-### Turn your progress into a recap card
-
-Every project with completed focuses, including Uncategorized, has a recap card showing total time, today's time, focus count, focus days and the last seven days. Open it from the project details, choose a square (1:1) or portrait (9:16) layout, and hide the project name if you like.
-
-Once the records are saved and their undo period has passed, save the card as a PNG, copy the image, or use the macOS share menu. Refresh the card if its records change after you open it. To post on a social platform, you can save the image and upload it yourself.
-
-<p align="center">
-  <img src="docs/images/en/recap-layouts.png" width="1000" alt="Square and portrait recap cards; demonstration data">
-  <br><sub>Recap cards use demonstration data, not real user records.</sub>
-</p>
+One timer, three forms: keep the full controls in the main window, float it above your work, or tuck it into the notch. The same timer keeps running as you switch.
 
 ### Shrink it to a floating window
 
@@ -100,6 +95,34 @@ The main window, floating window and notch island briefly show the time you just
 
 </details>
 
+### Give each kind of work a project
+
+Work, reading, or something you are learning can each have a project and a color. Open the menu above the timer ring to choose a project, or type a name and choose a color to add one. Before you start, its total time and completed focus count appear below the menu.
+
+You can start with Uncategorized. Change projects during a focus to move the whole focus to the new project; a choice made during a break applies to the next focus.
+
+### See where your time goes
+
+Statistics shows your focus time and count for the last 7 or 30 days. Seven days are stacked by project color; thirty days appear as one square per day, darker on busier days. Below, each project's time in that range is listed from most to least with a bar. Open a project to see its total time, its last week and its completed focuses grouped by day; expand a day for each focus, or click the color dot beside the name to choose another color.
+
+Click a project's name to rename it; its focuses stay with it. Click a single focus to correct its start time or length, move it to another project or Uncategorized, or delete it. A focus can be edited once it is saved, after the undo button disappears. If you no longer need a project, delete it from its detail page. After you confirm, its records move to Uncategorized, keeping their time and counts. Deleting a project or a focus can't be undone.
+
+<p align="center">
+  <img src="docs/images/en/projects.png" width="1000" alt="Weekly statistics and project details; demonstration data">
+  <br><sub>Illustrative focus history for demonstration, not real user data.</sub>
+</p>
+
+### Turn your progress into a recap card
+
+Every project with completed focuses, including Uncategorized, has a recap card showing total time, today's time, focus count, focus days and the last seven days. Open it from the project details, choose a square (1:1) or portrait (9:16) layout, and hide the project name if you like.
+
+Once the records are saved and their undo period has passed, save the card as a PNG, copy the image, or use the macOS share menu. Refresh the card if its records change after you open it. To post on a social platform, you can save the image and upload it yourself.
+
+<p align="center">
+  <img src="docs/images/en/recap-layouts.png" width="1000" alt="Square and portrait recap cards; demonstration data">
+  <br><sub>Recap cards use demonstration data, not real user records.</sub>
+</p>
+
 ## Everyday controls and settings
 
 | Feature | Details |
@@ -120,23 +143,6 @@ The main window, floating window and notch island briefly show the time you just
 3. Check the preview, which lists how many focuses and which projects will be added, then choose **Restore**.
 
 Restoring only adds focuses and projects that aren't already there and never changes existing ones, so restoring the same backup twice adds nothing. Corrections and renames you made after the backup stay as they are. A project or focus you deleted after making the backup comes back and can be deleted again. Before restoring, Ripen keeps a copy of your current data. Settings such as lengths, shortcut and appearance aren't in the backup; set them again on the new Mac.
-
-## Install
-
-Ripen requires macOS 14 Sonoma or later. Each release is tested on macOS 27; macOS 14 to 26 are supported but not tested on a real Mac.
-
-1. Install with [Homebrew](https://brew.sh):
-
-   ```sh
-   brew install --cask latteine1217/tap/ripen
-   ```
-
-   Or download `Ripen-<version>.dmg` from [GitHub Releases](https://github.com/latteine1217/ripen/releases), open it, and drag **Ripen** onto the **Applications** shortcut.
-2. Ripen is ad-hoc signed and not notarized by Apple, so Gatekeeper blocks the first launch:
-   - **macOS 14**: in the Applications folder, right-click (or Control-click) Ripen, choose **Open**, then click **Open** in the dialog.
-   - **macOS 15 and later**: double-click Ripen so macOS blocks it, then open **System Settings › Privacy & Security**, find Ripen near the bottom, click **Open Anyway**, and confirm.
-
-After that, Ripen opens normally. Release notes for every version are in the [changelog](CHANGELOG.md).
 
 ## Roadmap
 
