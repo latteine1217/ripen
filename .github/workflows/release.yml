@@ -75,7 +75,11 @@ jobs:
           [[ -n "$TAP_TOKEN" ]] || { echo "::error::secret HOMEBREW_TAP_TOKEN is not set"; exit 1; }
           TAP_DIR="$(brew --repository)/Library/Taps/latteine1217/homebrew-tap"
           rm -rf "$TAP_DIR"
-          git clone --quiet "https://x-access-token:$TAP_TOKEN@github.com/latteine1217/homebrew-tap.git" "$TAP_DIR"
+          # tap 是公開的：以預設 remote clone，token 只在 push 時使用、不寫進 .git/config。
+          # 帶 token 的 remote 會被 Homebrew 視為自訂 remote，另外影響信任判斷。
+          git clone --quiet https://github.com/latteine1217/homebrew-tap "$TAP_DIR"
+          # Homebrew 7 起非官方 tap 須先信任，brew audit 才會載入其中的 cask
+          brew trust --tap latteine1217/tap
           echo "TAP_DIR=$TAP_DIR" >> "$GITHUB_ENV"
       - name: Update cask
         run: |
@@ -99,7 +103,8 @@ jobs:
           elif [[ "$PUSH" == true ]]; then
             git -C "$TAP_DIR" -c user.name=latteine -c user.email=98538439+latteine1217@users.noreply.github.com \
               commit --quiet -am "chore: 更新 Ripen 至 $VERSION"
-            git -C "$TAP_DIR" push --quiet origin HEAD
+            BRANCH="$(git -C "$TAP_DIR" branch --show-current)"
+            git -C "$TAP_DIR" push --quiet "https://x-access-token:$TAP_TOKEN@github.com/latteine1217/homebrew-tap" "HEAD:refs/heads/$BRANCH"
             echo "Pushed cask $VERSION."
           else
             echo "Check only: not pushing."
