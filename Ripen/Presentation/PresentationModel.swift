@@ -43,7 +43,8 @@ final class PresentationModel {
     /// 轉換表中沒有這一格時忽略：操作可能來自已在過場中消失的介面。
     private func apply(_ action: PresentationAction) {
         guard let next = presentation.applying(action),
-              next != presentation || action.replacesFloatingWindow else { return }
+            next != presentation || action.replacesFloatingWindow
+        else { return }
         change = PresentationChange(presentation: next, action: action, revision: change.revision + 1)
     }
 }

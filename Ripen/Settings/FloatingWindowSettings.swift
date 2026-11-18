@@ -8,7 +8,7 @@ extension AppSettings {
     }
 }
 
-private extension SettingKey where Value == String {
+extension SettingKey where Value == String {
     /// 空字串代表沒有記錄：`SettingKey` 需要非 nil 的預設值。
-    static var floatingWindowPosition: Self { Self("floatingWindowPosition", default: "") }
+    fileprivate static var floatingWindowPosition: Self { Self("floatingWindowPosition", default: "") }
 }

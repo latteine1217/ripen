@@ -82,7 +82,7 @@ final class UpdateChecker {
         state = .checking
         do {
             guard let release = try await source.latest(), let latest = release.version,
-                  let currentVersion, currentVersion < latest
+                let currentVersion, currentVersion < latest
             else {
                 state = .upToDate
                 return

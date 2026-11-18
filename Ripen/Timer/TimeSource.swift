@@ -28,10 +28,12 @@ struct SystemTimeSource: TimeSource {
 
     init() {
         let start = ContinuousClock.now
-        self.init(systemClock: { Date() }, elapsed: {
-            let duration = ContinuousClock.now - start
-            return Double(duration.components.seconds) + Double(duration.components.attoseconds) / 1e18
-        })
+        self.init(
+            systemClock: { Date() },
+            elapsed: {
+                let duration = ContinuousClock.now - start
+                return Double(duration.components.seconds) + Double(duration.components.attoseconds) / 1e18
+            })
     }
 
     /// 測試用：注入系統時間與經過的時間。

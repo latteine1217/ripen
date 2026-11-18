@@ -87,7 +87,8 @@ final class FloatingWindowController {
         guard panel.isVisible else { return releasePanel(panel) }
         generation += 1
         let current = generation
-        let animation: Animation = NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
+        let animation: Animation =
+            NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
             ? .easeOut(duration: PresentationFade.duration)
             : .easeIn(duration: Self.dismissDuration)
         withAnimation(animation) {
@@ -187,7 +188,8 @@ final class FloatingWindowController {
             place(targetFrame(near: window.frame))
         }
         guard window.isVisible, let screen = Self.sharedScreen(window.frame, glassFrame),
-              !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion else {
+            !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
+        else {
             dismissMain(PresentationFade.duration)
             if !existing { show(near: window.frame) }
             return
@@ -203,13 +205,15 @@ final class FloatingWindowController {
         // 新的懸浮窗也要有畫面：變形中途就看得到懸浮窗內容，不是一塊空框（懸浮窗原型）
         let floatingSnapshot = glassSnapshot(of: panel)
         let radius = glassCornerRadius
-        overlay.show(TransitionHost(progress: overlay.progress) { t in
-            FloatingMorphView(
-                morph: FloatingMorph(window: from, windowRadius: DropMorphView.windowRadius,
-                                     floating: to, floatingRadius: radius, progress: t),
-                windowSnapshot: windowSnapshot, floatingSnapshot: floatingSnapshot
-            )
-        })
+        overlay.show(
+            TransitionHost(progress: overlay.progress) { t in
+                FloatingMorphView(
+                    morph: FloatingMorph(
+                        window: from, windowRadius: DropMorphView.windowRadius,
+                        floating: to, floatingRadius: radius, progress: t),
+                    windowSnapshot: windowSnapshot, floatingSnapshot: floatingSnapshot
+                )
+            })
         // overlay 第一格就是主視窗快照，真視窗在它下面淡出
         dismissMain(NotchPullController.crossFadeDuration)
         let c = FloatingMorph.curve
@@ -231,8 +235,9 @@ final class FloatingWindowController {
         stopResizing()
         cancelMorph()
         guard let panel, panel.isVisible, !state.isDismissing,
-              let screen = Self.sharedScreen(window.frame, glassFrame),
-              !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion else {
+            let screen = Self.sharedScreen(window.frame, glassFrame),
+            !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
+        else {
             hide()
             reveal(PresentationFade.duration)
             return
@@ -249,13 +254,15 @@ final class FloatingWindowController {
         let windowSnapshot = window.themeFrameSnapshot()
         let floatingSnapshot = panel.snapshot(of: glassFrame)
         let radius = glassCornerRadius
-        overlay.show(TransitionHost(progress: overlay.progress) { t in
-            FloatingMorphView(
-                morph: .expanding(floating: to, floatingRadius: radius,
-                                  window: from, windowRadius: DropMorphView.windowRadius, progress: t),
-                windowSnapshot: windowSnapshot, floatingSnapshot: floatingSnapshot
-            )
-        })
+        overlay.show(
+            TransitionHost(progress: overlay.progress) { t in
+                FloatingMorphView(
+                    morph: .expanding(
+                        floating: to, floatingRadius: radius,
+                        window: from, windowRadius: DropMorphView.windowRadius, progress: t),
+                    windowSnapshot: windowSnapshot, floatingSnapshot: floatingSnapshot
+                )
+            })
         // overlay 第一格已畫出同一個懸浮窗，直接撤掉真的
         panel.orderOut(nil)
         state.isPresented = false
@@ -316,8 +323,9 @@ final class FloatingWindowController {
                 dragStart = (mouse, glassFrame.origin)
             }
             guard let start = dragStart else { return }
-            glassFrame.origin = CGPoint(x: start.origin.x + mouse.x - start.mouse.x,
-                                        y: start.origin.y + mouse.y - start.mouse.y)
+            glassFrame.origin = CGPoint(
+                x: start.origin.x + mouse.x - start.mouse.x,
+                y: start.origin.y + mouse.y - start.mouse.y)
             panel.setFrameOrigin(CGPoint(x: glassFrame.minX - Self.margin, y: glassFrame.minY - Self.margin))
         case .ended:
             guard dragStart != nil else { return }
@@ -365,7 +373,8 @@ final class FloatingWindowController {
     /// 把手換到朝螢幕中央的角。只在位置定下來時呼叫（擺放、移動放開、調整大小放開）：拖曳中途不跟著跳。
     private func updateGripCorner() {
         guard let corner = ResizeCorner.facingScreenCenter(from: glassFrame, in: Self.screenAreas),
-              corner != state.gripCorner else { return }
+            corner != state.gripCorner
+        else { return }
         state.gripCorner = corner
     }
 
@@ -382,7 +391,8 @@ final class FloatingWindowController {
         let areas = Self.screenAreas
         let center = CGPoint(x: glassFrame.midX, y: glassFrame.midY)
         guard !areas.contains(where: { $0.frame.contains(center) }),
-              let area = FloatingWindowPlacement.screen(for: glassFrame, in: areas) else { return }
+            let area = FloatingWindowPlacement.screen(for: glassFrame, in: areas)
+        else { return }
         place(FloatingWindowPlacement.settle(glassFrame, in: area.visibleFrame))
     }
 
@@ -413,8 +423,9 @@ final class FloatingWindowController {
             return
         }
         guard resizing == nil, !ignoresCornerUntilRelease, let panel, panel.isVisible, !morphing,
-              dragStart == nil, !state.isDismissing,
-              let area = FloatingWindowPlacement.screen(for: glassFrame, in: Self.screenAreas) else { return }
+            dragStart == nil, !state.isDismissing,
+            let area = FloatingWindowPlacement.screen(for: glassFrame, in: Self.screenAreas)
+        else { return }
         generation += 1
         resizing = (corner, NSEvent.mouseLocation, glassFrame, area.frame)
         // 調整期間 panel 暫時撐滿整台螢幕，玻璃在 SwiftUI 裡長大縮小，不必每格改 panel frame（spec #1）
@@ -529,15 +540,21 @@ final class FloatingWindowController {
         panel?.ignoresMouseEvents = false
         guard mouseMonitors.isEmpty else { return }
         let events: NSEvent.EventTypeMask = [.mouseMoved, .leftMouseDragged]
-        if let monitor = NSEvent.addGlobalMonitorForEvents(matching: events, handler: { [weak self] _ in
-            MainActor.assumeIsolated { self?.mouseMoved() }
-        }) {
+        if let monitor = NSEvent.addGlobalMonitorForEvents(
+            matching: events,
+            handler: { [weak self] _ in
+                MainActor.assumeIsolated { self?.mouseMoved() }
+            })
+        {
             mouseMonitors.append(monitor)
         }
-        if let monitor = NSEvent.addLocalMonitorForEvents(matching: events, handler: { [weak self] event in
-            MainActor.assumeIsolated { self?.mouseMoved() }
-            return event
-        }) {
+        if let monitor = NSEvent.addLocalMonitorForEvents(
+            matching: events,
+            handler: { [weak self] event in
+                MainActor.assumeIsolated { self?.mouseMoved() }
+                return event
+            })
+        {
             mouseMonitors.append(monitor)
         }
     }

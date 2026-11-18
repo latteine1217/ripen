@@ -10,6 +10,6 @@ extension AppSettings {
     }
 }
 
-private extension SettingKey where Value == Hotkey {
-    static var startPauseHotkey: Self { Self("startPauseHotkey", default: .defaultStartPause, isValid: \.isUsable) }
+extension SettingKey where Value == Hotkey {
+    fileprivate static var startPauseHotkey: Self { Self("startPauseHotkey", default: .defaultStartPause, isValid: \.isUsable) }
 }

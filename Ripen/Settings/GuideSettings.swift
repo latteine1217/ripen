@@ -33,7 +33,7 @@ extension AppSettings {
     }
 }
 
-private extension SettingKey where Value == Bool {
-    static var gestureIntroSeen: Self { Self("gestureIntroSeen", default: false) }
-    static func seen(_ hint: GestureHint) -> Self { Self("hintSeen.\(hint.rawValue)", default: false) }
+extension SettingKey where Value == Bool {
+    fileprivate static var gestureIntroSeen: Self { Self("gestureIntroSeen", default: false) }
+    fileprivate static func seen(_ hint: GestureHint) -> Self { Self("hintSeen.\(hint.rawValue)", default: false) }
 }

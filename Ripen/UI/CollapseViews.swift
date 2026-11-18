@@ -18,14 +18,16 @@ struct CollapseView: View {
 
     var body: some View {
         switch CollapseMorph.stage(at: t) {
-        case let .shrink(morph, horizontal):
+        case .shrink(let morph, let horizontal):
             let drop = CollapseMorph.drop(notch: notch, islandSize: islandSize, baseRadius: baseRadius)
-            DropMorphView(t: morph, from: drop.frame, fromRadius: drop.radius, to: window, snapshot: snapshot,
-                          notch: notch, horizontal: horizontal, toRadius: windowRadius)
-        case let .absorb(pull, solidIsland):
+            DropMorphView(
+                t: morph, from: drop.frame, fromRadius: drop.radius, to: window, snapshot: snapshot,
+                notch: notch, horizontal: horizontal, toRadius: windowRadius)
+        case .absorb(let pull, let solidIsland):
             ZStack(alignment: .topLeading) {
-                DropLiquidView(pull: pull, notch: notch, islandSize: islandSize, baseRadius: baseRadius,
-                               travel: CollapseMorph.travel)
+                DropLiquidView(
+                    pull: pull, notch: notch, islandSize: islandSize, baseRadius: baseRadius,
+                    travel: CollapseMorph.travel)
                 UnevenRoundedRectangle(
                     bottomLeadingRadius: baseRadius, bottomTrailingRadius: baseRadius, style: .continuous
                 )

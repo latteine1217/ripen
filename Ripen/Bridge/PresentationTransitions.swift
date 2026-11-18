@@ -103,7 +103,7 @@ final class PresentationTransitions {
             fading = nil
             let cleanups = cleanups
             self.cleanups = []
-            cleanups.forEach { $0() }
+            for cleanup in cleanups { cleanup() }
         }
     }
 }

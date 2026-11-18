@@ -9,8 +9,10 @@ struct TimerSettingsSection: View {
             minutesStepper("Focus", value: $settings.focusMinutes)
             minutesStepper("Short Break", value: $settings.shortBreakMinutes)
             minutesStepper("Long Break", value: $settings.longBreakMinutes)
-            steppedRow("Long Break Interval", value: $settings.longBreakInterval, in: AppSettings.longBreakIntervalRange,
-                       unit: nil) { Text($0, format: .number) }
+            steppedRow(
+                "Long Break Interval", value: $settings.longBreakInterval, in: AppSettings.longBreakIntervalRange,
+                unit: nil
+            ) { Text($0, format: .number) }
             .help(Text("Focuses to complete before each long break"))
             Toggle("Start Next Phase When Done", isOn: $settings.autoStartNextPhase)
         } header: {

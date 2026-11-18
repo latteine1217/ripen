@@ -29,9 +29,11 @@ struct TimerControls: Equatable {
         /// 附快捷鍵的說明，例如「Skip to the next phase (⌘S)」。
         private let shortcutHelp: LocalizedStringKey?
 
-        init(title: LocalizedStringKey, systemImage: String, intent: TimerIntent,
-             help: LocalizedStringKey? = nil, shortcutHelp: LocalizedStringKey? = nil,
-             disabledReason: LocalizedStringKey? = nil, isAvailable: Bool = true) {
+        init(
+            title: LocalizedStringKey, systemImage: String, intent: TimerIntent,
+            help: LocalizedStringKey? = nil, shortcutHelp: LocalizedStringKey? = nil,
+            disabledReason: LocalizedStringKey? = nil, isAvailable: Bool = true
+        ) {
             self.title = title
             self.systemImage = systemImage
             self.intent = intent
@@ -67,22 +69,27 @@ struct TimerControls: Equatable {
     /// 參數都不設預設值：呼叫端不會漏掉閘門。各介面經 `AppModel.timerControls` 或 `timerFace` 取得。
     init(display: PhaseDisplay, undoOffer: UndoOffer?, requiresRecoveryDecision: Bool) {
         let reason = requiresRecoveryDecision ? Self.awaitingRecoveryReason : nil
-        primary = switch display.status {
-        case .idle: Action(title: "Start", systemImage: "play.fill", intent: .toggleStartPause, disabledReason: reason)
-        case .running: Action(title: "Pause", systemImage: "pause.fill", intent: .toggleStartPause, disabledReason: reason)
-        case .paused: Action(title: "Resume", systemImage: "play.fill", intent: .toggleStartPause, disabledReason: reason)
-        }
+        primary =
+            switch display.status {
+            case .idle: Action(title: "Start", systemImage: "play.fill", intent: .toggleStartPause, disabledReason: reason)
+            case .running: Action(title: "Pause", systemImage: "pause.fill", intent: .toggleStartPause, disabledReason: reason)
+            case .paused: Action(title: "Resume", systemImage: "play.fill", intent: .toggleStartPause, disabledReason: reason)
+            }
         finishes = display.isOvertime
-        secondary = finishes
-            ? Action(title: "Done", systemImage: "checkmark", intent: .skipOrFinish,
-                     help: "Finish this phase and move to the next",
-                     shortcutHelp: "Finish this phase and move to the next (⌘S)", disabledReason: reason)
-            : Action(title: "Skip", systemImage: "forward.end.fill", intent: .skipOrFinish,
-                     help: "Skip to the next phase", shortcutHelp: "Skip to the next phase (⌘S)",
-                     disabledReason: reason)
-        reset = Action(title: "Reset", systemImage: "arrow.counterclockwise", intent: .reset,
-                       shortcutHelp: "Reset the current phase (⌘R)", disabledReason: reason,
-                       isAvailable: !display.isOvertime && display.status != .idle)
+        secondary =
+            finishes
+            ? Action(
+                title: "Done", systemImage: "checkmark", intent: .skipOrFinish,
+                help: "Finish this phase and move to the next",
+                shortcutHelp: "Finish this phase and move to the next (⌘S)", disabledReason: reason)
+            : Action(
+                title: "Skip", systemImage: "forward.end.fill", intent: .skipOrFinish,
+                help: "Skip to the next phase", shortcutHelp: "Skip to the next phase (⌘S)",
+                disabledReason: reason)
+        reset = Action(
+            title: "Reset", systemImage: "arrow.counterclockwise", intent: .reset,
+            shortcutHelp: "Reset the current phase (⌘R)", disabledReason: reason,
+            isAvailable: !display.isOvertime && display.status != .idle)
         undo = undoOffer.map(Self.undo)
     }
 
@@ -95,16 +102,18 @@ struct TimerControls: Equatable {
 extension AppModel {
     /// 各介面取得按鈕規則的唯一入口，不會漏掉恢復閘門。已在刷新中取得 `display` 的介面傳入，一次刷新只讀一次時鐘。
     func timerControls(display: PhaseDisplay? = nil) -> TimerControls {
-        TimerControls(display: display ?? self.display, undoOffer: undoOffer,
-                      requiresRecoveryDecision: requiresRecoveryDecision)
+        TimerControls(
+            display: display ?? self.display, undoOffer: undoOffer,
+            requiresRecoveryDecision: requiresRecoveryDecision)
     }
 
     /// 計時介面每格的呈現值；與 `timerControls` 同一個閘門，另依設定格式化結束時刻。
     func timerFace(display: PhaseDisplay? = nil) -> TimerFace {
         let display = display ?? self.display
-        return TimerFace(display: display, controls: timerControls(display: display),
-                         clockFormat: settings.clockFormat, language: EndTimeFormat.appLanguage,
-                         systemUses24Hour: EndTimeFormat.systemUses24Hour)
+        return TimerFace(
+            display: display, controls: timerControls(display: display),
+            clockFormat: settings.clockFormat, language: EndTimeFormat.appLanguage,
+            systemUses24Hour: EndTimeFormat.systemUses24Hour)
     }
 
     func perform(_ intent: TimerIntent) {

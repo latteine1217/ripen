@@ -17,10 +17,12 @@ struct SoundSettingsSection: View {
             }
             .disabled(!settings.completionSoundEnabled)
 
-            Toggle("Send a Notification When a Phase Ends", isOn: Binding(
-                get: { notifications.isOn },
-                set: { on in Task { await notifications.setOn(on) } }
-            ))
+            Toggle(
+                "Send a Notification When a Phase Ends",
+                isOn: Binding(
+                    get: { notifications.isOn },
+                    set: { on in Task { await notifications.setOn(on) } }
+                ))
             if notifications.isRequesting {
                 Text("Choose Allow in the notification at the top right of your screen. If you don’t see it, check Notification Center.")
                     .foregroundStyle(.secondary)
@@ -39,8 +41,10 @@ struct SoundSettingsSection: View {
                 LabeledContent {
                     Button("Open Notification Settings", action: SystemPhaseNotifier.openSystemSettings)
                 } label: {
-                    Text("Notifications go away after a few seconds. To keep them until you close them, set Alert Style to Persistent in System Settings.")
-                        .foregroundStyle(.secondary)
+                    Text(
+                        "Notifications go away after a few seconds. To keep them until you close them, set Alert Style to Persistent in System Settings."
+                    )
+                    .foregroundStyle(.secondary)
                 }
             }
         }

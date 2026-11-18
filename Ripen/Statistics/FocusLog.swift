@@ -126,8 +126,8 @@ private enum PendingChange {
 
     var write: FocusLogWrite {
         switch self {
-        case let .recolorProject(id, color): .recolorProjects([id: color])
-        case let .renameProject(id, name): .renameProjects([id: name])
+        case .recolorProject(let id, let color): .recolorProjects([id: color])
+        case .renameProject(let id, let name): .renameProjects([id: name])
         case .updateRecord(let entry): .updateRecords([entry])
         case .deleteRecord(let id): .deleteRecords([id])
         case .deleteProject(let id): .deleteProjects([id])
@@ -179,10 +179,13 @@ final class FocusLog {
     var records: [FocusRecord] { entries.map(\.record) }
     /// 與 `records` 同序，附識別碼，讓畫面能指定某一筆紀錄（例如開啟成果卡）。
     var entries: [StoredFocusRecord] {
-        Self.replaying(changes, onto: StoredFocusLog(
-            records: saved.records + pending + (staged.map { [$0] } ?? []),
-            projects: saved.projects + pendingProjects
-        )).log.records
+        Self.replaying(
+            changes,
+            onto: StoredFocusLog(
+                records: saved.records + pending + (staged.map { [$0] } ?? []),
+                projects: saved.projects + pendingProjects
+            )
+        ).log.records
     }
     /// 尚未寫入的紀錄，含還能復原的那一筆；退出前由 `PhaseRunner` 先確立。
     var pendingCount: Int { pending.count + (staged == nil ? 0 : 1) }
@@ -316,16 +319,17 @@ final class FocusLog {
     private func plan(for change: FocusLogChange) -> Result<ChangePlan, FocusLogRejection> {
         guard !isAwaitingRecoveryDecision() else { return .failure(.awaitingRecoveryDecision) }
         switch change {
-        case let .addProject(name, color):
+        case .addProject(let name, let color):
             return validatedName(name).map { .addProject(FocusProject(name: $0, color: color ?? suggestedProjectColor)) }
-        case let .recolorProject(id, color):
+        case .recolorProject(let id, let color):
             return projectRejection(id).map(Result.failure) ?? .success(.queue(.recolorProject(id, color)))
-        case let .renameProject(id, name):
+        case .renameProject(let id, let name):
             guard let project = project(withID: id) else { return .failure(.notFound) }
             // 改成完全相同的名稱視為接受，不排入佇列；只改大小寫仍會改名
             return validatedName(name, renaming: id).map { $0 == project.name ? .keep : .queue(.renameProject(id, $0)) }
-        case let .updateRecord(id, record):
-            let rejection = recordEditRejection(id) ?? record.projectID.flatMap(projectRejection)
+        case .updateRecord(let id, let record):
+            let rejection =
+                recordEditRejection(id) ?? record.projectID.flatMap(projectRejection)
                 ?? correctionRejection(record, replacing: id)
             return rejection.map(Result.failure) ?? .success(.queue(.updateRecord(StoredFocusRecord(id: id, record: record))))
         case .deleteRecord(let id):
@@ -387,7 +391,7 @@ final class FocusLog {
     /// 開始時刻或長度有變時才檢查時間：時鐘被往回調過的舊紀錄，只換分類時不該被擋下。
     private func correctionRejection(_ record: FocusRecord, replacing id: UUID) -> FocusLogRejection? {
         guard let current = entries.first(where: { $0.id == id })?.record,
-              record.startedAt != current.startedAt || record.duration != current.duration
+            record.startedAt != current.startedAt || record.duration != current.duration
         else { return nil }
         switch FocusRecord.correctionIssue(startedAt: record.startedAt, duration: record.duration, now: now()) {
         case .nonPositiveDuration: return .nonPositiveDuration
@@ -402,7 +406,8 @@ final class FocusLog {
     }
 
     /// 依序把異動套到資料上，回傳結果與實際套用（因此要寫入）的異動。
-    private static func replaying(_ changes: [PendingChange], onto base: StoredFocusLog) -> (log: StoredFocusLog, applied: [PendingChange]) {
+    private static func replaying(_ changes: [PendingChange], onto base: StoredFocusLog) -> (log: StoredFocusLog, applied: [PendingChange])
+    {
         var log = base
         let applied = changes.compactMap { applying($0, to: &log) }
         return (log, applied)
@@ -412,10 +417,10 @@ final class FocusLog {
     /// 刪除一律成立：對象可能已寫入卻沒收到確認，必須照樣送出。
     private static func applying(_ change: PendingChange, to log: inout StoredFocusLog) -> PendingChange? {
         switch change {
-        case let .recolorProject(id, color):
+        case .recolorProject(let id, let color):
             guard let index = log.projects.firstIndex(where: { $0.id == id }) else { return nil }
             log.projects[index] = FocusProject(id: id, name: log.projects[index].name, color: color)
-        case let .renameProject(id, name):
+        case .renameProject(let id, let name):
             guard let index = log.projects.firstIndex(where: { $0.id == id }) else { return nil }
             log.projects[index] = FocusProject(id: id, name: name, color: log.projects[index].color)
         case .updateRecord(var entry):

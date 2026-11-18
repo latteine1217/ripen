@@ -11,11 +11,12 @@ struct TimerRingView: View {
 
     var body: some View {
         // 超時中時間改用 tint（超時色），進度維持滿圈；暫停時時間淡化、中央另寫「已暫停」
-        let timeStyle: AnyShapeStyle = switch face.timeStyle {
-        case .overtime: AnyShapeStyle(.tint)
-        case .paused: AnyShapeStyle(palette.secondary)
-        case .idle, .running: AnyShapeStyle(palette.primary)
-        }
+        let timeStyle: AnyShapeStyle =
+            switch face.timeStyle {
+            case .overtime: AnyShapeStyle(.tint)
+            case .paused: AnyShapeStyle(palette.secondary)
+            case .idle, .running: AnyShapeStyle(palette.primary)
+            }
         ZStack {
             ProgressRing(progress: face.progress, lineWidth: lineWidth, track: AnyShapeStyle(palette.progressTrack))
             VStack(spacing: 4) {

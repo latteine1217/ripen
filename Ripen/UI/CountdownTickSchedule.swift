@@ -75,8 +75,11 @@ struct TimerFaceTimeline<Content: View>: View {
     @Environment(\.timerSurfaceVisible) private var isVisible
 
     var body: some View {
-        TimelineView(CountdownTickSchedule(paused: !isVisible || model.status != .running,
-                                           clockRevision: model.systemClockRevision)) { _ in
+        TimelineView(
+            CountdownTickSchedule(
+                paused: !isVisible || model.status != .running,
+                clockRevision: model.systemClockRevision)
+        ) { _ in
             content(model.timerFace())
         }
     }

@@ -55,17 +55,17 @@ enum RecapCardRenderer {
         // 重畫到沒有 alpha 的點陣：輸出不透明，圓角外也不會透出背景
         let bounds = CGRect(x: 0, y: 0, width: layout.pixelWidth, height: layout.pixelHeight)
         guard let space = CGColorSpace(name: CGColorSpace.sRGB),
-              let context = CGContext(
+            let context = CGContext(
                 data: nil, width: layout.pixelWidth, height: layout.pixelHeight, bitsPerComponent: 8, bytesPerRow: 0,
                 space: space, bitmapInfo: CGImageAlphaInfo.noneSkipLast.rawValue
-              ),
-              let background = NSColor(RecapCardView.background).usingColorSpace(.sRGB)?.cgColor
+            ),
+            let background = NSColor(RecapCardView.background).usingColorSpace(.sRGB)?.cgColor
         else { throw RecapExportError.renderFailed }
         context.setFillColor(background)
         context.fill(bounds)
         context.draw(image, in: bounds)
         guard let opaque = context.makeImage(),
-              let data = NSBitmapImageRep(cgImage: opaque).representation(using: .png, properties: [:])
+            let data = NSBitmapImageRep(cgImage: opaque).representation(using: .png, properties: [:])
         else { throw RecapExportError.renderFailed }
         return data
     }

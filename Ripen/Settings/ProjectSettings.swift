@@ -8,6 +8,6 @@ extension AppSettings {
     }
 }
 
-private extension SettingKey where Value == String {
-    static var lastProjectID: Self { Self("lastProjectID", default: "") }
+extension SettingKey where Value == String {
+    fileprivate static var lastProjectID: Self { Self("lastProjectID", default: "") }
 }

@@ -29,8 +29,9 @@ struct AppPalette {
 
     /// 微弱明暗層次，避免不透明外觀像一塊平板；過場快照亦使用同一底色。
     static var surfaceGradient: LinearGradient {
-        LinearGradient(colors: [Color("SurfaceTop"), Color("SurfaceBottom")],
-                       startPoint: .topLeading, endPoint: .bottomTrailing)
+        LinearGradient(
+            colors: [Color("SurfaceTop"), Color("SurfaceBottom")],
+            startPoint: .topLeading, endPoint: .bottomTrailing)
     }
 }
 

@@ -44,7 +44,9 @@ struct ColorSwatches: View {
         HStack(spacing: 10) {
             ForEach(ProjectColor.allCases, id: \.self) { color in
                 let isSelected = color == selection
-                Button { choose(color) } label: {
+                Button {
+                    choose(color)
+                } label: {
                     Circle()
                         .fill(color.color)
                         .frame(width: 18, height: 18)

@@ -1,5 +1,5 @@
-import Foundation
 import Darwin
+import Foundation
 
 /// 正式的專注儲存；每次操作各自開啟連線，失敗後重試不沿用失效的連線。
 struct SQLiteFocusLogStorage: FocusLogStorage, TimerRecoveryStorage, FocusBackupStorage {
@@ -29,7 +29,7 @@ struct SQLiteFocusLogStorage: FocusLogStorage, TimerRecoveryStorage, FocusBackup
     private var pendingBackupURL: URL { directory.appending(path: "focus-log.pending-backup.sqlite") }
     private var restoreSafetyURL: URL { directory.appending(path: "focus-log.pre-restore.sqlite") }
     /// 與 schema 版本分開，避免把其他 SQLite 檔案誤認為 Ripen 的資料。
-    private static let applicationID = 0x52504E31
+    private static let applicationID = 0x5250_4E31
 
     static var standard: Self { Self(directory: URL.applicationSupportDirectory.appending(path: "Ripen")) }
 
@@ -66,7 +66,8 @@ struct SQLiteFocusLogStorage: FocusLogStorage, TimerRecoveryStorage, FocusBackup
                 try database.deleteProjects(ids)
                 let journal = try database.completionJournal().map { entry in
                     guard let id = entry.record.projectID, ids.contains(id) else { return entry }
-                    return StoredFocusRecord(id: entry.id,
+                    return StoredFocusRecord(
+                        id: entry.id,
                         record: FocusRecord(startedAt: entry.record.startedAt, duration: entry.record.duration))
                 }
                 try database.saveCompletionJournal(journal)
@@ -139,9 +140,9 @@ struct SQLiteFocusLogStorage: FocusLogStorage, TimerRecoveryStorage, FocusBackup
         }
         try backup.checkIntegrity()
         guard try backup.integer("PRAGMA application_id") == Self.applicationID,
-              try backup.integer("PRAGMA user_version") == upgrades.count + 1,
-              try backup.records() == records,
-              try backup.projects() == projects
+            try backup.integer("PRAGMA user_version") == upgrades.count + 1,
+            try backup.records() == records,
+            try backup.projects() == projects
         else { throw FocusStorageError.invalidData }
     }
 
@@ -175,7 +176,7 @@ struct SQLiteFocusLogStorage: FocusLogStorage, TimerRecoveryStorage, FocusBackup
         defer { try? FileManager.default.removeItem(at: workspace) }
         // 直接讀檔頭：application_id 在第 68 位元組起（大端序），截斷的 Ripen 檔仍能辨認為損壞而非他人檔案
         guard data.count >= 100, data.prefix(16) == Data("SQLite format 3\0".utf8),
-              data[68..<72].reduce(0, { $0 << 8 | Int($1) }) == Self.applicationID
+            data[68..<72].reduce(0, { $0 << 8 | Int($1) }) == Self.applicationID
         else { throw FocusRestoreError.notABackup }
         let copy = Self(directory: workspace, upgrades: upgrades)
         try data.write(to: copy.databaseURL)
@@ -200,9 +201,10 @@ struct SQLiteFocusLogStorage: FocusLogStorage, TimerRecoveryStorage, FocusBackup
             guard let id = entry.record.projectID, !known.contains(id) else { return entry }
             return StoredFocusRecord(id: entry.id, record: FocusRecord(startedAt: entry.record.startedAt, duration: entry.record.duration))
         }
-        return FocusRestore(records: newRecords,
-                            projects: projects.filter { !existingProjects.contains($0.id) },
-                            skippedRecordCount: records.count - newRecords.count)
+        return FocusRestore(
+            records: newRecords,
+            projects: projects.filter { !existingProjects.contains($0.id) },
+            skippedRecordCount: records.count - newRecords.count)
     }
 
     /// 只保留最近一份；新副本完整寫好才取代舊的，失敗就不進行還原。
@@ -231,7 +233,7 @@ struct SQLiteFocusLogStorage: FocusLogStorage, TimerRecoveryStorage, FocusBackup
         let version = try database.integer("PRAGMA user_version")
         if version == 0 {
             guard try readState() == "initializing",
-                  try database.integer("SELECT count(*) FROM sqlite_master WHERE name NOT LIKE 'sqlite_%'") == 0
+                try database.integer("SELECT count(*) FROM sqlite_master WHERE name NOT LIKE 'sqlite_%'") == 0
             else { throw FocusStorageError.invalidData }
             try initialize(database)
         }
@@ -303,7 +305,8 @@ struct SQLiteFocusLogStorage: FocusLogStorage, TimerRecoveryStorage, FocusBackup
         } catch CocoaError.fileReadNoSuchFile { records = [] }
         guard records.allSatisfy(\.isValid) else { throw FocusStorageError.invalidData }
         try database.transaction {
-            try database.execute("""
+            try database.execute(
+                """
                 CREATE TABLE focus_records (
                     sequence INTEGER PRIMARY KEY,
                     id TEXT NOT NULL UNIQUE,

@@ -172,7 +172,9 @@ struct RecapIconButton: View {
         if let shortcut = model.recapShortcut {
             let project = model.focusLog.project(withID: shortcut.projectID)
             let name = project?.name ?? String(localized: "Uncategorized")
-            Button { RecapWindow.shared.open(projectID: shortcut.projectID) } label: {
+            Button {
+                RecapWindow.shared.open(projectID: shortcut.projectID)
+            } label: {
                 Image(systemName: "photo")
                     .opacity(isHovering ? 1 : 0.75)
                     .background(Circle().fill(isHovering ? palette.buttonHover : .clear).frame(width: 22, height: 22))

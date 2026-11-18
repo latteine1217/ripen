@@ -17,10 +17,11 @@ final class AppAppearanceController {
         } onChange: { [weak self] in
             Task { @MainActor [weak self] in self?.applyAndObserve() }
         }
-        NSApplication.shared.appearance = switch mode {
-        case .system: nil
-        case .light: NSAppearance(named: .aqua)
-        case .dark: NSAppearance(named: .darkAqua)
-        }
+        NSApplication.shared.appearance =
+            switch mode {
+            case .system: nil
+            case .light: NSAppearance(named: .aqua)
+            case .dark: NSAppearance(named: .darkAqua)
+            }
     }
 }

@@ -56,29 +56,29 @@ extension AppSettings {
     }
 }
 
-private extension ClosedRange where Bound == Int {
+extension ClosedRange where Bound == Int {
     /// 超出範圍的值改成最近的邊界。
-    func clamp(_ value: Int) -> Int { Swift.min(Swift.max(value, lowerBound), upperBound) }
+    fileprivate func clamp(_ value: Int) -> Int { Swift.min(Swift.max(value, lowerBound), upperBound) }
 }
 
 // 預設值與 CycleConfiguration.standard 一致（25 / 5 / 15 / 4）。
-private extension SettingKey where Value == Int {
-    static var focusMinutes: Self { phaseMinutes("focusMinutes", default: 25) }
-    static var shortBreakMinutes: Self { phaseMinutes("shortBreakMinutes", default: 5) }
-    static var longBreakMinutes: Self { phaseMinutes("longBreakMinutes", default: 15) }
-    static var longBreakInterval: Self {
+extension SettingKey where Value == Int {
+    fileprivate static var focusMinutes: Self { phaseMinutes("focusMinutes", default: 25) }
+    fileprivate static var shortBreakMinutes: Self { phaseMinutes("shortBreakMinutes", default: 5) }
+    fileprivate static var longBreakMinutes: Self { phaseMinutes("longBreakMinutes", default: 15) }
+    fileprivate static var longBreakInterval: Self {
         Self("longBreakInterval", default: 4) { AppSettings.longBreakIntervalRange.contains($0) }
     }
 
-    static func phaseMinutes(_ name: String, default value: Int) -> Self {
+    fileprivate static func phaseMinutes(_ name: String, default value: Int) -> Self {
         Self(name, default: value) { AppSettings.phaseMinutesRange.contains($0) }
     }
 }
 
-private extension SettingKey where Value == Bool {
-    static var autoStartNextPhase: Self { Self("autoStartBreaks", default: false) }
+extension SettingKey where Value == Bool {
+    fileprivate static var autoStartNextPhase: Self { Self("autoStartBreaks", default: false) }
 }
 
-private extension SettingKey where Value == ClockFormat {
-    static var clockFormat: Self { Self("clockFormat", default: .system) }
+extension SettingKey where Value == ClockFormat {
+    fileprivate static var clockFormat: Self { Self("clockFormat", default: .system) }
 }

@@ -357,16 +357,18 @@ final class PhaseRunner {
     /// 這一段若在 `now` 完成會是怎樣的完成；倒數到 0 前為 nil。
     private func completion(at now: Date) -> PhaseCompletion? {
         guard working.run.engine.isOvertime(at: now), let startedAt = working.run.engine.startedAt else { return nil }
-        return PhaseCompletion(phase: working.run.engine.phase, startedAt: startedAt,
-                               duration: working.run.engine.elapsed(at: now))
+        return PhaseCompletion(
+            phase: working.run.engine.phase, startedAt: startedAt,
+            duration: working.run.engine.elapsed(at: now))
     }
 
     /// 完成的專注記錄實際長度，依開始時刻歸日（GLOSSARY）。
     /// 按「完成」時先暫存（還能復原）。回傳暫存的紀錄（分類已確認）；休息不回傳。
     private func recordIfFocus(_ completion: PhaseCompletion) -> FocusRecord? {
         guard completion.phase == .focus else { return nil }
-        let record = FocusRecord(startedAt: clock.systemDate(for: completion.startedAt), duration: completion.duration,
-                                 projectID: working.focusProjectID)
+        let record = FocusRecord(
+            startedAt: clock.systemDate(for: completion.startedAt), duration: completion.duration,
+            projectID: working.focusProjectID)
         return focusLog.stage(record)
     }
 
@@ -385,8 +387,9 @@ final class PhaseRunner {
     // MARK: - 復原機會
 
     private func offerUndo(_ action: UndoableAction, restoring snapshot: PhaseRun, at now: Date) {
-        working.pendingUndo = PendingUndo(offer: UndoOffer(action: action, expiresAt: now + Self.undoWindow),
-                                          snapshot: snapshot)
+        working.pendingUndo = PendingUndo(
+            offer: UndoOffer(action: action, expiresAt: now + Self.undoWindow),
+            snapshot: snapshot)
     }
 
     /// 其他操作出現或期限已過，復原機會結束；暫存的完成紀錄在此寫入。
@@ -405,18 +408,21 @@ final class PhaseRunner {
     /// 刷新時：狀態有變化，或執行中距上次成功保存滿五秒。已有保存錯誤時等使用者重試。
     private func isCheckpointDue(since before: State) -> Bool {
         let now = clock.now()
-        let changed = working.run.engine != before.run.engine || working.run.cycle != before.run.cycle
+        let changed =
+            working.run.engine != before.run.engine || working.run.cycle != before.run.cycle
             || working.run.reachedZero != before.run.reachedZero
         return recoveryIssue == nil
-            && (changed || (working.run.engine.status(at: now) == .running
-                            && (lastCheckpointAt.map({ now.timeIntervalSince($0) >= Self.recoveryCheckpointInterval }) ?? true)))
+            && (changed
+                || (working.run.engine.status(at: now) == .running
+                    && (lastCheckpointAt.map({ now.timeIntervalSince($0) >= Self.recoveryCheckpointInterval }) ?? true)))
     }
 
     /// 保存工作副本的進度；`completions` 預設為尚未確立與未保存的完成。
     @discardableResult
     private func saveCheckpoint(completions: [StoredFocusRecord]? = nil) -> Bool {
-        let checkpoint = working.run.engine.recovery(at: clock.now(), projectID: working.focusProjectID,
-                                                     completedFocuses: working.run.cycle.completedFocuses)
+        let checkpoint = working.run.engine.recovery(
+            at: clock.now(), projectID: working.focusProjectID,
+            completedFocuses: working.run.cycle.completedFocuses)
         return writeRecovery(storable(checkpoint), completions: completions, action: .save)
     }
 
@@ -488,7 +494,10 @@ final class PhaseRunner {
     }
 
     func retryRecovery() {
-        guard recoveryLoaded else { loadRecovery(); return }
+        guard recoveryLoaded else {
+            loadRecovery()
+            return
+        }
         switch failedRecoveryAction {
         case .continueSaved: continueRecovery()
         case .discard: discardRecovery()

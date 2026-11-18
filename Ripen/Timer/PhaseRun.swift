@@ -92,7 +92,7 @@ struct PhaseRun: Equatable, Sendable {
     /// 改階段長度從下一段生效；停在起點、還沒開始的階段不算在跑，直接換成新長度。
     mutating func applyChangedLength(at now: Date, configuration: CycleConfiguration) {
         guard engine.status(at: now) == .idle,
-              engine.duration != configuration.duration(for: engine.phase)
+            engine.duration != configuration.duration(for: engine.phase)
         else { return }
         loadCurrentPhase(configuration)
     }

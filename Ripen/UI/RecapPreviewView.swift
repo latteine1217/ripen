@@ -100,8 +100,10 @@ struct RecapPreviewView: View {
             Label("You can export the image once the undo period ends.", systemImage: "clock")
                 .foregroundStyle(.secondary)
         case (.unsaved, _):
-            Label("Some focuses haven’t been saved yet. Retry saving your history before exporting.", systemImage: "exclamationmark.triangle")
-                .foregroundStyle(.secondary)
+            Label(
+                "Some focuses haven’t been saved yet. Retry saving your history before exporting.", systemImage: "exclamationmark.triangle"
+            )
+            .foregroundStyle(.secondary)
         case (.changed, _):
             Label("Statistics changed. Refresh to export the latest card.", systemImage: "arrow.clockwise")
                 .foregroundStyle(.secondary)
@@ -226,14 +228,19 @@ final class RecapSharing: NSObject, @preconcurrency NSSharingServicePickerDelega
     private var onOutcome: ((Outcome) -> Void)?
 
     func present(_ file: URL, onOutcome: @escaping (Outcome) -> Void) {
-        guard let anchor else { onOutcome(.failed); return }
+        guard let anchor else {
+            onOutcome(.failed)
+            return
+        }
         self.onOutcome = onOutcome
         let picker = NSSharingServicePicker(items: [file])
         picker.delegate = self
         picker.show(relativeTo: anchor.bounds, of: anchor, preferredEdge: .minY)
     }
 
-    func sharingServicePicker(_ picker: NSSharingServicePicker, delegateFor sharingService: NSSharingService) -> (any NSSharingServiceDelegate)? {
+    func sharingServicePicker(_ picker: NSSharingServicePicker, delegateFor sharingService: NSSharingService) -> (
+        any NSSharingServiceDelegate
+    )? {
         self
     }
 

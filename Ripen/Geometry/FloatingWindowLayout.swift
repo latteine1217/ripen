@@ -69,7 +69,9 @@ struct FloatingWindowLayout: Equatable, Sendable {
 
     /// 小（播放器）：左邊 44pt 進度圈裡放開始／暫停，中間階段與 24pt 時間，右邊跳過、展開、✕。
     private static func small(_ size: CGSize) -> Self {
-        let w = size.width, cy = size.height / 2, b = button
+        let w = size.width
+        let cy = size.height / 2
+        let b = button
         let ring = CGPoint(x: 10 + 22, y: cy)
         let textX: CGFloat = 66
         let close = CGPoint(x: w - 12 - b / 2, y: cy)
@@ -88,8 +90,11 @@ struct FloatingWindowLayout: Equatable, Sendable {
 
     /// 中（卡片）：上排小進度圈、階段與結束時刻，中央大字時間，進度條，底部一排四顆按鈕。
     private static func medium(_ size: CGSize) -> Self {
-        let w = size.width, h = size.height, b = button
-        let pad: CGFloat = 18, top: CGFloat = 24
+        let w = size.width
+        let h = size.height
+        let b = button
+        let pad: CGFloat = 18
+        let top: CGFloat = 24
         let rowY = h - 14 - b / 2
         let bar = CGRect(x: pad, y: rowY - 30, width: w - 2 * pad, height: 4)
         // 預設 160pt 高時是原型的 40pt；拉高時跟著變大，最矮時縮到 20pt，與進度條之間留出空隙
@@ -108,7 +113,9 @@ struct FloatingWindowLayout: Equatable, Sendable {
 
     /// 大（圓形進度）：縮小版的計時圓環，裡面放階段、時間、結束時刻，下方一排四顆按鈕。
     private static func large(_ size: CGSize) -> Self {
-        let w = size.width, h = size.height, b = button
+        let w = size.width
+        let h = size.height
+        let b = button
         let rowY = h - 14 - b / 2
         let d = max(80, min(w - 48, rowY - b / 2 - 28))
         let ring = CGPoint(x: w / 2, y: 14 + d / 2)
@@ -176,9 +183,9 @@ struct FloatingWindowSizeBlend: Equatable, Sendable {
     }
 }
 
-private extension FloatingWindowLayout {
+extension FloatingWindowLayout {
     /// 版面的每個數值乘上權重；與 `add` 一起組成加權平均。
-    mutating func scale(by k: Double) {
+    fileprivate mutating func scale(by k: Double) {
         let k = CGFloat(k)
         cornerRadius *= k
         ringCenter = ringCenter * k
@@ -197,7 +204,7 @@ private extension FloatingWindowLayout {
         close = close * k
     }
 
-    mutating func add(_ o: Self) {
+    fileprivate mutating func add(_ o: Self) {
         cornerRadius += o.cornerRadius
         ringCenter = ringCenter + o.ringCenter
         ringDiameter += o.ringDiameter
@@ -206,8 +213,9 @@ private extension FloatingWindowLayout {
         caption.add(o.caption)
         time.add(o.time)
         end.add(o.end)
-        bar = CGRect(x: bar.minX + o.bar.minX, y: bar.minY + o.bar.minY,
-                     width: bar.width + o.bar.width, height: bar.height + o.bar.height)
+        bar = CGRect(
+            x: bar.minX + o.bar.minX, y: bar.minY + o.bar.minY,
+            width: bar.width + o.bar.width, height: bar.height + o.bar.height)
         barOpacity += o.barOpacity
         startPause = startPause + o.startPause
         startPauseFill += o.startPauseFill
@@ -217,15 +225,15 @@ private extension FloatingWindowLayout {
     }
 }
 
-private extension FloatingWindowLayout.TextSlot {
-    mutating func scale(by k: CGFloat) {
+extension FloatingWindowLayout.TextSlot {
+    fileprivate mutating func scale(by k: CGFloat) {
         point = point * k
         anchorX *= k
         fontSize *= k
         opacity *= Double(k)
     }
 
-    mutating func add(_ o: Self) {
+    fileprivate mutating func add(_ o: Self) {
         point = point + o.point
         anchorX += o.anchorX
         fontSize += o.fontSize

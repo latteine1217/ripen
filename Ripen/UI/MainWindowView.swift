@@ -50,9 +50,9 @@ struct MainWindowView: View {
     }
 }
 
-private extension View {
+extension View {
     /// 隱藏的頁面不可點擊、不回應快捷鍵（例如計時頁的空白鍵），也不被輔助使用讀到。
-    func visible(_ isVisible: Bool) -> some View {
+    fileprivate func visible(_ isVisible: Bool) -> some View {
         opacity(isVisible ? 1 : 0)
             .allowsHitTesting(isVisible)
             .disabled(!isVisible)

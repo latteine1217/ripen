@@ -17,15 +17,18 @@ struct GestureIntroView: View {
     }
 
     private let pages = [
-        Page(title: "Tear Off a Floating Window",
-             message: "Drag the timer ring outward, or click the yellow button, to get a small window that stays on top.",
-             illustration: .tearOff),
-        Page(title: "Tuck It into the Notch",
-             message: "Drag the main window up into the notch, or click the red button. Pull the island down to bring the main window back.",
-             illustration: .notch),
-        Page(title: "Resize the Floating Window",
-             message: "Drag any corner of the floating window to switch between the small, medium and large layouts.",
-             illustration: .resize),
+        Page(
+            title: "Tear Off a Floating Window",
+            message: "Drag the timer ring outward, or click the yellow button, to get a small window that stays on top.",
+            illustration: .tearOff),
+        Page(
+            title: "Tuck It into the Notch",
+            message: "Drag the main window up into the notch, or click the red button. Pull the island down to bring the main window back.",
+            illustration: .notch),
+        Page(
+            title: "Resize the Floating Window",
+            message: "Drag any corner of the floating window to switch between the small, medium and large layouts.",
+            illustration: .resize),
     ]
 
     var body: some View {
@@ -100,7 +103,9 @@ struct GestureIllustration: View {
     var body: some View {
         TimelineView(.animation(paused: reduceMotion || fixedProgress != nil || !isPresented)) { context in
             let p = fixedProgress ?? (reduceMotion ? 1 : Self.progress(at: context.date))
-            Canvas { gc, size in draw(in: &gc, size: size, progress: p) } symbols: {
+            Canvas { gc, size in
+                draw(in: &gc, size: size, progress: p)
+            } symbols: {
                 Image(systemName: "cursorarrow")
                     .font(.system(size: 16, weight: .medium))
                     .foregroundStyle(palette.primary)
@@ -135,14 +140,19 @@ struct GestureIllustration: View {
             drawPointer(in: &gc, at: CGPoint(x: center.x + 10, y: center.y + 16))
         case .notch:
             // 螢幕上緣與瀏海；主視窗往上被吸進瀏海，變成攤開的瀏海島
-            gc.stroke(Path { $0.move(to: CGPoint(x: 0, y: 10)); $0.addLine(to: CGPoint(x: size.width, y: 10)) },
-                      with: outline, lineWidth: 1.5)
+            gc.stroke(
+                Path {
+                    $0.move(to: CGPoint(x: 0, y: 10))
+                    $0.addLine(to: CGPoint(x: size.width, y: 10))
+                },
+                with: outline, lineWidth: 1.5)
             let notch = CGRect(x: size.width / 2 - 24, y: 10, width: 48, height: 12)
             let window = CGRect(x: size.width / 2 - 50, y: 60, width: 100, height: 76)
             let island = CGRect(x: size.width / 2 - 60, y: 10, width: 120, height: 18)
             let rect = window.lerp(to: island, p)
-            gc.fill(Path(roundedRect: rect, cornerRadius: lerp(12, 9, p)),
-                    with: .color(p > 0.85 ? .black : palette.secondary.opacity(lerp(0.25, 0.9, p))))
+            gc.fill(
+                Path(roundedRect: rect, cornerRadius: lerp(12, 9, p)),
+                with: .color(p > 0.85 ? .black : palette.secondary.opacity(lerp(0.25, 0.9, p))))
             gc.fill(Path(roundedRect: notch, cornerRadius: 6), with: .color(.black))
             drawPointer(in: &gc, at: CGPoint(x: rect.midX + 8, y: rect.maxY - 4))
         case .resize:
@@ -164,13 +174,14 @@ struct GestureIllustration: View {
     private func lerp(_ a: CGFloat, _ b: CGFloat, _ t: Double) -> CGFloat { a + (b - a) * t }
 }
 
-private extension CGRect {
-    func centered(at point: CGPoint) -> CGRect {
+extension CGRect {
+    fileprivate func centered(at point: CGPoint) -> CGRect {
         CGRect(x: point.x - width / 2, y: point.y - height / 2, width: width, height: height)
     }
 
-    func lerp(to other: CGRect, _ t: Double) -> CGRect {
-        CGRect(x: minX + (other.minX - minX) * t, y: minY + (other.minY - minY) * t,
-               width: width + (other.width - width) * t, height: height + (other.height - height) * t)
+    fileprivate func lerp(to other: CGRect, _ t: Double) -> CGRect {
+        CGRect(
+            x: minX + (other.minX - minX) * t, y: minY + (other.minY - minY) * t,
+            width: width + (other.width - width) * t, height: height + (other.height - height) * t)
     }
 }

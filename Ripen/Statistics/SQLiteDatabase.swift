@@ -69,9 +69,9 @@ final class SQLiteDatabase {
         var result = sqlite3_step(query)
         while result == SQLITE_ROW {
             guard let text = sqlite3_column_text(query, 0),
-                  let id = UUID(uuidString: String(cString: text)),
-                  sqlite3_column_type(query, 1) == SQLITE_FLOAT || sqlite3_column_type(query, 1) == SQLITE_INTEGER,
-                  sqlite3_column_type(query, 2) == SQLITE_FLOAT || sqlite3_column_type(query, 2) == SQLITE_INTEGER
+                let id = UUID(uuidString: String(cString: text)),
+                sqlite3_column_type(query, 1) == SQLITE_FLOAT || sqlite3_column_type(query, 1) == SQLITE_INTEGER,
+                sqlite3_column_type(query, 2) == SQLITE_FLOAT || sqlite3_column_type(query, 2) == SQLITE_INTEGER
             else { throw FocusStorageError.invalidData }
             let record = FocusRecord(
                 startedAt: Date(timeIntervalSinceReferenceDate: sqlite3_column_double(query, 1)),
@@ -105,9 +105,9 @@ final class SQLiteDatabase {
         var result = sqlite3_step(query)
         while result == SQLITE_ROW {
             guard let id = try optionalUUID(query, column: 0),
-                  let name = sqlite3_column_text(query, 1).map({ String(cString: $0) }),
-                  FocusProject.normalizedName(name) == name,
-                  let color = sqlite3_column_text(query, 2).map({ String(cString: $0) })
+                let name = sqlite3_column_text(query, 1).map({ String(cString: $0) }),
+                FocusProject.normalizedName(name) == name,
+                let color = sqlite3_column_text(query, 2).map({ String(cString: $0) })
             else { throw FocusStorageError.invalidData }
             projects.append(FocusProject(id: id, name: name, color: ProjectColor(rawValue: color) ?? .allCases[0]))
             result = sqlite3_step(query)
@@ -124,9 +124,9 @@ final class SQLiteDatabase {
             sqlite3_reset(query)
             sqlite3_clear_bindings(query)
             guard bind(project.id.uuidString, to: query, at: 1) == SQLITE_OK,
-                  bind(project.name, to: query, at: 2) == SQLITE_OK,
-                  bind(project.color.rawValue, to: query, at: 3) == SQLITE_OK,
-                  sqlite3_step(query) == SQLITE_DONE
+                bind(project.name, to: query, at: 2) == SQLITE_OK,
+                bind(project.color.rawValue, to: query, at: 3) == SQLITE_OK,
+                sqlite3_step(query) == SQLITE_DONE
             else { throw error }
             if sqlite3_changes(handle) == 0 {
                 let existing = try self.projects().first { $0.id == project.id }
@@ -143,8 +143,8 @@ final class SQLiteDatabase {
             sqlite3_reset(query)
             sqlite3_clear_bindings(query)
             guard bind(color.rawValue, to: query, at: 1) == SQLITE_OK,
-                  bind(id.uuidString, to: query, at: 2) == SQLITE_OK,
-                  sqlite3_step(query) == SQLITE_DONE
+                bind(id.uuidString, to: query, at: 2) == SQLITE_OK,
+                sqlite3_step(query) == SQLITE_DONE
             else { throw error }
             guard sqlite3_changes(handle) == 1 else { throw FocusStorageError.invalidData }
         }
@@ -159,8 +159,8 @@ final class SQLiteDatabase {
             sqlite3_reset(query)
             sqlite3_clear_bindings(query)
             guard bind(name, to: query, at: 1) == SQLITE_OK,
-                  bind(id.uuidString, to: query, at: 2) == SQLITE_OK,
-                  sqlite3_step(query) == SQLITE_DONE
+                bind(id.uuidString, to: query, at: 2) == SQLITE_OK,
+                sqlite3_step(query) == SQLITE_DONE
             else { throw error }
         }
     }
@@ -173,13 +173,14 @@ final class SQLiteDatabase {
         for entry in entries {
             sqlite3_reset(query)
             sqlite3_clear_bindings(query)
-            let boundProject = entry.record.projectID.map { bind($0.uuidString, to: query, at: 3) }
+            let boundProject =
+                entry.record.projectID.map { bind($0.uuidString, to: query, at: 3) }
                 ?? sqlite3_bind_null(query, 3)
             guard sqlite3_bind_double(query, 1, entry.record.startedAt.timeIntervalSinceReferenceDate) == SQLITE_OK,
-                  sqlite3_bind_double(query, 2, entry.record.duration) == SQLITE_OK,
-                  boundProject == SQLITE_OK,
-                  bind(entry.id.uuidString, to: query, at: 4) == SQLITE_OK,
-                  sqlite3_step(query) == SQLITE_DONE
+                sqlite3_bind_double(query, 2, entry.record.duration) == SQLITE_OK,
+                boundProject == SQLITE_OK,
+                bind(entry.id.uuidString, to: query, at: 4) == SQLITE_OK,
+                sqlite3_step(query) == SQLITE_DONE
             else { throw error }
         }
     }
@@ -231,7 +232,8 @@ final class SQLiteDatabase {
         }
         guard recovery.isValid else { throw FocusStorageError.invalidData }
         let payload = String(decoding: try JSONEncoder().encode(recovery), as: UTF8.self)
-        let query = try statement("INSERT INTO timer_recovery (id, payload) VALUES (1, ?) ON CONFLICT(id) DO UPDATE SET payload = excluded.payload")
+        let query = try statement(
+            "INSERT INTO timer_recovery (id, payload) VALUES (1, ?) ON CONFLICT(id) DO UPDATE SET payload = excluded.payload")
         defer { sqlite3_finalize(query) }
         guard bind(payload, to: query, at: 1) == SQLITE_OK, sqlite3_step(query) == SQLITE_DONE else { throw error }
     }
@@ -244,7 +246,8 @@ final class SQLiteDatabase {
         guard result == SQLITE_ROW, let text = sqlite3_column_text(query, 0) else { throw error }
         let entries = try JSONDecoder().decode([StoredFocusRecord].self, from: Data(String(cString: text).utf8))
         guard Self.isSupported(entries),
-              sqlite3_step(query) == SQLITE_DONE else { throw FocusStorageError.invalidData }
+            sqlite3_step(query) == SQLITE_DONE
+        else { throw FocusStorageError.invalidData }
         return entries
     }
 
@@ -256,7 +259,8 @@ final class SQLiteDatabase {
         guard Self.isSupported(entries)
         else { throw FocusStorageError.invalidData }
         let payload = String(decoding: try JSONEncoder().encode(entries), as: UTF8.self)
-        let query = try statement("INSERT INTO timer_completion_journal (id, payload) VALUES (1, ?) ON CONFLICT(id) DO UPDATE SET payload = excluded.payload")
+        let query = try statement(
+            "INSERT INTO timer_completion_journal (id, payload) VALUES (1, ?) ON CONFLICT(id) DO UPDATE SET payload = excluded.payload")
         defer { sqlite3_finalize(query) }
         guard bind(payload, to: query, at: 1) == SQLITE_OK, sqlite3_step(query) == SQLITE_DONE else { throw error }
     }
@@ -275,8 +279,8 @@ final class SQLiteDatabase {
         let query = try statement("PRAGMA quick_check")
         defer { sqlite3_finalize(query) }
         guard sqlite3_step(query) == SQLITE_ROW,
-              let text = sqlite3_column_text(query, 0), String(cString: text) == "ok",
-              sqlite3_step(query) == SQLITE_DONE
+            let text = sqlite3_column_text(query, 0), String(cString: text) == "ok",
+            sqlite3_step(query) == SQLITE_DONE
         else { throw FocusStorageError.invalidData }
     }
 
@@ -298,9 +302,10 @@ final class SQLiteDatabase {
 
     func insert(_ entries: [StoredFocusRecord]) throws {
         let hasProject = try hasProjectColumn()
-        let query = try statement(hasProject
-            ? "INSERT INTO focus_records (id, started_at, duration, project_id) VALUES (?, ?, ?, ?) ON CONFLICT(id) DO NOTHING"
-            : "INSERT INTO focus_records (id, started_at, duration) VALUES (?, ?, ?) ON CONFLICT(id) DO NOTHING")
+        let query = try statement(
+            hasProject
+                ? "INSERT INTO focus_records (id, started_at, duration, project_id) VALUES (?, ?, ?, ?) ON CONFLICT(id) DO NOTHING"
+                : "INSERT INTO focus_records (id, started_at, duration) VALUES (?, ?, ?) ON CONFLICT(id) DO NOTHING")
         defer { sqlite3_finalize(query) }
         for entry in entries {
             // 沒有分類欄位的版本只能保存未分類，不能默默丟掉歸屬。
@@ -309,10 +314,10 @@ final class SQLiteDatabase {
             sqlite3_clear_bindings(query)
             let boundProject = entry.record.projectID.map { bind($0.uuidString, to: query, at: 4) } ?? SQLITE_OK
             guard bind(entry.id.uuidString, to: query, at: 1) == SQLITE_OK,
-                  sqlite3_bind_double(query, 2, entry.record.startedAt.timeIntervalSinceReferenceDate) == SQLITE_OK,
-                  sqlite3_bind_double(query, 3, entry.record.duration) == SQLITE_OK,
-                  boundProject == SQLITE_OK,
-                  sqlite3_step(query) == SQLITE_DONE
+                sqlite3_bind_double(query, 2, entry.record.startedAt.timeIntervalSinceReferenceDate) == SQLITE_OK,
+                sqlite3_bind_double(query, 3, entry.record.duration) == SQLITE_OK,
+                boundProject == SQLITE_OK,
+                sqlite3_step(query) == SQLITE_DONE
             else { throw error }
             if sqlite3_changes(handle) == 0 {
                 let existing = try records().first { $0.id == entry.id }

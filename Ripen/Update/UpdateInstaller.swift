@@ -44,9 +44,9 @@ enum UpdateInstaller {
 
         let mounted = mountPoint.appending(path: "Ripen.app")
         guard let bundle = Bundle(url: mounted),
-              bundle.bundleIdentifier == Bundle.main.bundleIdentifier,
-              let shortVersion = bundle.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String,
-              AppVersion(shortVersion) == version
+            bundle.bundleIdentifier == Bundle.main.bundleIdentifier,
+            let shortVersion = bundle.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String,
+            AppVersion(shortVersion) == version
         else { throw Failure.unexpectedApp }
 
         let staged = workDirectory.appending(path: "Ripen.app")
@@ -61,8 +61,8 @@ enum UpdateInstaller {
         let url = Bundle.main.bundleURL
         let path = url.path
         guard !path.hasPrefix("/Volumes/"), !path.contains("/AppTranslocation/"),
-              FileManager.default.isWritableFile(atPath: url.deletingLastPathComponent().path),
-              FileManager.default.isWritableFile(atPath: path)
+            FileManager.default.isWritableFile(atPath: url.deletingLastPathComponent().path),
+            FileManager.default.isWritableFile(atPath: path)
         else { return nil }
         return url
     }
@@ -84,8 +84,10 @@ enum UpdateInstaller {
 
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/bin/sh")
-        process.arguments = [script.path, String(ProcessInfo.processInfo.processIdentifier),
-                             target.path, staged.path, workDirectory.path]
+        process.arguments = [
+            script.path, String(ProcessInfo.processInfo.processIdentifier),
+            target.path, staged.path, workDirectory.path,
+        ]
         try process.run()
         logger.info("已排定更新：\(target.path, privacy: .public)")
     }
@@ -95,22 +97,22 @@ enum UpdateInstaller {
     /// 有指定 `workDirectory`（下載的 dmg、取出的新版與本指令稿）時，換新結束後一併清除；還原失敗時保留。
     /// 正式更新與隔離檔案測試共用此指令，測試不會結束或重新開啟 App。
     static let replacementCommands = """
-    if backupDirectory=$(/usr/bin/mktemp -d "${target%/*}/.Ripen-update.XXXXXX"); then
-      backup="$backupDirectory/Ripen.app"
-      if /bin/mv "$target" "$backup"; then
-        if /usr/bin/ditto "$staged" "$target"; then
-          /bin/rm -rf "$backupDirectory"
-        else
-          /bin/rm -rf "$target" || exit 1
-          /bin/mv "$backup" "$target" || exit 1
-          /bin/rmdir "$backupDirectory"
+        if backupDirectory=$(/usr/bin/mktemp -d "${target%/*}/.Ripen-update.XXXXXX"); then
+          backup="$backupDirectory/Ripen.app"
+          if /bin/mv "$target" "$backup"; then
+            if /usr/bin/ditto "$staged" "$target"; then
+              /bin/rm -rf "$backupDirectory"
+            else
+              /bin/rm -rf "$target" || exit 1
+              /bin/mv "$backup" "$target" || exit 1
+              /bin/rmdir "$backupDirectory"
+            fi
+          else
+            /bin/rmdir "$backupDirectory"
+          fi
         fi
-      else
-        /bin/rmdir "$backupDirectory"
-      fi
-    fi
-    if [ -n "$workDirectory" ]; then /bin/rm -rf "$workDirectory"; fi
-    """
+        if [ -n "$workDirectory" ]; then /bin/rm -rf "$workDirectory"; fi
+        """
 
     private static func run(_ executable: String, _ arguments: [String]) throws {
         let process = Process()

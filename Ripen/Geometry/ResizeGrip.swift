@@ -16,8 +16,9 @@ struct ResizeGrip: Equatable, Sendable {
         // 即 inset = r − (r − hitRadius)/√2；圓角小於熱區時至少離兩邊一個半徑
         let inset = max(r - (r - Self.hitRadius) / CGFloat(2).squareRoot(), Self.hitRadius)
         self.corner = corner
-        center = CGPoint(x: corner.isRight ? size.width - inset : inset,
-                         y: corner.isTop ? inset : size.height - inset)
+        center = CGPoint(
+            x: corner.isRight ? size.width - inset : inset,
+            y: corner.isTop ? inset : size.height - inset)
     }
 
     func contains(_ point: CGPoint) -> Bool {

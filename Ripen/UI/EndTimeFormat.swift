@@ -13,11 +13,12 @@ enum EndTimeFormat {
         systemUses24Hour: Bool,
         timeZone: TimeZone = .current
     ) -> String {
-        let uses24Hour = switch clockFormat {
-        case .system: systemUses24Hour
-        case .twelveHour: false
-        case .twentyFourHour: true
-        }
+        let uses24Hour =
+            switch clockFormat {
+            case .system: systemUses24Hour
+            case .twelveHour: false
+            case .twentyFourHour: true
+            }
         // 模板明確要求 a（上午／下午）：中文預設的 B 會依時段改成「凌晨」「晚上」等，與時制設定的用詞不符
         let template = uses24Hour ? "Hm" : "ahm"
         return formatter(template: template, language: language, timeZone: timeZone).string(from: date)

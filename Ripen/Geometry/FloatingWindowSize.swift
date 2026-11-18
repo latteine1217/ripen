@@ -70,14 +70,16 @@ enum ResizeCorner: CaseIterable, Sendable {
 
     /// 游標從按下處移動 `translation`（全域座標，往上為正）後的大小，尚未夾限。
     func draggedSize(from start: CGSize, translation: CGSize) -> CGSize {
-        CGSize(width: start.width + (isRight ? translation.width : -translation.width),
-               height: start.height + (isTop ? translation.height : -translation.height))
+        CGSize(
+            width: start.width + (isRight ? translation.width : -translation.width),
+            height: start.height + (isTop ? translation.height : -translation.height))
     }
 
     /// 把 `size` 擺在 `rect` 中，固定這個角的對角（全域座標，左下原點）。
     func frame(_ size: CGSize, anchoredOppositeTo rect: CGRect) -> CGRect {
-        CGRect(x: isRight ? rect.minX : rect.maxX - size.width,
-               y: isTop ? rect.minY : rect.maxY - size.height,
-               width: size.width, height: size.height)
+        CGRect(
+            x: isRight ? rect.minX : rect.maxX - size.width,
+            y: isTop ? rect.minY : rect.maxY - size.height,
+            width: size.width, height: size.height)
     }
 }

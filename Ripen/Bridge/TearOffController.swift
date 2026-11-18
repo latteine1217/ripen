@@ -89,7 +89,8 @@ final class TearOffController {
 
     private func begin(offsetFromRingCenter offset: CGSize, ringRadius: CGFloat) {
         guard !isActive, let window = mainWindow.window, window.isVisible,
-              presentation.allows(.tearOffTimerRing) else { return }
+            presentation.allows(.tearOffTimerRing)
+        else { return }
         let mouse = NSEvent.mouseLocation
         // 全域座標 y 向上，SwiftUI 的位移 y 向下
         let center = CGPoint(x: mouse.x - offset.width, y: mouse.y + offset.height)
@@ -187,9 +188,11 @@ final class TearOffController {
             }
         }
         let fadeDelay = reduceMotion ? 0 : Self.snapBackResponse * 0.6
-        operation.animate(.easeIn(duration: PresentationFade.duration).delay(fadeDelay), changes: {
-            ghost.opacity = 0
-        }, completion: { operation.cancel() })
+        operation.animate(
+            .easeIn(duration: PresentationFade.duration).delay(fadeDelay),
+            changes: {
+                ghost.opacity = 0
+            }, completion: { operation.cancel() })
     }
 
     /// 套用拖出後由 `PresentationController` 呼叫：分身滑到懸浮窗的最終位置（玻璃本體 `frame`），
@@ -202,14 +205,17 @@ final class TearOffController {
         let operation = transitions.begin(continuing: operation)
         let target = Self.local(CGPoint(x: frame.midX, y: frame.midY), in: overlay.screenFrame)
         let duration = NSWorkspace.shared.accessibilityDisplayShouldReduceMotion ? 0 : Self.landDuration
-        operation.animate(.easeOut(duration: duration), changes: {
-            ghost.settling = true
-            ghost.cursor = target
-            ghost.progress = 1
-        }, completion: {
-            reveal()
-            operation.finish(fadeDuration: NotchPullController.crossFadeDuration)
-        })
+        operation.animate(
+            .easeOut(duration: duration),
+            changes: {
+                ghost.settling = true
+                ghost.cursor = target
+                ghost.progress = 1
+            },
+            completion: {
+                reveal()
+                operation.finish(fadeDuration: NotchPullController.crossFadeDuration)
+            })
     }
 
     private func end() {

@@ -33,7 +33,8 @@ enum NotchGeometry {
     static func notch(for screen: ScreenMetrics) -> NotchFrame {
         let frame = screen.frame
         if screen.safeAreaTop > 0,
-           let left = screen.auxiliaryTopLeftWidth, let right = screen.auxiliaryTopRightWidth {
+            let left = screen.auxiliaryTopLeftWidth, let right = screen.auxiliaryTopRightWidth
+        {
             // 只用兩塊未遮蔽區的寬度，不依賴它們的原點座標系
             let rect = CGRect(
                 x: frame.minX + left, y: frame.maxY - screen.safeAreaTop,

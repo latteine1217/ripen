@@ -8,6 +8,6 @@ extension AppSettings {
     }
 }
 
-private extension SettingKey where Value == Bool {
-    static var showsMenuBarItem: Self { Self("showsMenuBarItem", default: true) }
+extension SettingKey where Value == Bool {
+    fileprivate static var showsMenuBarItem: Self { Self("showsMenuBarItem", default: true) }
 }

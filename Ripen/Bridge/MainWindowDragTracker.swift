@@ -46,7 +46,8 @@ final class MainWindowDragTracker {
     private func windowWillMove(_ window: NSWindow?) {
         // willMove 也會在程式設定 frame 時送出；只在按住滑鼠時才算使用者拖曳
         guard let window, window === mainWindow.window, timer == nil, NSEvent.pressedMouseButtons & 1 != 0,
-              presentation.allows(.collapseIntoNotch) else { return }
+            presentation.allows(.collapseIntoNotch)
+        else { return }
         releaseScreen = nil
         let timer = Timer(timeInterval: Self.pollInterval, repeats: true) { [weak self] _ in
             MainActor.assumeIsolated { self?.tick() }
@@ -83,8 +84,9 @@ final class MainWindowDragTracker {
             let island = NotchGeometry.islandFrame(notch: notch, expanded: false)
             // 上緣貼齊螢幕上緣，左右與下方留發光的邊
             panel.setFrame(
-                CGRect(x: island.minX - Self.hintMargin, y: island.minY - Self.hintMargin,
-                       width: island.width + 2 * Self.hintMargin, height: island.height + Self.hintMargin),
+                CGRect(
+                    x: island.minX - Self.hintMargin, y: island.minY - Self.hintMargin,
+                    width: island.width + 2 * Self.hintMargin, height: island.height + Self.hintMargin),
                 display: false
             )
             hintHosting?.rootView = hintView(notch: notch)
@@ -114,8 +116,9 @@ final class MainWindowDragTracker {
     }
 
     private func hintView(notch: NotchFrame) -> CollapseHintView {
-        CollapseHintView(state: hint, islandSize: NotchGeometry.islandSize(notch: notch, expanded: false),
-                         baseRadius: NotchIslandView.cornerRadius(expanded: false))
+        CollapseHintView(
+            state: hint, islandSize: NotchGeometry.islandSize(notch: notch, expanded: false),
+            baseRadius: NotchIslandView.cornerRadius(expanded: false))
     }
 
     /// 不收滑鼠的 panel，與瀏海島同層。

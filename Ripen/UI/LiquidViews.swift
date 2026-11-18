@@ -54,8 +54,9 @@ struct DropLiquidView: View, Animatable {
     private static let margin: CGFloat = 24
 
     var body: some View {
-        let g = PullGeometry(pull: pull, islandSize: islandSize, baseRadius: baseRadius, notchWidth: notch.width,
-                             travel: travel)
+        let g = PullGeometry(
+            pull: pull, islandSize: islandSize, baseRadius: baseRadius, notchWidth: notch.width,
+            travel: travel)
         // 畫布只涵蓋液體所在的範圍，不必每格對整個螢幕做 blur
         let width = max(islandSize.width, g.body.width) + 2 * Self.margin
         let height = max(g.body.maxY, notch.height) + Self.margin
@@ -83,8 +84,9 @@ struct DropLiquidView: View, Animatable {
                 if g.neckWidth > 0, body.minY > notch.height {
                     layer.fill(neck(cx: cx, body: body, neckWidth: g.neckWidth), with: .color(.black))
                 }
-                layer.fill(Path(roundedRect: body, cornerRadius: g.cornerRadius, style: .continuous),
-                           with: .color(.black))
+                layer.fill(
+                    Path(roundedRect: body, cornerRadius: g.cornerRadius, style: .continuous),
+                    with: .color(.black))
             }
         }
         // blur 會侵蝕貼著螢幕頂端的邊，瀏海本身再畫一次不經濾鏡的實心
@@ -141,8 +143,9 @@ struct DropMorphView: View {
     static let windowRadius: CGFloat = 16
 
     var body: some View {
-        let m = DropMorph(from: from, fromRadius: fromRadius, to: to, toRadius: toRadius, t: t,
-                          horizontal: horizontal)
+        let m = DropMorph(
+            from: from, fromRadius: fromRadius, to: to, toRadius: toRadius, t: t,
+            horizontal: horizontal)
         ZStack(alignment: .topLeading) {
             Rectangle().fill(.black)
                 .frame(width: notch.width, height: notch.height)

@@ -35,14 +35,16 @@ enum CollapseMorph {
         let remaining = 1 - v
         // 液體經 blur 後四角都圓，真島上緣是直角：後段 80%–90% 疊上實心島，交接時兩者相同（原型坑 3）。
         // 在液體不畫之前（pull ≤ 0.5，約 v = 0.93）就完全不透明，兩翼不會閃灰
-        return .absorb(pull: PullGeometry.threshold * remaining * remaining,
-                       solidIsland: DropMorph.smoothstep(0.8, 0.9, v))
+        return .absorb(
+            pull: PullGeometry.threshold * remaining * remaining,
+            solidIsland: DropMorph.smoothstep(0.8, 0.9, v))
     }
 
     /// 前段結束、後段開始時的水珠：與 `PullGeometry` 在門檻處的本體相同，兩段交接時形狀不跳。
     static func drop(notch: CGRect, islandSize: CGSize, baseRadius: CGFloat) -> (frame: CGRect, radius: CGFloat) {
-        let g = PullGeometry(pull: PullGeometry.threshold, islandSize: islandSize, baseRadius: baseRadius,
-                             notchWidth: notch.width, travel: travel)
+        let g = PullGeometry(
+            pull: PullGeometry.threshold, islandSize: islandSize, baseRadius: baseRadius,
+            notchWidth: notch.width, travel: travel)
         return (g.body.offsetBy(dx: notch.midX, dy: notch.minY), g.cornerRadius)
     }
 }

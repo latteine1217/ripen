@@ -85,15 +85,19 @@ struct GeneralSettingsSection: View {
     }
 
     private func problemText(_ text: Text) -> some View {
-        Label { text } icon: { Image(systemName: "exclamationmark.triangle.fill") }
-            .foregroundStyle(.red)
-            .font(.callout)
+        Label {
+            text
+        } icon: {
+            Image(systemName: "exclamationmark.triangle.fill")
+        }
+        .foregroundStyle(.red)
+        .font(.callout)
     }
 }
 
-private extension InterfaceLanguage {
+extension InterfaceLanguage {
     /// 語言名稱用該語言本身書寫，不隨介面翻譯，看不懂目前語言時也找得到。
-    var title: Text {
+    fileprivate var title: Text {
         switch self {
         case .system: Text("Follow System")
         case .english: Text(verbatim: "English")

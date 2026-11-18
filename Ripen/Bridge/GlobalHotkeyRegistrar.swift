@@ -60,26 +60,28 @@ final class CarbonHotkeyRegistrar: HotkeyRegistering {
     private func installHandlerIfNeeded() throws {
         guard !isHandlerInstalled else { return }
         var eventType = EventTypeSpec(eventClass: OSType(kEventClassKeyboard), eventKind: UInt32(kEventHotKeyPressed))
-        let status = InstallEventHandler(GetApplicationEventTarget(), { _, event, _ in
-            var hotKeyID = EventHotKeyID()
-            let status = GetEventParameter(
-                event, EventParamName(kEventParamDirectObject), EventParamType(typeEventHotKeyID),
-                nil, MemoryLayout<EventHotKeyID>.size, nil, &hotKeyID
-            )
-            guard status == noErr, hotKeyID.signature == CarbonHotkeyRegistrar.signature else {
-                return OSStatus(eventNotHandledErr)
-            }
-            // 應用程式事件目標的熱鍵事件由主執行緒的事件迴圈送達
-            MainActor.assumeIsolated { CarbonHotkeyRegistrar.shared.actions[hotKeyID.id]?() }
-            return noErr
-        }, 1, &eventType, nil, nil)
+        let status = InstallEventHandler(
+            GetApplicationEventTarget(),
+            { _, event, _ in
+                var hotKeyID = EventHotKeyID()
+                let status = GetEventParameter(
+                    event, EventParamName(kEventParamDirectObject), EventParamType(typeEventHotKeyID),
+                    nil, MemoryLayout<EventHotKeyID>.size, nil, &hotKeyID
+                )
+                guard status == noErr, hotKeyID.signature == CarbonHotkeyRegistrar.signature else {
+                    return OSStatus(eventNotHandledErr)
+                }
+                // 應用程式事件目標的熱鍵事件由主執行緒的事件迴圈送達
+                MainActor.assumeIsolated { CarbonHotkeyRegistrar.shared.actions[hotKeyID.id]?() }
+                return noErr
+            }, 1, &eventType, nil, nil)
         guard status == noErr else { throw HotkeyRegistrationError(status: status) }
         isHandlerInstalled = true
     }
 }
 
-private extension Hotkey {
-    var carbonModifiers: UInt32 {
+extension Hotkey {
+    fileprivate var carbonModifiers: UInt32 {
         let pairs: [(Modifiers, Int)] = [(.command, cmdKey), (.option, optionKey), (.control, controlKey), (.shift, shiftKey)]
         return pairs.reduce(0) { modifiers.contains($1.0) ? $0 | UInt32($1.1) : $0 }
     }

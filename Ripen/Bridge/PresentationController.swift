@@ -28,7 +28,8 @@ final class PresentationController {
         island = NotchIslandController(model: model, presentation: presentation, transitions: transitions)
         floating = FloatingWindowController(model: model, presentation: presentation, transitions: transitions)
         dragTracker = MainWindowDragTracker(model: model, presentation: presentation, mainWindow: mainWindow)
-        tearOff = TearOffController(model: model, presentation: presentation, mainWindow: mainWindow, floating: floating, transitions: transitions)
+        tearOff = TearOffController(
+            model: model, presentation: presentation, mainWindow: mainWindow, floating: floating, transitions: transitions)
         mainWindow.onClose = { [weak presentation] in presentation?.closeMainWindow() }
         mainWindow.onMiniaturize = { [weak presentation] in presentation?.minimizeMainWindow() }
         observe()
@@ -115,7 +116,7 @@ final class PresentationController {
         // 拉出、吸入與變形只在對應的視窗存在時選到；guard 失敗代表 choose 與 facts() 不一致
         switch transition {
         case .waitForMainWindow:
-            break // 已在上面提早返回
+            break  // 已在上面提早返回
         case .pullOut:
             guard let window else { return assertionFailure("拉出時主視窗應已建立") }
             island.pullOut(into: window) { [weak self] fade in self?.mainWindow.show(fadeDuration: fade) }

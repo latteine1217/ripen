@@ -119,20 +119,26 @@ final class NotchPullController {
     }
 
     private func liquid(in overlay: TransitionOverlay) -> some View {
-        pulledIsland = (NotchGeometry.islandSize(notch: state.notch, expanded: state.isExpanded),
-                        NotchIslandView.cornerRadius(expanded: state.isExpanded))
-        return PullHost(amount: amount, notch: overlay.local(state.notch.rect),
-                        islandSize: pulledIsland.size, baseRadius: pulledIsland.radius)
+        pulledIsland = (
+            NotchGeometry.islandSize(notch: state.notch, expanded: state.isExpanded),
+            NotchIslandView.cornerRadius(expanded: state.isExpanded)
+        )
+        return PullHost(
+            amount: amount, notch: overlay.local(state.notch.rect),
+            islandSize: pulledIsland.size, baseRadius: pulledIsland.radius)
     }
 
     /// 還沒變成正圓就放開：吸回瀏海。阻尼偏高，收得乾脆、不來回晃（瀏海島原型）。
     private func snapBack() {
         guard let operation else { return }
-        let animation: Animation = NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
+        let animation: Animation =
+            NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
             ? .easeOut(duration: 0.15) : .spring(response: 0.32, dampingFraction: 0.78)
-        operation.animate(animation, changes: {
-            amount.value = 0
-        }, completion: { operation.cancel() })
+        operation.animate(
+            animation,
+            changes: {
+                amount.value = 0
+            }, completion: { operation.cancel() })
     }
 
     /// 島的黑底先回來，再撤 overlay：島的 panel 在上層，交接時不會露出空白。
@@ -161,8 +167,10 @@ final class NotchPullController {
     func destination(size: CGSize, notchScreen: NSScreen) -> (frame: CGRect, screen: NSScreen) {
         defer { releasePoint = nil }
         guard let point = releasePoint else {
-            return (PullGeometry.windowFrame(size: size, notch: state.notch, visibleFrame: notchScreen.visibleFrame),
-                    notchScreen)
+            return (
+                PullGeometry.windowFrame(size: size, notch: state.notch, visibleFrame: notchScreen.visibleFrame),
+                notchScreen
+            )
         }
         // 游標在螢幕最上緣時 y 可能等於 frame.maxY、不在任何 frame 內；那時就是瀏海所在的螢幕
         let screen = NSScreen.screens.first { $0.frame.contains(point) } ?? notchScreen
@@ -203,9 +211,11 @@ final class NotchPullController {
         // 「展開」按鈕、Dock 與選單列：自動播一次拉成水珠，看一次就學會可以往下拉
         operation.afterFirstFrame { [weak self] in
             guard let self else { return }
-            operation.animate(.easeIn(duration: Self.autoPullDuration), changes: {
-                amount.value = PullGeometry.threshold * Self.autoPullOvershoot
-            }, completion: morph)
+            operation.animate(
+                .easeIn(duration: Self.autoPullDuration),
+                changes: {
+                    amount.value = PullGeometry.threshold * Self.autoPullOvershoot
+                }, completion: morph)
         }
     }
 
@@ -216,14 +226,16 @@ final class NotchPullController {
     ) {
         guard let operation else { return }
         let notch = overlay.local(state.notch.rect)
-        let g = PullGeometry(pull: amount.value, islandSize: pulledIsland.size, baseRadius: pulledIsland.radius,
-                             notchWidth: notch.width)
+        let g = PullGeometry(
+            pull: amount.value, islandSize: pulledIsland.size, baseRadius: pulledIsland.radius,
+            notchWidth: notch.width)
         let drop = g.body.offsetBy(dx: notch.midX, dy: notch.minY)
         let to = overlay.local(target)
         overlay.progress.t = 0
-        overlay.show(TransitionHost(progress: overlay.progress) { t in
-            DropMorphView(t: t, from: drop, fromRadius: g.cornerRadius, to: to, snapshot: snapshot, notch: notch)
-        })
+        overlay.show(
+            TransitionHost(progress: overlay.progress) { t in
+                DropMorphView(t: t, from: drop, fromRadius: g.cornerRadius, to: to, snapshot: snapshot, notch: notch)
+            })
         // overlay 第一格已畫出同一顆水珠，島的 panel 可以直接撤掉
         removeIsland()
         state.isPulling = false
@@ -256,7 +268,8 @@ extension NSWindow {
     /// 含標題列的整窗快照：拍 contentView 的 superview（`NSThemeFrame`），與真視窗外觀一致（spec #1）。
     func themeFrameSnapshot() -> NSImage? {
         guard let view = contentView?.superview ?? contentView,
-              let rep = view.bitmapImageRepForCachingDisplay(in: view.bounds) else { return nil }
+            let rep = view.bitmapImageRepForCachingDisplay(in: view.bounds)
+        else { return nil }
         view.cacheDisplay(in: view.bounds, to: rep)
         let image = NSImage(size: view.bounds.size)
         image.addRepresentation(rep)

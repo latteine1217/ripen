@@ -49,11 +49,13 @@ struct CapsuleOutline: Shape {
         var path = Path()
         path.move(to: CGPoint(x: rect.midX, y: rect.minY))
         path.addLine(to: CGPoint(x: rect.maxX - r, y: rect.minY))
-        path.addArc(center: CGPoint(x: rect.maxX - r, y: rect.midY), radius: r,
-                    startAngle: .degrees(-90), endAngle: .degrees(90), clockwise: false)
+        path.addArc(
+            center: CGPoint(x: rect.maxX - r, y: rect.midY), radius: r,
+            startAngle: .degrees(-90), endAngle: .degrees(90), clockwise: false)
         path.addLine(to: CGPoint(x: rect.minX + r, y: rect.maxY))
-        path.addArc(center: CGPoint(x: rect.minX + r, y: rect.midY), radius: r,
-                    startAngle: .degrees(90), endAngle: .degrees(270), clockwise: false)
+        path.addArc(
+            center: CGPoint(x: rect.minX + r, y: rect.midY), radius: r,
+            startAngle: .degrees(90), endAngle: .degrees(270), clockwise: false)
         path.closeSubpath()
         return path
     }

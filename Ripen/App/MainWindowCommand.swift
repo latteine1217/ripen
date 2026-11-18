@@ -14,7 +14,11 @@ struct MainWindowCommand: Commands {
         let _ = registerOpener()
         CommandGroup(after: .windowArrangement) {
             // 與原本自動加的項目同名：主視窗的標題
-            Button { presenter.showMainWindow() } label: { Text(verbatim: "Ripen") }
+            Button {
+                presenter.showMainWindow()
+            } label: {
+                Text(verbatim: "Ripen")
+            }
         }
     }
 

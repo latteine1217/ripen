@@ -43,9 +43,11 @@ struct DataSettingsSection: View {
             } label: {
                 status
             }
-            .alert(Text("Restore from “\(pendingRestore?.url.lastPathComponent ?? "")”?"),
-                   isPresented: Binding(get: { pendingRestore != nil }, set: { if !$0 { pendingRestore = nil } }),
-                   presenting: pendingRestore) { pending in
+            .alert(
+                Text("Restore from “\(pendingRestore?.url.lastPathComponent ?? "")”?"),
+                isPresented: Binding(get: { pendingRestore != nil }, set: { if !$0 { pendingRestore = nil } }),
+                presenting: pendingRestore
+            ) { pending in
                 Button("Restore") { restore(pending) }
                 Button("Cancel", role: .cancel) {}
             } message: { pending in
@@ -59,8 +61,10 @@ struct DataSettingsSection: View {
         } header: {
             Text("Data")
         } footer: {
-            Text("A backup contains your focus history and projects. Settings aren’t included. Restoring only adds what’s missing and never changes existing data. CSV files are for spreadsheets and can’t be imported.")
-                .foregroundStyle(.secondary)
+            Text(
+                "A backup contains your focus history and projects. Settings aren’t included. Restoring only adds what’s missing and never changes existing data. CSV files are for spreadsheets and can’t be imported."
+            )
+            .foregroundStyle(.secondary)
         }
     }
 
@@ -69,9 +73,11 @@ struct DataSettingsSection: View {
         if focusLog.canExportRecords {
             Text("Focus History and Projects")
         } else {
-            Label("Recent changes haven’t been saved yet. You can back up, restore or export once they’re saved.",
-                  systemImage: "exclamationmark.triangle")
-                .foregroundStyle(.secondary)
+            Label(
+                "Recent changes haven’t been saved yet. You can back up, restore or export once they’re saved.",
+                systemImage: "exclamationmark.triangle"
+            )
+            .foregroundStyle(.secondary)
         }
     }
 
@@ -112,9 +118,11 @@ struct DataSettingsSection: View {
             LabeledContent {
                 Button("Retry") { preview(url) }
             } label: {
-                Label("Couldn’t restore “\(url.lastPathComponent)”. Your data hasn’t changed.",
-                      systemImage: "exclamationmark.triangle.fill")
-                    .foregroundStyle(.red)
+                Label(
+                    "Couldn’t restore “\(url.lastPathComponent)”. Your data hasn’t changed.",
+                    systemImage: "exclamationmark.triangle.fill"
+                )
+                .foregroundStyle(.red)
             }
         case nil:
             EmptyView()
@@ -161,7 +169,10 @@ struct DataSettingsSection: View {
 
     private func write(_ export: Export, to url: URL) {
         // 面板開著時可能又有新的完成；狀態列已說明原因，等保存後再輸出
-        guard focusLog.canExportRecords else { feedback = nil; return }
+        guard focusLog.canExportRecords else {
+            feedback = nil
+            return
+        }
         do {
             switch export {
             case .backup:
@@ -187,7 +198,10 @@ struct DataSettingsSection: View {
 
     /// 讀取與驗證都在暫存副本上進行；沒有可新增項目時直接說明，不需要確認。
     private func preview(_ url: URL) {
-        guard focusLog.canRestoreBackup else { feedback = nil; return }
+        guard focusLog.canRestoreBackup else {
+            feedback = nil
+            return
+        }
         do {
             let restore = try focusLog.previewRestore(from: url)
             if restore.isEmpty {

@@ -106,7 +106,8 @@ final class NotchIslandController {
             crossesScreens = destination.screen.displayID != screen.displayID
         }
         guard let panel, panel.isVisible, let screen, !crossesScreens,
-              !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion else {
+            !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
+        else {
             puller.fadeAway(duration: PresentationFade.duration)
             hide()
             reveal(PresentationFade.duration)
@@ -116,13 +117,15 @@ final class NotchIslandController {
         generation += 1
         removeMonitors()
         cancelWork()
-        puller.pullOut(into: window, panel: panel, screen: screen, removeIsland: { [weak self] in
-            guard let self else { return }
-            self.panel?.orderOut(nil)
-            self.state.isHovering = false
-            self.setExpanded(false, animated: false)
-            self.releasePanel()
-        }, reveal: reveal)
+        puller.pullOut(
+            into: window, panel: panel, screen: screen,
+            removeIsland: { [weak self] in
+                guard let self else { return }
+                self.panel?.orderOut(nil)
+                self.state.isHovering = false
+                self.setExpanded(false, animated: false)
+                self.releasePanel()
+            }, reveal: reveal)
     }
 
     /// 主視窗 → 瀏海島的吸入過場（#13），拉出的反向：主視窗在 overlay 中縮成貼著瀏海的水珠、
@@ -162,10 +165,12 @@ final class NotchIslandController {
         let islandSize = NotchGeometry.islandSize(notch: state.notch, expanded: false)
         let radius = NotchIslandView.cornerRadius(expanded: false)
         let snapshot = if let frame { window.snapshot(of: frame) } else { window.themeFrameSnapshot() }
-        overlay.show(TransitionHost(progress: overlay.progress) { t in
-            CollapseView(t: t, window: from, snapshot: snapshot, notch: notch, islandSize: islandSize,
-                         baseRadius: radius, windowRadius: cornerRadius)
-        })
+        overlay.show(
+            TransitionHost(progress: overlay.progress) { t in
+                CollapseView(
+                    t: t, window: from, snapshot: snapshot, notch: notch, islandSize: islandSize,
+                    baseRadius: radius, windowRadius: cornerRadius)
+            })
         // overlay 第一格就是視窗快照，真視窗在它下面淡出
         dismiss(NotchPullController.crossFadeDuration)
         let c = CollapseMorph.curve
@@ -251,7 +256,7 @@ final class NotchIslandController {
     /// 解析度或排列變了：留在原螢幕重算瀏海；原螢幕不在了就移到主螢幕。一台螢幕都沒有時等下一次變更。
     private func screensChanged() {
         guard isVisible,
-              let screen = NSScreen.screens.first(where: { $0.displayID == displayID }) ?? NSScreen.main ?? NSScreen.screens.first
+            let screen = NSScreen.screens.first(where: { $0.displayID == displayID }) ?? NSScreen.main ?? NSScreen.screens.first
         else { return }
         displayID = screen.displayID
         state.notch = NotchGeometry.notch(for: screen.metrics)
@@ -295,22 +300,31 @@ final class NotchIslandController {
         guard mouseMonitors.isEmpty else { return }
         let handler: @MainActor () -> Void = { [weak self] in self?.mouseMoved() }
         let events: NSEvent.EventTypeMask = [.mouseMoved, .leftMouseDragged]
-        if let monitor = NSEvent.addGlobalMonitorForEvents(matching: events, handler: { _ in
-            MainActor.assumeIsolated { handler() }
-        }) {
+        if let monitor = NSEvent.addGlobalMonitorForEvents(
+            matching: events,
+            handler: { _ in
+                MainActor.assumeIsolated { handler() }
+            })
+        {
             mouseMonitors.append(monitor)
         }
-        if let monitor = NSEvent.addLocalMonitorForEvents(matching: events, handler: { event in
-            MainActor.assumeIsolated { handler() }
-            return event
-        }) {
+        if let monitor = NSEvent.addLocalMonitorForEvents(
+            matching: events,
+            handler: { event in
+                MainActor.assumeIsolated { handler() }
+                return event
+            })
+        {
             mouseMonitors.append(monitor)
         }
         // 島的 panel 不搶焦點，但按在上面的事件仍送到本 App，本地監聽收得到
-        if let monitor = NSEvent.addLocalMonitorForEvents(matching: .leftMouseDown, handler: { [weak self] event in
-            MainActor.assumeIsolated { self?.mouseDown(in: event.window) }
-            return event
-        }) {
+        if let monitor = NSEvent.addLocalMonitorForEvents(
+            matching: .leftMouseDown,
+            handler: { [weak self] event in
+                MainActor.assumeIsolated { self?.mouseDown(in: event.window) }
+                return event
+            })
+        {
             mouseMonitors.append(monitor)
         }
     }
@@ -318,8 +332,9 @@ final class NotchIslandController {
     /// 在島上按下：交給拉出判斷是點擊還是往下拉。
     private func mouseDown(in window: NSWindow?) {
         guard let panel, window === panel, let screen = currentScreen,
-              NotchGeometry.islandFrame(notch: state.notch, expanded: state.isExpanded)
-                  .contains(NSEvent.mouseLocation) else { return }
+            NotchGeometry.islandFrame(notch: state.notch, expanded: state.isExpanded)
+                .contains(NSEvent.mouseLocation)
+        else { return }
         puller.mouseDown(panel: panel, screen: screen)
     }
 

@@ -26,7 +26,8 @@ struct FloatingWindowPosition: Equatable, Sendable {
     init?(stored: String) {
         let parts = stored.split(separator: ",")
         guard parts.count == 3 || parts.count == 5, let x = Double(parts[0]), let y = Double(parts[1]),
-              let screenID = UInt32(parts[2]) else { return nil }
+            let screenID = UInt32(parts[2])
+        else { return nil }
         var size: CGSize?
         if parts.count == 5 {
             guard let width = Double(parts[3]), let height = Double(parts[4]) else { return nil }

@@ -49,8 +49,9 @@ struct TearOffDrag: Equatable, Sendable {
 
     /// 放開處的懸浮窗（玻璃本體）：中心對齊游標，再夾回那台螢幕的可見範圍並貼邊。
     static func landingFrame(cursor: CGPoint, size: CGSize, screens: [ScreenArea]) -> CGRect {
-        let raw = CGRect(x: cursor.x - size.width / 2, y: cursor.y - size.height / 2,
-                         width: size.width, height: size.height)
+        let raw = CGRect(
+            x: cursor.x - size.width / 2, y: cursor.y - size.height / 2,
+            width: size.width, height: size.height)
         guard let screen = FloatingWindowPlacement.screen(for: raw, in: screens) else { return raw }
         return FloatingWindowPlacement.settle(raw, in: screen.visibleFrame)
     }

@@ -245,11 +245,12 @@ final class AppModel {
     @discardableResult
     func prepareToQuit() -> Bool {
         focusLog.retryIfNeeded()
-        let saved = switch runner.apply(.pauseForQuit) {
-        case .awaitingRecoveryDecision: recoveryIssue == nil
-        case .applied(let checkpointSaved): checkpointSaved
-        case .unchanged, .rolledBack: false
-        }
+        let saved =
+            switch runner.apply(.pauseForQuit) {
+            case .awaitingRecoveryDecision: recoveryIssue == nil
+            case .applied(let checkpointSaved): checkpointSaved
+            case .unchanged, .rolledBack: false
+            }
         return saved && !focusLog.hasUnsavedChanges
     }
 

@@ -15,7 +15,9 @@ struct ProjectPickerView: View {
     var body: some View {
         let project = model.currentProject
         VStack(spacing: 4) {
-            Button { isOpen.toggle() } label: {
+            Button {
+                isOpen.toggle()
+            } label: {
                 HStack(spacing: 7) {
                     ProjectDot(color: project?.color)
                     projectName(project)
@@ -90,9 +92,11 @@ private struct ProjectTriggerStyle: ButtonStyle {
         configuration.label
             .padding(.horizontal, 12)
             .padding(.vertical, 5)
-            .background(Capsule().fill(
-                configuration.isPressed ? palette.buttonPressed : isHovering ? palette.buttonHover : palette.track
-            ))
+            .background(
+                Capsule().fill(
+                    configuration.isPressed ? palette.buttonPressed : isHovering ? palette.buttonHover : palette.track
+                )
+            )
             .contentShape(Capsule())
             .onHover { isHovering = $0 }
     }
@@ -168,7 +172,9 @@ private struct ProjectMenu: View {
     private func row(_ id: UUID?) -> some View {
         let project = id.flatMap(model.focusLog.project(withID:))
         let isSelected = model.currentProject?.id == id
-        return Button { choose(id) } label: {
+        return Button {
+            choose(id)
+        } label: {
             HStack(spacing: 8) {
                 ProjectDot(color: project?.color)
                 (project.map { Text(verbatim: $0.name) } ?? Text("Uncategorized"))

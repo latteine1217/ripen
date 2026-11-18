@@ -119,11 +119,13 @@ struct GlassBackground<S: InsettableShape>: View {
     private var outerShadows: some View {
         ZStack {
             shape.fill(.black)
-                .shadow(color: .black.opacity(style.ambientShadowOpacity),
-                        radius: style.ambientShadowRadius, y: style.ambientShadowY)
+                .shadow(
+                    color: .black.opacity(style.ambientShadowOpacity),
+                    radius: style.ambientShadowRadius, y: style.ambientShadowY)
             shape.fill(.black)
-                .shadow(color: .black.opacity(style.contactShadowOpacity),
-                        radius: style.contactShadowRadius, y: style.contactShadowY)
+                .shadow(
+                    color: .black.opacity(style.contactShadowOpacity),
+                    radius: style.contactShadowRadius, y: style.contactShadowY)
         }
         .overlay { shape.fill(.black).blendMode(.destinationOut) }
         .compositingGroup()

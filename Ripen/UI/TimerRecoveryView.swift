@@ -51,13 +51,16 @@ struct TimerRecoveryStorageNotice: View {
     var body: some View {
         if let issue = model.recoveryIssue {
             VStack(alignment: .leading, spacing: 8) {
-                Text(issue == .load ? "The previous timer could not be loaded."
-                     : model.focusLog.recoveryCompletions.isEmpty
-                        ? "Your timer progress has not been saved."
-                        : "Timer progress or completed focuses have not been saved.")
-                    .font(.headline)
-                    // 英文句子超過 300pt；父層高度不足時 Text 預設截斷，這則訊息不能少字。
-                    .fixedSize(horizontal: false, vertical: true)
+                Text(
+                    issue == .load
+                        ? "The previous timer could not be loaded."
+                        : model.focusLog.recoveryCompletions.isEmpty
+                            ? "Your timer progress has not been saved."
+                            : "Timer progress or completed focuses have not been saved."
+                )
+                .font(.headline)
+                // 英文句子超過 300pt；父層高度不足時 Text 預設截斷，這則訊息不能少字。
+                .fixedSize(horizontal: false, vertical: true)
                 Text("Your saved data is kept. You can retry.")
                     .font(.caption)
                 Button("Retry", action: model.retryRecovery)

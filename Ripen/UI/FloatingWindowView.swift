@@ -79,8 +79,11 @@ struct FloatingWindowGlass: View, Animatable {
 
     nonisolated var animatableData: AnimatablePair<Double, AnimatablePair<Double, Double>> {
         get { AnimatablePair(blend.small, AnimatablePair(blend.medium, blend.large)) }
-        set { blend = FloatingWindowSizeBlend(small: newValue.first, medium: newValue.second.first,
-                                              large: newValue.second.second) }
+        set {
+            blend = FloatingWindowSizeBlend(
+                small: newValue.first, medium: newValue.second.first,
+                large: newValue.second.second)
+        }
     }
 
     var body: some View {
@@ -104,8 +107,9 @@ struct FloatingWindowGlass: View, Animatable {
             )
             // 熱區在移動手勢之外，拖角落不會被當成移動
             .overlay {
-                ResizeHandles(size: size, layout: layout, grip: grip,
-                              keepsCursor: keepsResizeCursor, onResize: onResize)
+                ResizeHandles(
+                    size: size, layout: layout, grip: grip,
+                    keepsCursor: keepsResizeCursor, onResize: onResize)
             }
             .overlay { PhaseRipple(shape: shape, reminderID: model.lastReminder?.id, tint: face.tint) }
             // 超時色是時間推導的值；這個 view 在 TimelineView 裡，每次刷新都重讀
@@ -163,23 +167,28 @@ private struct FloatingWindowContent: View {
     var body: some View {
         let controls = face.controls
         PlacedLayout(placements: placements) {
-            ProgressRing(progress: face.progress, lineWidth: layout.ringLineWidth,
-                         track: AnyShapeStyle(palette.progressTrack), insetsStroke: true,
-                         isPaused: face.isPaused, pausedGlyphOpacity: layout.ringGlyphOpacity)
+            ProgressRing(
+                progress: face.progress, lineWidth: layout.ringLineWidth,
+                track: AnyShapeStyle(palette.progressTrack), insetsStroke: true,
+                isPaused: face.isPaused, pausedGlyphOpacity: layout.ringGlyphOpacity)
             // 成果卡入口接在階段後，與復原膠囊同一格：膠囊倒數完才浮現（#25）
             HStack(spacing: 4) {
                 PhaseCaption(display: face.display)
                 RecapIconButton(model: model)
             }
-                .font(.system(size: layout.caption.fontSize, weight: .semibold, design: .rounded))
-                .foregroundStyle(.tint)
-                .fixedSize()
-                .oneTimeHint(.floatingResize, "Drag a corner to resize", settings: model.settings,
-                             isActive: showsHints,
-                             alignment: layout.caption.anchorX < 0.5 ? .leading : .center)
-                .undoCapsuleOverlay(model, compact: true,
-                                    alignment: layout.caption.anchorX < 0.5 ? .leading : .center)
-                .opacity(layout.caption.opacity)
+            .font(.system(size: layout.caption.fontSize, weight: .semibold, design: .rounded))
+            .foregroundStyle(.tint)
+            .fixedSize()
+            .oneTimeHint(
+                .floatingResize, "Drag a corner to resize", settings: model.settings,
+                isActive: showsHints,
+                alignment: layout.caption.anchorX < 0.5 ? .leading : .center
+            )
+            .undoCapsuleOverlay(
+                model, compact: true,
+                alignment: layout.caption.anchorX < 0.5 ? .leading : .center
+            )
+            .opacity(layout.caption.opacity)
             timeText
             // 小尺寸這一格本來就隱藏
             CompletionOrEndCaption(model: model, caption: face.endCaption)
@@ -198,8 +207,9 @@ private struct FloatingWindowContent: View {
                 action: presentation.expandFloatingWindow
             )
             let dismissal = FloatingWindowDismissal(presentation: presentation.presentation)
-            IslandIconButton(dismissal.title, systemImage: dismissal.systemImage, help: dismissal.help,
-                             action: presentation.closeFloatingWindow)
+            IslandIconButton(
+                dismissal.title, systemImage: dismissal.systemImage, help: dismissal.help,
+                action: presentation.closeFloatingWindow)
         }
         .foregroundStyle(palette.primary)
         .environment(\.iconButtonMetrics, .floatingWindow)
@@ -231,11 +241,12 @@ private struct FloatingWindowContent: View {
     /// 剩餘時間：三種尺寸共用這一個元件，只換字級與位置。完成專注後約 3 秒換成完成摘要（#25）。
     /// 超時中用超時色；只有倒數中用主要文字色，停在起點與暫停時淡化。
     private var timeText: some View {
-        let style: AnyShapeStyle = switch face.timeStyle {
-        case .overtime: AnyShapeStyle(.tint)
-        case .running: AnyShapeStyle(palette.primary)
-        case .idle, .paused: AnyShapeStyle(palette.secondary)
-        }
+        let style: AnyShapeStyle =
+            switch face.timeStyle {
+            case .overtime: AnyShapeStyle(.tint)
+            case .running: AnyShapeStyle(palette.primary)
+            case .idle, .paused: AnyShapeStyle(palette.secondary)
+            }
         return CompletionTimeSwap(summary: model.completionSummary) {
             Text(verbatim: face.timeText)
                 .foregroundStyle(style)
@@ -366,12 +377,13 @@ private struct CornerHandle: View {
 
     private var resizeCursor: NSCursor {
         if #available(macOS 15, *) {
-            let position: NSCursor.FrameResizePosition = switch grip.corner {
-            case .topLeft: .topLeft
-            case .topRight: .topRight
-            case .bottomLeft: .bottomLeft
-            case .bottomRight: .bottomRight
-            }
+            let position: NSCursor.FrameResizePosition =
+                switch grip.corner {
+                case .topLeft: .topLeft
+                case .topRight: .topRight
+                case .bottomLeft: .bottomLeft
+                case .bottomRight: .bottomRight
+                }
             return .frameResize(position: position, directions: .all)
         }
         return .crosshair
@@ -403,7 +415,8 @@ private struct Grip: View {
         Canvas { context, size in
             var path = Path()
             // 兩條線的中點約在 (x − 3, y − 3)：往外推 3pt，整組把手落在方框正中
-            let x = size.width / 2 + 3, y = size.height / 2 + 3
+            let x = size.width / 2 + 3
+            let y = size.height / 2 + 3
             for k in [4.0, 8.0] {
                 path.move(to: CGPoint(x: x - k, y: y))
                 path.addLine(to: CGPoint(x: x, y: y - k))

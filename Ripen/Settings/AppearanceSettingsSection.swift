@@ -35,8 +35,10 @@ struct AppearanceSettingsSection: View {
         } header: {
             Text("Appearance")
         } footer: {
-            Text("Black and White use solid backgrounds. Glass can follow the system or use a light or dark appearance. The notch island always stays black.")
-                .foregroundStyle(.secondary)
+            Text(
+                "Black and White use solid backgrounds. Glass can follow the system or use a light or dark appearance. The notch island always stays black."
+            )
+            .foregroundStyle(.secondary)
         }
     }
 

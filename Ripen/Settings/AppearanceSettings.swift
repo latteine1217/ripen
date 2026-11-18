@@ -55,21 +55,21 @@ extension AppSettings {
     }
 }
 
-private extension SettingKey where Value == AppearanceStyle {
-    static var appearanceStyle: Self { Self("appearanceStyle", default: .glass) }
+extension SettingKey where Value == AppearanceStyle {
+    fileprivate static var appearanceStyle: Self { Self("appearanceStyle", default: .glass) }
 }
 
-private extension SettingKey where Value == AppearanceColorMode {
+extension SettingKey where Value == AppearanceColorMode {
     // 沿用既有深色玻璃；切換跟隨系統須由使用者主動選擇。
-    static var glassColorMode: Self { Self("glassColorMode", default: .dark) }
+    fileprivate static var glassColorMode: Self { Self("glassColorMode", default: .dark) }
 }
 
-private extension SettingKey where Value == Double {
-    static var glassTintOpacity: Self {
+extension SettingKey where Value == Double {
+    fileprivate static var glassTintOpacity: Self {
         Self("glassTintOpacity", default: 0.35) { AppSettings.glassTintOpacityRange.contains($0) }
     }
 }
 
-private extension SettingKey where Value == Bool {
-    static var glassBlurEnabled: Self { Self("glassBlurEnabled", default: true) }
+extension SettingKey where Value == Bool {
+    fileprivate static var glassBlurEnabled: Self { Self("glassBlurEnabled", default: true) }
 }

@@ -57,8 +57,9 @@ struct TearOffView<Face: View>: View {
                     path.move(to: state.anchor)
                     path.addLine(to: state.cursor)
                 }
-                .stroke(tint.opacity(0.75),
-                        style: StrokeStyle(lineWidth: TearOffDrag.tetherWidth(progress: p), lineCap: .round))
+                .stroke(
+                    tint.opacity(0.75),
+                    style: StrokeStyle(lineWidth: TearOffDrag.tetherWidth(progress: p), lineCap: .round))
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)

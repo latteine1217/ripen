@@ -58,7 +58,9 @@ struct PageSwitcher: View {
 
     private func segment(_ page: MainWindowPage) -> some View {
         let isSelected = selection == page
-        return Button { selection = page } label: {
+        return Button {
+            selection = page
+        } label: {
             Label(page.title, systemImage: page.systemImage)
                 .font(.callout.weight(isSelected ? .semibold : .regular))
                 .foregroundStyle(isSelected ? Color.brandAccent : palette.secondary)

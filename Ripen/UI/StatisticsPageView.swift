@@ -112,8 +112,10 @@ private struct OverviewView: View {
         let entries: [(project: FocusProject?, total: FocusTotal)] = (focusLog.projects.map(Optional.some) + [nil])
             .map { ($0, totals[$0?.id] ?? FocusTotal(count: 0, minutes: 0)) }
         let ordered = entries.enumerated()
-            .sorted { $0.element.total.minutes != $1.element.total.minutes
-                ? $0.element.total.minutes > $1.element.total.minutes : $0.offset < $1.offset }
+            .sorted {
+                $0.element.total.minutes != $1.element.total.minutes
+                    ? $0.element.total.minutes > $1.element.total.minutes : $0.offset < $1.offset
+            }
             .map(\.element)
         let most = ordered.first?.total.minutes ?? 0
         return ScrollView {
@@ -128,7 +130,9 @@ private struct OverviewView: View {
 
     private func row(_ project: FocusProject?, total: FocusTotal, most: Int) -> some View {
         let isEmpty = total.minutes == 0
-        return Button { open(ProjectKey(id: project?.id)) } label: {
+        return Button {
+            open(ProjectKey(id: project?.id))
+        } label: {
             VStack(alignment: .leading, spacing: 6) {
                 HStack(spacing: 8) {
                     ProjectName(project: project)
@@ -142,8 +146,9 @@ private struct OverviewView: View {
                         .foregroundStyle(palette.secondary)
                 }
                 if !isEmpty {
-                    ProjectBar(fraction: Double(total.minutes) / Double(max(most, 1)),
-                               color: project?.color.color ?? palette.secondary)
+                    ProjectBar(
+                        fraction: Double(total.minutes) / Double(max(most, 1)),
+                        color: project?.color.color ?? palette.secondary)
                 }
             }
         }
@@ -220,7 +225,8 @@ private struct DayGrid: View {
         let shape = RoundedRectangle(cornerRadius: 4, style: .continuous)
         let level = most == 0 ? 0 : Int((Double(day.minutes) / Double(most) * 4).rounded(.up))
         let label = "\(day.day.formatted(.dateTime.month().day())) · \(FocusTotal.timeText(minutes: day.minutes))"
-        return shape
+        return
+            shape
             .fill(level == 0 ? palette.track : Phase.focus.tint.opacity(Self.levels[min(level, 4) - 1]))
             .overlay { if isToday { shape.strokeBorder(palette.primary, lineWidth: 1.5) } }
             .frame(width: Self.cell, height: Self.cell)
@@ -291,7 +297,9 @@ private struct ProjectDetailView: View {
             HStack(spacing: 8) {
                 // 換色不常用，收在色點後面（#43）；未分類沒有代表色，色點只是標記
                 if let project {
-                    Button { choosesColor = true } label: {
+                    Button {
+                        choosesColor = true
+                    } label: {
                         Circle().fill(tint).frame(width: 10, height: 10)
                     }
                     .buttonStyle(ProjectRowStyle())
@@ -311,7 +319,9 @@ private struct ProjectDetailView: View {
                 }
                 // 改名不常用，收在名稱後面，與換色收在色點後面相同；未分類不是分類，不能改名（ADR-0019）
                 if let project {
-                    Button { renames = true } label: {
+                    Button {
+                        renames = true
+                    } label: {
                         ProjectName(project: project)
                             .font(.title3.weight(.semibold))
                             .lineLimit(1)
@@ -325,9 +335,12 @@ private struct ProjectDetailView: View {
                     .help(Text("Rename Project"))
                     .accessibilityHint(Text("Rename Project"))
                     .popover(isPresented: $renames, arrowEdge: .bottom) {
-                        ProjectRenameForm(name: project.name, isNameTaken: {
-                            focusLog.check(.renameProject(project.id, name: $0)) == .nameTaken
-                        }) { name in
+                        ProjectRenameForm(
+                            name: project.name,
+                            isNameTaken: {
+                                focusLog.check(.renameProject(project.id, name: $0)) == .nameTaken
+                            }
+                        ) { name in
                             if case .success = focusLog.apply(.renameProject(project.id, name: name)) { renames = false }
                         } cancel: {
                             renames = false
@@ -342,7 +355,9 @@ private struct ProjectDetailView: View {
                 }
                 Spacer(minLength: 8)
                 // 一個分類一張成果卡（ADR-0011）；還沒有完成的專注就沒有可分享的成果
-                Button { showsRecap = true } label: {
+                Button {
+                    showsRecap = true
+                } label: {
                     Label("Recap Card", systemImage: "photo")
                         .font(.callout)
                 }
@@ -358,7 +373,9 @@ private struct ProjectDetailView: View {
                     Divider()
                         .frame(height: 16)
                         .padding(.horizontal, 4)
-                    Button { confirmsDeletion = true } label: {
+                    Button {
+                        confirmsDeletion = true
+                    } label: {
                         Label("Delete Project…", systemImage: "trash")
                             .labelStyle(.iconOnly)
                             .font(.callout)
@@ -479,7 +496,9 @@ private struct RecordList: View {
 
     private func recordRow(_ entry: StoredFocusRecord) -> some View {
         let record = entry.record
-        return Button { editing = entry.id } label: {
+        return Button {
+            editing = entry.id
+        } label: {
             HStack {
                 Text(record.startedAt, format: .dateTime.hour().minute())
                 Spacer()
@@ -498,8 +517,10 @@ private struct RecordList: View {
         .help(Text("Edit or delete this focus"))
         .accessibilityElement(children: .combine)
         .accessibilityHint(Text("Edit or delete this focus"))
-        .popover(isPresented: Binding(get: { editing == entry.id }, set: { if !$0 { editing = nil } }),
-                 arrowEdge: .trailing) {
+        .popover(
+            isPresented: Binding(get: { editing == entry.id }, set: { if !$0 { editing = nil } }),
+            arrowEdge: .trailing
+        ) {
             Group {
                 // 狀態隨時可能改變（復原期限到了、重試成功），每次繪製重新判斷
                 if let reason = lockReason(entry.id) {
@@ -592,8 +613,10 @@ private struct RecordEditor: View {
     @State private var projectID: UUID?
     @State private var confirmsDeletion = false
 
-    init(entry: StoredFocusRecord, projects: [FocusProject], rejection: @escaping (FocusRecord) -> FocusLogRejection?,
-         save: @escaping (FocusRecord) -> Void, delete: @escaping () -> Void, cancel: @escaping () -> Void) {
+    init(
+        entry: StoredFocusRecord, projects: [FocusProject], rejection: @escaping (FocusRecord) -> FocusLogRejection?,
+        save: @escaping (FocusRecord) -> Void, delete: @escaping () -> Void, cancel: @escaping () -> Void
+    ) {
         self.entry = entry
         self.projects = projects
         self.rejection = rejection
@@ -609,7 +632,9 @@ private struct RecordEditor: View {
 
     private var edited: FocusRecord {
         let original = entry.record
-        let startedAt = start == original.startedAt ? original.startedAt
+        let startedAt =
+            start == original.startedAt
+            ? original.startedAt
             : calendar.dateInterval(of: .minute, for: start)?.start ?? start
         let duration = minutes == Self.minutes(of: original.duration) ? original.duration : TimeInterval(minutes) * 60
         return FocusRecord(startedAt: startedAt, duration: duration, projectID: projectID)
@@ -652,10 +677,13 @@ private struct RecordEditor: View {
                 }
             }
             if issue == .nonPositiveDuration || issue == .endsAfterNow {
-                Text(issue == .nonPositiveDuration ? "The length must be longer than 0 minutes."
-                                                   : "The focus can’t end later than now.")
-                    .font(.callout)
-                    .foregroundStyle(palette.secondary)
+                Text(
+                    issue == .nonPositiveDuration
+                        ? "The length must be longer than 0 minutes."
+                        : "The focus can’t end later than now."
+                )
+                .font(.callout)
+                .foregroundStyle(palette.secondary)
             }
             // 刪除不能復原（ADR-0019）：在同一個視窗內第二次確認，說明是哪一筆。
             // 不另開對話框，避免 popover 失去焦點而關閉、按了刪除卻沒有作用。
@@ -663,10 +691,12 @@ private struct RecordEditor: View {
                 VStack(alignment: .leading, spacing: 6) {
                     Text("Delete this focus?")
                         .font(.callout.weight(.semibold))
-                    Text("\(Text(entry.record.startedAt, format: .dateTime.month().day().hour().minute())) · \(FocusTotal.timeText(minutes: Self.minutes(of: entry.record.duration))). This can’t be undone.")
-                        .font(.callout)
-                        .foregroundStyle(palette.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
+                    Text(
+                        "\(Text(entry.record.startedAt, format: .dateTime.month().day().hour().minute())) · \(FocusTotal.timeText(minutes: Self.minutes(of: entry.record.duration))). This can’t be undone."
+                    )
+                    .font(.callout)
+                    .foregroundStyle(palette.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
                     HStack {
                         Spacer()
                         Button("Cancel") { confirmsDeletion = false }

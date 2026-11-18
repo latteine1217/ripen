@@ -61,8 +61,8 @@ struct HotkeyRecorder: View {
     }
 }
 
-private extension Hotkey {
-    init?(event: NSEvent) {
+extension Hotkey {
+    fileprivate init?(event: NSEvent) {
         let flags = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
         var modifiers: Modifiers = []
         if flags.contains(.control) { modifiers.insert(.control) }

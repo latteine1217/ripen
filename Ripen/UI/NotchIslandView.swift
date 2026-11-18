@@ -81,13 +81,15 @@ struct NotchIslandView: View {
                         PhaseCaption(display: face.display)
                         RecapIconButton(model: model)
                     }
-                        .font(.system(size: 11, weight: .semibold, design: .rounded))
-                        .foregroundStyle(.tint)
-                        .undoCapsuleOverlay(model, compact: true, alignment: .leading)
+                    .font(.system(size: 11, weight: .semibold, design: .rounded))
+                    .foregroundStyle(.tint)
+                    .undoCapsuleOverlay(model, compact: true, alignment: .leading)
                 } else {
-                    ProgressRing(progress: face.progress, lineWidth: 2.5, track: AnyShapeStyle(.tint.opacity(0.25)),
-                                 isPaused: face.isPaused)
-                        .frame(width: 14, height: 14)
+                    ProgressRing(
+                        progress: face.progress, lineWidth: 2.5, track: AnyShapeStyle(.tint.opacity(0.25)),
+                        isPaused: face.isPaused
+                    )
+                    .frame(width: 14, height: 14)
                 }
                 Spacer(minLength: state.notch.rect.width)
                 if expanded {
@@ -126,8 +128,10 @@ struct NotchIslandView: View {
                             }
                         }
                         .accessibilityHidden(true)
-                        .oneTimeHint(.notchPullOut, "Pull down to open the main window", settings: model.settings,
-                                     isActive: state.showsPullOutHint(controlsEnabled: disabledReason == nil))
+                        .oneTimeHint(
+                            .notchPullOut, "Pull down to open the main window", settings: model.settings,
+                            isActive: state.showsPullOutHint(controlsEnabled: disabledReason == nil)
+                        )
                         .font(.system(size: 11, weight: .medium, design: .rounded))
                 }
                 .padding(.horizontal, 18)
@@ -144,10 +148,11 @@ struct NotchIslandView: View {
     /// 收合與展開共用的時間；完成專注後約 3 秒換成完成摘要（#25）。
     /// 超時中改用超時色；沒在倒數時（停在起點、暫停，含暫停中的超時）淡化。
     private func timeText(_ face: TimerFace, size: CGFloat) -> some View {
-        let dimmed = switch face.timeStyle {
-        case .running, .overtime(isPaused: false): false
-        case .idle, .paused, .overtime(isPaused: true): true
-        }
+        let dimmed =
+            switch face.timeStyle {
+            case .running, .overtime(isPaused: false): false
+            case .idle, .paused, .overtime(isPaused: true): true
+            }
         return CompletionTimeSwap(summary: model.completionSummary) {
             Text(verbatim: face.timeText)
                 .foregroundStyle(face.timeStyle.isOvertime ? AnyShapeStyle(.tint) : AnyShapeStyle(.white))

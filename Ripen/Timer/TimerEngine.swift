@@ -35,8 +35,9 @@ struct TimerEngine: Equatable, Sendable {
 
     func recovery(at now: Date, projectID: UUID?, completedFocuses: Int) -> TimerRecovery? {
         guard let startedAt else { return nil }
-        return TimerRecovery(phase: phase, duration: duration, remaining: signedRemaining(at: now),
-                             startedAt: startedAt, projectID: projectID, completedFocuses: completedFocuses)
+        return TimerRecovery(
+            phase: phase, duration: duration, remaining: signedRemaining(at: now),
+            startedAt: startedAt, projectID: projectID, completedFocuses: completedFocuses)
     }
 
     func status(at now: Date) -> TimerStatus {

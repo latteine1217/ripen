@@ -35,13 +35,13 @@ enum ReminderSoundCatalog {
     }()
 }
 
-private extension SettingKey where Value == Bool {
-    static var completionSoundEnabled: Self { Self("completionSoundEnabled", default: true) }
-    static var phaseEndNotificationEnabled: Self { Self("phaseEndNotificationEnabled", default: false) }
+extension SettingKey where Value == Bool {
+    fileprivate static var completionSoundEnabled: Self { Self("completionSoundEnabled", default: true) }
+    fileprivate static var phaseEndNotificationEnabled: Self { Self("phaseEndNotificationEnabled", default: false) }
 }
 
-private extension SettingKey where Value == String {
-    static var reminderSoundName: Self {
+extension SettingKey where Value == String {
+    fileprivate static var reminderSoundName: Self {
         Self("reminderSoundName", default: ReminderSoundCatalog.defaultName) {
             ReminderSoundCatalog.systemSoundNames.contains($0)
         }

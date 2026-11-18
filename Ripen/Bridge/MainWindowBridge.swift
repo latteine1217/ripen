@@ -51,7 +51,7 @@ final class MainWindowBridge {
         pendingUntilAttach = []
         // SwiftUI 建立後會自己帶到前面；先透明，由等待中的工作（過場或淡入）決定何時露出
         window.alphaValue = 0
-        pending.forEach { $0() }
+        for work in pending { work() }
     }
 
     /// 主視窗已建立就立即執行；還沒建立（上次退出時已隱藏，SwiftUI 不還原）就要求 SwiftUI 建立，

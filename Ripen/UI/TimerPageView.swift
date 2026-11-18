@@ -26,22 +26,27 @@ struct TimerPageView: View {
 
                 // 超時中剩餘時間為 0，圓環維持滿圈、以超時色標示
                 TimerRingView(face: face, hidesCenter: model.completionSummary != nil)
-                .overlay { completionSummary }
-                .frame(width: Self.ringDiameter, height: Self.ringDiameter)
-                .modifier(TearOffRing(tearOff: tearOff, diameter: Self.ringDiameter,
-                                      settings: model.settings,
-                                      // 主視窗不在畫面上時不提示，免得出現的當下就記為看過
-                                      offersHint: model.isRestingAfterFocus && isPresented))
+                    .overlay { completionSummary }
+                    .frame(width: Self.ringDiameter, height: Self.ringDiameter)
+                    .modifier(
+                        TearOffRing(
+                            tearOff: tearOff, diameter: Self.ringDiameter,
+                            settings: model.settings,
+                            // 主視窗不在畫面上時不提示，免得出現的當下就記為看過
+                            offersHint: model.isRestingAfterFocus && isPresented))
 
-                CycleProgressView(progress: CycleProgress(
-                    completed: display.completedFocusesInCycle,
-                    interval: display.longBreakInterval,
-                    isFocus: display.phase == .focus
-                ))
+                CycleProgressView(
+                    progress: CycleProgress(
+                        completed: display.completedFocusesInCycle,
+                        interval: display.longBreakInterval,
+                        isFocus: display.phase == .focus
+                    ))
 
                 endTimeRow(face.endCaptionBesideRing)
-                    .oneTimeHint(.overtimeDone, "Press Done to finish and record this phase",
-                                 settings: model.settings, isActive: face.controls.finishes)
+                    .oneTimeHint(
+                        .overtimeDone, "Press Done to finish and record this phase",
+                        settings: model.settings, isActive: face.controls.finishes
+                    )
                     // 跳過、重設、完成後暫時換成復原膠囊；這一列在新階段起點本來就是空的
                     .undoCapsuleOverlay(model)
 
@@ -174,8 +179,10 @@ private struct TearOffRing: ViewModifier {
                 .opacity(isLifted ? 1 : 0)
                 // 圓環已帶同一句 accessibilityHint，不重複朗讀
                 .accessibilityHidden(true)
-                .oneTimeHint(.ringTearOff, "Drag the ring outward to make a floating window",
-                             settings: settings, isActive: offersHint)
+                .oneTimeHint(
+                    .ringTearOff, "Drag the ring outward to make a floating window",
+                    settings: settings, isActive: offersHint
+                )
                 .font(.caption)
         }
         // 減少動態效果時不放大（見 ring），陰影與提示字照樣淡入淡出
@@ -207,8 +214,9 @@ private struct TearOffRing: ViewModifier {
                         .onChanged { value in
                             tearOff.dragChanged(
                                 start: value.startLocation, translation: value.translation,
-                                offsetFromRingCenter: CGSize(width: value.location.x - diameter / 2,
-                                                             height: value.location.y - diameter / 2),
+                                offsetFromRingCenter: CGSize(
+                                    width: value.location.x - diameter / 2,
+                                    height: value.location.y - diameter / 2),
                                 ringRadius: diameter / 2
                             )
                         }

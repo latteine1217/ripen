@@ -1,6 +1,6 @@
 import AppKit
-import os
 import UserNotifications
+import os
 
 /// 以系統通知提醒階段結束（ADR-0018）。
 ///

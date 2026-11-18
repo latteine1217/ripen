@@ -17,8 +17,10 @@ struct TimerButtonStyle: ButtonStyle {
                 if prominent {
                     Capsule().fill(.tint)
                 } else {
-                    Capsule().fill(isHovering ? palette.buttonHover
-                                   : palette.button ?? Color.primary.opacity(0.1))
+                    Capsule().fill(
+                        isHovering
+                            ? palette.buttonHover
+                            : palette.button ?? Color.primary.opacity(0.1))
                 }
             }
             .contentShape(Capsule())

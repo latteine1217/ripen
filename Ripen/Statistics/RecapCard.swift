@@ -57,8 +57,9 @@ extension RecapCard {
     /// 預覽可以顯示尚未確立的紀錄，但輸出前卡片納入的紀錄必須都已保存，且分類沒有變動。
     @MainActor
     func exportability(in focusLog: FocusLog) -> RecapExportability {
-        let current = Dictionary(uniqueKeysWithValues: focusLog.entries.filter { $0.record.projectID == projectID }
-            .map { ($0.id, $0.record) })
+        let current = Dictionary(
+            uniqueKeysWithValues: focusLog.entries.filter { $0.record.projectID == projectID }
+                .map { ($0.id, $0.record) })
         guard current == records else { return .changed }
         let statuses = records.keys.map(focusLog.status(ofRecord:))
         if statuses.contains(.undoable) { return .undoable }

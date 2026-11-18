@@ -61,12 +61,13 @@ struct MenuBarLabel: View {
         if let lastRendered, lastRendered.text == text, lastRendered.overtimeTint == overtimeTint {
             return lastRendered.image
         }
-        let renderer = ImageRenderer(content: HStack(spacing: 4) {
-            Image(systemName: "timer")
-            if let text { Text(text).monospacedDigit() }
-        }
-        .font(.system(size: NSFont.systemFontSize))
-        .foregroundStyle(overtimeTint ?? .black))
+        let renderer = ImageRenderer(
+            content: HStack(spacing: 4) {
+                Image(systemName: "timer")
+                if let text { Text(text).monospacedDigit() }
+            }
+            .font(.system(size: NSFont.systemFontSize))
+            .foregroundStyle(overtimeTint ?? .black))
         renderer.scale = NSScreen.main?.backingScaleFactor ?? 2
         let image = renderer.nsImage ?? NSImage()
         image.isTemplate = overtimeTint == nil

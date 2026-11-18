@@ -17,22 +17,23 @@ struct RipenApp: App {
     @State private var updater = UpdateChecker()
     @State private var notifications: PhaseNotificationController
     #if DEBUG
-    @State private var glassTuning = GlassTuning()
+        @State private var glassTuning = GlassTuning()
     #endif
 
     init() {
         #if DEBUG
-        FrameDump.runIfRequested()
+            FrameDump.runIfRequested()
         #endif
         // 測試 host 也會執行 App.init；必須在開啟儲存前隔離，避免測試遷移真正的使用者資料。
         let isTesting = ProcessInfo.processInfo.environment["RIPEN_TESTING"] == "1"
         #if DEBUG
-        // 驗收建置可固定隔離目錄，工具重新啟動時不依賴繼承的環境變數。
-        let validationDirectory = (ProcessInfo.processInfo.environment["RIPEN_DATA_DIRECTORY"]
-            ?? Bundle.main.object(forInfoDictionaryKey: "RipenValidationDataDirectory") as? String)
-            .map { URL(fileURLWithPath: $0) }
+            // 驗收建置可固定隔離目錄，工具重新啟動時不依賴繼承的環境變數。
+            let validationDirectory =
+                (ProcessInfo.processInfo.environment["RIPEN_DATA_DIRECTORY"]
+                ?? Bundle.main.object(forInfoDictionaryKey: "RipenValidationDataDirectory") as? String)
+                .map { URL(fileURLWithPath: $0) }
         #else
-        let validationDirectory: URL? = nil
+            let validationDirectory: URL? = nil
         #endif
         let isolated = isTesting || validationDirectory != nil
         let settings = AppSettings(storage: isolated ? InMemorySettingsStorage() : UserDefaults.standard)
@@ -40,10 +41,10 @@ struct RipenApp: App {
         // 語言要在啟動前從 defaults 讀出，不能放在驗收模式的記憶體設定；驗收版的 bundle id 已隔離，只有測試 host 不碰
         _interfaceLanguage = State(initialValue: .live(storage: isTesting ? InMemorySettingsStorage() : UserDefaults.standard))
         #if DEBUG
-        if validationDirectory != nil {
-            settings.focusMinutes = 1
-            settings.completionSoundEnabled = false
-        }
+            if validationDirectory != nil {
+                settings.focusMinutes = 1
+                settings.completionSoundEnabled = false
+            }
         #endif
         let persistent = validationDirectory.map { SQLiteFocusLogStorage(directory: $0) } ?? .standard
         let storage: any FocusStorage = isTesting ? InMemoryFocusStorage() : persistent
@@ -57,9 +58,10 @@ struct RipenApp: App {
             alarm: TimerPhaseEndAlarm(),
             notifier: systemNotifier ?? NoPhaseNotifier()
         )
-        _notifications = State(initialValue: PhaseNotificationController(
-            settings: settings, service: systemNotifier ?? NoNotificationPermission()
-        ))
+        _notifications = State(
+            initialValue: PhaseNotificationController(
+                settings: settings, service: systemNotifier ?? NoNotificationPermission()
+            ))
         let hotkeys = GlobalHotkeyController(registrar: CarbonHotkeyRegistrar.shared, settings: model.settings) {
             model.toggleStartPauseFromHotkey()
         }
@@ -111,7 +113,7 @@ struct RipenApp: App {
                 .environment(presenter.tearOff)
                 .onWindowAttach { window in presenter.mainWindow.attach(window) }
                 #if DEBUG
-                .environment(\.glassStyle, glassTuning.style)
+                    .environment(\.glassStyle, glassTuning.style)
                 #endif
         }
         .windowResizability(.contentSize)
@@ -122,7 +124,7 @@ struct RipenApp: App {
         .commands { TimerCommands(timer: model, mainWindow: presenter.mainWindow) }
         .commands { UpdateCommands(updater: updater) }
         #if DEBUG
-        .commands { GlassTuningCommands() }
+            .commands { GlassTuningCommands() }
         #endif
 
         // 從懸浮窗與瀏海島開的成果卡；不屬於任何計時形態（ADR-0001）
@@ -134,10 +136,10 @@ struct RipenApp: App {
         .commandsRemoved()
 
         #if DEBUG
-        Window(Text(verbatim: "Glass Tuning"), id: GlassTuningView.windowID) {
-            GlassTuningView(tuning: glassTuning, settings: model.settings)
-        }
-        .windowResizability(.contentSize)
+            Window(Text(verbatim: "Glass Tuning"), id: GlassTuningView.windowID) {
+                GlassTuningView(tuning: glassTuning, settings: model.settings)
+            }
+            .windowResizability(.contentSize)
         #endif
 
         Settings {

@@ -44,32 +44,38 @@ struct TimerFace: Equatable {
     let contentTint: Color
 
     /// 結束時刻依 `clockFormat`、介面語言與系統時制格式化；後兩者由呼叫端傳入，測試不受執行環境影響。
-    init(display: PhaseDisplay, controls: TimerControls,
-         clockFormat: ClockFormat, language: Locale, systemUses24Hour: Bool) {
+    init(
+        display: PhaseDisplay, controls: TimerControls,
+        clockFormat: ClockFormat, language: Locale, systemUses24Hour: Bool
+    ) {
         self.display = display
         self.controls = controls
         timeText = display.timeText
-        timeStyle = if display.isOvertime {
-            .overtime(isPaused: display.status == .paused)
-        } else {
-            switch display.status {
-            case .idle: .idle
-            case .running: .running
-            case .paused: .paused
+        timeStyle =
+            if display.isOvertime {
+                .overtime(isPaused: display.status == .paused)
+            } else {
+                switch display.status {
+                case .idle: .idle
+                case .running: .running
+                case .paused: .paused
+                }
             }
-        }
         progress = display.phaseProgress
         isPaused = display.status == .paused
-        endCaption = if display.status == .paused {
-            .paused
-        } else if display.isOvertime {
-            .overtime
-        } else {
-            .endsAt(display.endDate.map {
-                EndTimeFormat.string($0, clockFormat: clockFormat, language: language,
-                                     systemUses24Hour: systemUses24Hour)
-            })
-        }
+        endCaption =
+            if display.status == .paused {
+                .paused
+            } else if display.isOvertime {
+                .overtime
+            } else {
+                .endsAt(
+                    display.endDate.map {
+                        EndTimeFormat.string(
+                            $0, clockFormat: clockFormat, language: language,
+                            systemUses24Hour: systemUses24Hour)
+                    })
+            }
         tint = display.displayTint
         contentTint = display.displayContentTint
     }

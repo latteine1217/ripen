@@ -14,7 +14,8 @@ enum CollapseReach {
             hypot(cursor.x - notch.rect.midX, cursor.y - notch.rect.maxY)
         }
         guard let nearest = distances.indices.min(by: { distances[$0] < distances[$1] }),
-              distances[nearest] <= radius else { return nil }
+            distances[nearest] <= radius
+        else { return nil }
         return nearest
     }
 }
