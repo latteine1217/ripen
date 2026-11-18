@@ -30,24 +30,19 @@ jobs:
       - uses: actions/checkout@v7.0.1
       - name: Show toolchain
         run: xcodebuild -version
-      - name: Generate Xcode project
-        run: |
-          brew install xcodegen
-          xcodegen generate
-      - name: Test
-        run: >
-          xcodebuild test
-          -project Ripen.xcodeproj
-          -scheme Ripen
-          -destination 'platform=macOS'
-          -resultBundlePath build/ci/Tests.xcresult
+      - name: Install tools
+        run: brew install xcodegen shellcheck actionlint
+      # 與本機相同的檢查：lint、typecheck、完整測試
+      - name: Check
+        run: ./scripts/check.sh
       # 失敗時保留 xcresult，可在 Xcode 開啟查看失敗的測試與 log
       - name: Upload test results
         if: failure()
         uses: actions/upload-artifact@v7.0.2
         with:
           name: test-results
-          path: build/ci/Tests.xcresult
+          path: build/check/Tests.xcresult
+          if-no-files-found: ignore
 
   # 以發行用的 make-dmg.sh 打包並核對 dmg，提早發現只在 Release／universal 建置才出現的問題。
   # 產物未簽章，不上傳；正式簽章只在本機執行（ADR-0017）。

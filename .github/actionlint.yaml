@@ -1,0 +1,4 @@
+# ci.yml 使用的 xcode-27 是 GitHub 的自訂 runner 標籤
+self-hosted-runner:
+  labels:
+    - xcode-27

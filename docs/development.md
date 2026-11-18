@@ -13,6 +13,8 @@ xcodebuild test -project Ripen.xcodeproj -scheme Ripen -destination 'platform=ma
 
 只跑單一測試檔：在 `xcodebuild test` 後加上 `-only-testing:RipenTests/AppModelFocusTests`。
 
+完成一個變更後執行 `./scripts/check.sh`，與 CI 跑同一套檢查：`swift-format lint --strict`（規則、4 空格縮排與 140 字行長在 `.swift-format`）、`shellcheck`、`actionlint`，再以 `build-for-testing` 建置 App 與測試 target，最後跑完整測試，結果存於 `build/check/Tests.xcresult`。另需 `brew install shellcheck actionlint`。格式問題以 `xcrun swift-format format -i -r Ripen RipenTests` 修正；swift-format 隨 Xcode 提供，本機與 CI 使用同一版 Xcode，結果才一致。
+
 開發與測試使用 Xcode 預設的 DerivedData（`~/Library/Developer/Xcode/DerivedData`），不要以 `-derivedDataPath` 放進專案內：專案位於 `~/Documents` 等受保護資料夾時，測試會從那裡啟動 ad-hoc 簽章的 App，每次重建簽章都不同，macOS 會反覆要求檔案存取權。發行打包使用 `build/release`。
 
 畫面外觀與過場幾何用 Debug 建置的逐格輸出檢查；操作取消、視窗可見性與 overlay 清理則以真實 AppKit 整合測試驗證：`Ripen.app/Contents/MacOS/Ripen --render-frames <輸出資料夾> [名稱前綴]` 會把 `Ripen/UI/FrameDumpScenes.swift` 列出的場景輸出成 PNG 後結束。
@@ -40,7 +42,7 @@ xcodebuild test -project Ripen.xcodeproj -scheme Ripen -destination 'platform=ma
 
 Release 發佈後由 `.github/workflows/release.yml` 接手：下載附件，核對 GitHub 雜湊、dmg 格式（同一支 `verify-dmg.sh`）與簽章（`update-signing.swift verify`，只用原始碼裡的公鑰）；通過後把 [latteine1217/homebrew-tap](https://github.com/latteine1217/homebrew-tap) 的 `Casks/ripen.rb` 改為新版本與 dmg 雜湊，以 `brew style` 與 `brew audit --cask --online` 檢查後推上。推送 tap 使用 repo secret `HOMEBREW_TAP_TOKEN`：只授權 `homebrew-tap`、權限 Contents: Read and write 的 fine-grained token。私鑰不進 CI（ADR-0017）。prerelease 不觸發；也可從 Actions 手動執行並指定標籤，`push_tap` 關閉時只檢查不推送。workflow 失敗時 tap 不會更新，修正後重新執行即可。最後以上一版 App 跑清單的 A 層，確認使用者實際的更新路徑。Cask 設定 `auto_updates true`，使用者也可以在 App 內更新。
 
-每次 push 與 pull request 由 `.github/workflows/ci.yml` 在 macOS runner 上產生專案並執行完整測試，同時以 `make-dmg.sh` 打包並用 `verify-dmg.sh` 核對未簽章的 dmg（不上傳）；只改 `website/`、`docs/` 或 Markdown 時不觸發。失敗時 xcresult 會上傳為 `test-results` artifact。
+每次 push 與 pull request 由 `.github/workflows/ci.yml` 在 macOS runner 上執行 `scripts/check.sh`，同時以 `make-dmg.sh` 打包並用 `verify-dmg.sh` 核對未簽章的 dmg（不上傳）；只改 `website/`、`docs/` 或 Markdown 時不觸發。失敗時 xcresult 會上傳為 `test-results` artifact。
 
 App 內的「檢查更新⋯」依賴這個格式（ADR-0009、ADR-0017）：標籤為 `v<版本>`、不是 draft 或 prerelease，附件必須有 `Ripen-<版本>.dmg` 與其簽章檔 `Ripen-<版本>.dmg.sig`，dmg 根目錄有 `Ripen.app`，其 bundle id 與 `CFBundleShortVersionString` 與標籤一致。安裝前以 App 內建的公鑰驗證簽章；缺少簽章檔或任何一項不符時不自動安裝，設定裡改提供下載頁連結。
 
@@ -59,7 +61,7 @@ App 內的「檢查更新⋯」依賴這個格式（ADR-0009、ADR-0017）：標
 - `Ripen/Bridge/`：AppKit 橋接（主視窗、瀏海島 panel、App 生命週期、系統事件）
 - `Ripen/Resources/`：String Catalog（`Localizable.xcstrings`，英文與繁體中文）與 `Assets.xcassets`（應用程式圖標）
 - `RipenTests/`：Swift Testing 測試；`Support/` 放假時鐘等測試替身
-- `scripts/`：打包與發版腳本（`make-dmg.sh`、`verify-dmg.sh`、`release.sh`、`update-signing.swift`）
+- `scripts/`：打包與發版腳本（`check.sh`、`make-dmg.sh`、`verify-dmg.sh`、`release.sh`、`update-signing.swift`）
 - `docs/images/`：README 截圖（`en/`、`zh-Hant/`）
 
 ## 圖標與產品展示
