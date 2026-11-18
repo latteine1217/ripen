@@ -50,10 +50,3 @@ extension AppModel {
     var displayTint: Color { display.displayTint }
     var displayContentTint: Color { display.displayContentTint }
 }
-
-extension Text {
-    /// 超時中時間文字改用環境的 tint（此時是該階段的超時色），否則沿用原本的前景色。
-    func overtimeStyle(_ isOvertime: Bool) -> Text {
-        isOvertime ? foregroundStyle(.tint) : self
-    }
-}

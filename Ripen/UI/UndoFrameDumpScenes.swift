@@ -29,7 +29,7 @@ extension FrameDump {
                                     size: CGSize(width: frame.width + 80, height: frame.height + 80)) { _ in
                     let model = skippedModel(settings)
                     return AnyView(FloatingWindowGlass(
-                        model: model, presentation: PresentationModel(), display: model.display,
+                        model: model, presentation: PresentationModel(), face: model.timerFace(),
                         blend: FloatingWindowSizeBlend(size), frame: frame
                     ).environment(\.colorScheme, scheme).background(desktop))
                 })

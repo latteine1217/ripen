@@ -4,8 +4,8 @@ import SwiftUI
 /// 主視窗的統計頁：總覽是全部分類（含未分類）的今日數字、依分類堆疊的最近 7 天與分類列表；
 /// 點分類進入該分類的詳細統計、完成紀錄、代表色設定、改名與刪除，並編輯單筆紀錄（ADR-0010、ADR-0012、ADR-0019）。
 struct StatisticsPageView: View {
+    /// 分類與紀錄的異動都經 `FocusLog`，等待恢復決定時由它拒絕；刪除分類對階段執行狀態的影響由 AppModel 的掛鉤處理。
     let focusLog: FocusLog
-    var actions = StatisticsActions()
 
     /// 正在看的分類；nil 是總覽。
     @State private var detail: ProjectKey?
@@ -23,11 +23,10 @@ struct StatisticsPageView: View {
                     ProjectDetailView(
                         focusLog: focusLog, key: detail, now: context.date,
                         close: { self.detail = nil },
-                        actions: actions,
                         delete: { id in
                             // 先回總覽：分類消失後詳細頁已沒有內容可顯示
                             self.detail = nil
-                            actions.deleteProject(id)
+                            focusLog.apply(.deleteProject(id))
                         }
                     )
                     .transition(.opacity)
@@ -39,28 +38,6 @@ struct StatisticsPageView: View {
             .padding(32)
             .animation(reduceMotion ? nil : .easeInOut(duration: 0.2), value: detail)
         }
-    }
-}
-
-/// 統計頁改動資料的入口，全部經 `AppModel`：等待恢復決定時一律不動作，刪除分類時連同下次的選擇與進行中的專注一起改為未分類。
-/// 預設值不改任何資料，供逐格輸出與預覽使用。
-@MainActor
-struct StatisticsActions {
-    var deleteProject: (UUID) -> Void = { _ in }
-    var renameProject: (UUID, String) -> Bool = { _, _ in false }
-    var editRecord: (UUID, FocusRecord) -> Bool = { _, _ in false }
-    var deleteRecord: (UUID) -> Bool = { _ in false }
-    /// 在畫面 body 中讀取，等待恢復決定的狀態改變時跟著刷新。
-    var isLocked: () -> Bool = { false }
-
-    init() {}
-
-    init(model: AppModel) {
-        deleteProject = model.deleteProject
-        renameProject = model.renameProject
-        editRecord = model.editRecord
-        deleteRecord = model.deleteRecord
-        isLocked = { model.requiresRecoveryDecision }
     }
 }
 
@@ -282,7 +259,6 @@ private struct ProjectDetailView: View {
     let key: ProjectKey
     let now: Date
     let close: () -> Void
-    let actions: StatisticsActions
     let delete: (UUID) -> Void
 
     @Environment(\.calendar) private var calendar
@@ -297,7 +273,7 @@ private struct ProjectDetailView: View {
         let entries = focusLog.entries.filter { $0.record.projectID == key.id }
         let records = entries.map(\.record)
         let statistics = FocusStatistics(records: records, calendar: calendar)
-        let total = statistics.total
+        let total = focusLog.total(ofProject: key.id)
         let today = statistics.summary(on: now)
         let tint = project?.color.color ?? palette.secondary
         VStack(alignment: .leading, spacing: 12) {
@@ -325,7 +301,7 @@ private struct ProjectDetailView: View {
                     .accessibilityValue(Text(project.color.name))
                     .popover(isPresented: $choosesColor, arrowEdge: .bottom) {
                         ColorSwatches(selection: project.color) {
-                            focusLog.setColor($0, forProject: project.id)
+                            focusLog.apply(.recolorProject(project.id, $0))
                             choosesColor = false
                         }
                         .padding(12)
@@ -344,14 +320,15 @@ private struct ProjectDetailView: View {
                     .buttonStyle(ProjectRowStyle())
                     .padding(.horizontal, -8)
                     .foregroundStyle(palette.primary)
-                    .disabled(actions.isLocked())
+                    // 改回原名一定接受，被拒絕只會是等待恢復決定或分類已不存在
+                    .disabled(focusLog.check(.renameProject(project.id, name: project.name)) != nil)
                     .help(Text("Rename Project"))
                     .accessibilityHint(Text("Rename Project"))
                     .popover(isPresented: $renames, arrowEdge: .bottom) {
                         ProjectRenameForm(name: project.name, isNameTaken: {
-                            focusLog.isProjectNameTaken($0, renaming: project.id)
+                            focusLog.check(.renameProject(project.id, name: $0)) == .nameTaken
                         }) { name in
-                            if actions.renameProject(project.id, name) { renames = false }
+                            if case .success = focusLog.apply(.renameProject(project.id, name: name)) { renames = false }
                         } cancel: {
                             renames = false
                         }
@@ -425,7 +402,7 @@ private struct ProjectDetailView: View {
             Text("Completed Focuses")
                 .font(.headline)
             // 換分類時展開狀態重來，不沿用上一個分類展開的日子
-            RecordList(days: statistics.recordedDays, entries: entries, focusLog: focusLog, actions: actions)
+            RecordList(days: statistics.recordedDays, entries: entries, focusLog: focusLog)
                 .id(key)
         }
         .frame(width: StatisticsLayout.width, alignment: .leading)
@@ -439,7 +416,6 @@ private struct RecordList: View {
     let days: [DayRecords]
     let entries: [StoredFocusRecord]
     let focusLog: FocusLog
-    let actions: StatisticsActions
 
     @Environment(\.appPalette) private var palette
     @Environment(\.calendar) private var calendar
@@ -534,8 +510,9 @@ private struct RecordList: View {
                 } else {
                     RecordEditor(
                         entry: entry, projects: focusLog.projects,
-                        save: { if actions.editRecord(entry.id, $0) { editing = nil } },
-                        delete: { if actions.deleteRecord(entry.id) { editing = nil } },
+                        rejection: { focusLog.check(.updateRecord(entry.id, $0)) },
+                        save: { if case .success = focusLog.apply(.updateRecord(entry.id, $0)) { editing = nil } },
+                        delete: { if case .success = focusLog.apply(.deleteRecord(entry.id)) { editing = nil } },
                         cancel: { editing = nil }
                     )
                 }
@@ -544,14 +521,17 @@ private struct RecordList: View {
         }
     }
 
-    /// 只有已保存的紀錄能編輯（ADR-0019）；其餘說明原因，等狀態改變後同一個視窗就能編輯。
+    /// 鎖定與否由 `FocusLog` 判斷（ADR-0019）：刪除與更正的鎖定規則相同，以刪除預檢；
+    /// 這裡只把拒絕原因對應成說明，等狀態改變後同一個視窗就能編輯。
     private func lockReason(_ id: UUID) -> LocalizedStringKey? {
-        if actions.isLocked() { return "Choose whether to resume your last session before editing focuses." }
-        switch focusLog.status(ofRecord: id) {
-        case .undoable: return "This focus can still be undone. You can edit it once the undo button disappears."
-        case .unsaved: return "This focus hasn’t been saved yet. Retry saving before editing it."
-        case .saved: return focusLog.canEditRecord(id) ? nil : "Focus history is unavailable. Retry loading before editing."
-        case nil: return "This focus no longer exists."
+        switch focusLog.check(.deleteRecord(id)) {
+        case nil: return nil
+        case .awaitingRecoveryDecision: return "Choose whether to resume your last session before editing focuses."
+        case .recordUndoable: return "This focus can still be undone. You can edit it once the undo button disappears."
+        case .recordUnsaved: return "This focus hasn’t been saved yet. Retry saving before editing it."
+        case .historyUnavailable: return "Focus history is unavailable. Retry loading before editing."
+        // 刪除紀錄只會以上列原因或不存在被拒絕
+        case .notFound, .emptyName, .nameTaken, .nonPositiveDuration, .endsAfterNow: return "This focus no longer exists."
         }
     }
 }
@@ -596,10 +576,11 @@ private struct ProjectRenameForm: View {
 }
 
 /// 單筆紀錄的更正、重新歸類與刪除（ADR-0019）。開始時刻與長度以分鐘編輯，沒改的欄位保留原始精度；
-/// 只有時間有變才檢查允許範圍，與 `AppModel.editRecord` 相同。
+/// 允許範圍由 `FocusLog` 預檢（只有時間有變才檢查），與送出時同一套規則。
 private struct RecordEditor: View {
     let entry: StoredFocusRecord
     let projects: [FocusProject]
+    let rejection: (FocusRecord) -> FocusLogRejection?
     let save: (FocusRecord) -> Void
     let delete: () -> Void
     let cancel: () -> Void
@@ -611,10 +592,11 @@ private struct RecordEditor: View {
     @State private var projectID: UUID?
     @State private var confirmsDeletion = false
 
-    init(entry: StoredFocusRecord, projects: [FocusProject], save: @escaping (FocusRecord) -> Void,
-         delete: @escaping () -> Void, cancel: @escaping () -> Void) {
+    init(entry: StoredFocusRecord, projects: [FocusProject], rejection: @escaping (FocusRecord) -> FocusLogRejection?,
+         save: @escaping (FocusRecord) -> Void, delete: @escaping () -> Void, cancel: @escaping () -> Void) {
         self.entry = entry
         self.projects = projects
+        self.rejection = rejection
         self.save = save
         self.delete = delete
         self.cancel = cancel
@@ -633,11 +615,7 @@ private struct RecordEditor: View {
         return FocusRecord(startedAt: startedAt, duration: duration, projectID: projectID)
     }
 
-    private var issue: FocusCorrectionIssue? {
-        let record = edited
-        guard record.startedAt != entry.record.startedAt || record.duration != entry.record.duration else { return nil }
-        return FocusRecord.correctionIssue(startedAt: record.startedAt, duration: record.duration, now: Date())
-    }
+    private var issue: FocusLogRejection? { rejection(edited) }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -673,7 +651,7 @@ private struct RecordEditor: View {
                     .frame(maxWidth: 180)
                 }
             }
-            if let issue {
+            if issue == .nonPositiveDuration || issue == .endsAfterNow {
                 Text(issue == .nonPositiveDuration ? "The length must be longer than 0 minutes."
                                                    : "The focus can’t end later than now.")
                     .font(.callout)

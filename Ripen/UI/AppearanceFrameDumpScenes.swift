@@ -27,7 +27,7 @@ extension FrameDump {
                         .environment(\.colorScheme, scheme).background(desktop))
                 },
                 Scene(name: "appearance-\(name)-statistics", size: CGSize(width: 380, height: 340)) { _ in
-                    AnyView(StatisticsPageView(focusLog: model.focusLog, actions: StatisticsActions(model: model))
+                    AnyView(StatisticsPageView(focusLog: model.focusLog)
                         .ripenGlass(settings: settings)
                         .environment(\.colorScheme, scheme).background(desktop))
                 },
@@ -46,7 +46,7 @@ extension FrameDump {
                 scenes.append(Scene(name: "appearance-\(name)-floating-\(size)",
                                     size: CGSize(width: frame.width + 80, height: frame.height + 80)) { _ in
                     AnyView(FloatingWindowGlass(
-                        model: model, presentation: floatingOnly, display: model.display,
+                        model: model, presentation: floatingOnly, face: model.timerFace(),
                         blend: FloatingWindowSizeBlend(size), frame: frame
                     ).environment(\.colorScheme, scheme).background(desktop))
                 })
@@ -64,8 +64,8 @@ extension FrameDump {
                 settings.appearanceStyle = style
                 let storage = InMemoryFocusStorage()
                 let log = FocusLog(storage: storage)
-                let thesis = log.addProject(named: "Thesis", color: ProjectColor.allCases[0])
-                let reading = log.addProject(named: "Reading", color: ProjectColor.allCases[4])
+                let thesis = try? log.apply(.addProject(name: "Thesis", color: ProjectColor.allCases[0])).get()
+                let reading = try? log.apply(.addProject(name: "Reading", color: ProjectColor.allCases[4])).get()
                 let today = Calendar.current.startOfDay(for: Date())
                 // 每天（往前推幾天）各分類的專注次數，每次 25 分鐘；今天共 4 次 = 100 分鐘
                 let plan: [(daysAgo: Int, project: FocusProject?, count: Int)] = [

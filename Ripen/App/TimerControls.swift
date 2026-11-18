@@ -11,18 +11,41 @@ enum TimerIntent: Equatable, Sendable {
     case undo
 }
 
-/// 各介面共用的計時按鈕規則：顯示哪些按鈕、標題、能不能按、按下做什麼，以及結束時刻列該顯示什麼。
+/// 各介面共用的計時按鈕規則：顯示哪些按鈕、標題、說明、能不能按，以及按下做什麼。
 ///
 /// 主視窗、懸浮窗、瀏海島、選單列選單與主選單都由此推出，各自只保留版面與樣式。
+/// 計時介面每格還需要的時間文字、圓環與結束時刻列由 `TimerFace` 一併推出。
 struct TimerControls: Equatable {
     struct Action: Equatable {
         let title: LocalizedStringKey
         let systemImage: String
         let intent: TimerIntent
-        /// 為何現在不能按；nil 表示可以按。模型的 guard 仍是最後防線，這裡負責給使用者回饋。
-        var disabledReason: LocalizedStringKey?
+        /// 為何現在不能按；有原因時一定停用。模型的 guard 仍是最後防線，這裡負責給使用者回饋。
+        let disabledReason: LocalizedStringKey?
+        /// 沒有原因也可能停用（停在起點或超時中的重設）：按鈕本身已說明狀態，不另寫原因。
+        let isEnabled: Bool
+        /// 滑鼠停留的說明；nil 時沿用標題。
+        private let plainHelp: LocalizedStringKey?
+        /// 附快捷鍵的說明，例如「Skip to the next phase (⌘S)」。
+        private let shortcutHelp: LocalizedStringKey?
 
-        var isEnabled: Bool { disabledReason == nil }
+        init(title: LocalizedStringKey, systemImage: String, intent: TimerIntent,
+             help: LocalizedStringKey? = nil, shortcutHelp: LocalizedStringKey? = nil,
+             disabledReason: LocalizedStringKey? = nil, isAvailable: Bool = true) {
+            self.title = title
+            self.systemImage = systemImage
+            self.intent = intent
+            plainHelp = help
+            self.shortcutHelp = shortcutHelp
+            self.disabledReason = disabledReason
+            isEnabled = isAvailable && disabledReason == nil
+        }
+
+        /// 說明文字。⌘S／⌘R 只在主視窗是 key 時有效（`TimerCommands`），只有主視窗傳 true；
+        /// 懸浮窗與瀏海島不能成為 key，寫上快捷鍵會變成按了沒反應的提示。選單項目由系統在右側列出快捷鍵，不用這段。
+        func help(showsShortcut: Bool) -> LocalizedStringKey {
+            (showsShortcut ? shortcutHelp : nil) ?? plainHelp ?? title
+        }
     }
 
     /// 等待恢復決定或載入失敗待重試時（ADR-0014），計時按鈕指向處理它的地方。
@@ -30,27 +53,18 @@ struct TimerControls: Equatable {
         "Handle the previous timer in the main window first"
     }
 
-    /// 結束時刻列的內容。
-    enum EndCaption: Equatable {
-        /// 結束時刻；停在起點時還沒有結束時刻（nil），保留位置讓版面不跳動。
-        case endsAt(Date?)
-        case paused
-        case overtime
-    }
-
     /// 開始／暫停／繼續。
     let primary: Action
     /// 跳過；超時中為完成。
     let secondary: Action
+    /// 停在起點時沒有可重設的；超時中重設沒有作用，由「完成」取代（ADR-0006）。
+    let reset: Action
     /// 超時中：「完成」取代「跳過」，「重設」不提供（ADR-0006）。
     let finishes: Bool
-    /// 停在起點時沒有可重設的；超時中重設沒有作用。
-    let isResetEnabled: Bool
     /// 復原期限內才有。
     let undo: Action?
-    let endCaption: EndCaption
 
-    /// 參數都不設預設值：呼叫端不會漏掉閘門。各介面經 `AppModel.timerControls` 取得。
+    /// 參數都不設預設值：呼叫端不會漏掉閘門。各介面經 `AppModel.timerControls` 或 `timerFace` 取得。
     init(display: PhaseDisplay, undoOffer: UndoOffer?, requiresRecoveryDecision: Bool) {
         let reason = requiresRecoveryDecision ? Self.awaitingRecoveryReason : nil
         primary = switch display.status {
@@ -60,22 +74,16 @@ struct TimerControls: Equatable {
         }
         finishes = display.isOvertime
         secondary = finishes
-            ? Action(title: "Done", systemImage: "checkmark", intent: .skipOrFinish, disabledReason: reason)
-            : Action(title: "Skip", systemImage: "forward.end.fill", intent: .skipOrFinish, disabledReason: reason)
-        isResetEnabled = !requiresRecoveryDecision && !display.isOvertime && display.status != .idle
+            ? Action(title: "Done", systemImage: "checkmark", intent: .skipOrFinish,
+                     help: "Finish this phase and move to the next",
+                     shortcutHelp: "Finish this phase and move to the next (⌘S)", disabledReason: reason)
+            : Action(title: "Skip", systemImage: "forward.end.fill", intent: .skipOrFinish,
+                     help: "Skip to the next phase", shortcutHelp: "Skip to the next phase (⌘S)",
+                     disabledReason: reason)
+        reset = Action(title: "Reset", systemImage: "arrow.counterclockwise", intent: .reset,
+                       shortcutHelp: "Reset the current phase (⌘R)", disabledReason: reason,
+                       isAvailable: !display.isOvertime && display.status != .idle)
         undo = undoOffer.map(Self.undo)
-        endCaption = Self.endCaption(for: display)
-    }
-
-    /// 只需要結束時刻列時（共用的說明文字）不必組合整份按鈕規則。
-    static func endCaption(for display: PhaseDisplay) -> EndCaption {
-        if display.status == .paused {
-            .paused
-        } else if display.isOvertime {
-            .overtime
-        } else {
-            .endsAt(display.endDate)
-        }
     }
 
     /// 只需要復原項目時（主選單的 ⌘Z）不必讀時鐘。
@@ -89,6 +97,14 @@ extension AppModel {
     func timerControls(display: PhaseDisplay? = nil) -> TimerControls {
         TimerControls(display: display ?? self.display, undoOffer: undoOffer,
                       requiresRecoveryDecision: requiresRecoveryDecision)
+    }
+
+    /// 計時介面每格的呈現值；與 `timerControls` 同一個閘門，另依設定格式化結束時刻。
+    func timerFace(display: PhaseDisplay? = nil) -> TimerFace {
+        let display = display ?? self.display
+        return TimerFace(display: display, controls: timerControls(display: display),
+                         clockFormat: settings.clockFormat, language: EndTimeFormat.appLanguage,
+                         systemUses24Hour: EndTimeFormat.systemUses24Hour)
     }
 
     func perform(_ intent: TimerIntent) {

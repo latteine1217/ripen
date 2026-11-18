@@ -17,30 +17,23 @@ struct PhaseCaption: View {
     }
 }
 
-/// 倒數中顯示結束時刻、暫停時顯示「已暫停」、超時中顯示「超時」；停在起點時沒有結束時刻，保留位置。
-struct EndCaption: View {
-    let display: PhaseDisplay
-    let clockFormat: ClockFormat
+/// 結束時刻列的文字（`TimerFace.EndCaption`）；主視窗、懸浮窗與瀏海島共用，字級與顏色由所在介面決定。
+/// 停在起點時沒有結束時刻，保留位置讓版面不跳動，也不朗讀看不見的佔位文字。
+struct EndCaptionText: View {
+    let caption: TimerFace.EndCaption
 
     var body: some View {
-        let endTime = display.endDate.map {
-            EndTimeFormat.string(
-                $0, clockFormat: clockFormat,
-                language: EndTimeFormat.appLanguage, systemUses24Hour: EndTimeFormat.systemUses24Hour
-            )
+        switch caption {
+        case .paused:
+            Text("Paused")
+        case .overtime:
+            Text("Overtime")
+        case .endsAt(let endTime):
+            Text("Ends at \(endTime ?? "--:--")")
+                .monospacedDigit()
+                .opacity(endTime == nil ? 0 : 1)
+                .accessibilityHidden(endTime == nil)
         }
-        Group {
-            switch TimerControls.endCaption(for: display) {
-            case .paused:
-                Text("Paused")
-            case .overtime:
-                Text("Overtime")
-            case .endsAt:
-                Text("Ends at \(endTime ?? "--:--")")
-                    .opacity(endTime == nil ? 0 : 1)
-            }
-        }
-        .monospacedDigit()
     }
 }
 

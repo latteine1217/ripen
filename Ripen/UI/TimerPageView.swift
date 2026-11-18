@@ -16,24 +16,16 @@ struct TimerPageView: View {
     private static let ringDiameter: CGFloat = 220
 
     var body: some View {
-        TimelineView(CountdownTickSchedule(paused: !isPresented || model.status != .running, clockRevision: model.systemClockRevision)) { _ in
-            let display = model.display
+        TimerFaceTimeline(model: model) { face in
+            let display = face.display
             let status = display.status
             let phase = display.phase
             let isOvertime = display.isOvertime
-            let controls = model.timerControls(display: display)
             VStack(spacing: 20) {
                 ProjectPickerView(model: model, showsTotal: !model.isFocusInProgress)
 
                 // 超時中剩餘時間為 0，圓環維持滿圈、以超時色標示
-                TimerRingView(
-                    progress: display.phaseProgress,
-                    timeText: display.timeText,
-                    phaseTitle: phase.title,
-                    isPaused: status == .paused,
-                    isOvertime: isOvertime,
-                    hidesCenter: model.completionSummary != nil
-                )
+                TimerRingView(face: face, hidesCenter: model.completionSummary != nil)
                 .overlay { completionSummary }
                 .frame(width: Self.ringDiameter, height: Self.ringDiameter)
                 .modifier(TearOffRing(tearOff: tearOff, diameter: Self.ringDiameter,
@@ -47,16 +39,16 @@ struct TimerPageView: View {
                     isFocus: display.phase == .focus
                 ))
 
-                endTimeRow(Self.mainWindowCaption(controls))
+                endTimeRow(face.endCaptionBesideRing)
                     .oneTimeHint(.overtimeDone, "Press Done to finish and record this phase",
-                                 settings: model.settings, isActive: isOvertime)
+                                 settings: model.settings, isActive: face.controls.finishes)
                     // 跳過、重設、完成後暫時換成復原膠囊；這一列在新階段起點本來就是空的
                     .undoCapsuleOverlay(model)
 
-                self.controls(controls)
+                controls(face.controls)
             }
             .padding(32)
-            .tint(display.displayContentTint)
+            .tint(face.contentTint)
             // 減少動態效果時直接切換，不做過場
             .animation(reduceMotion ? nil : .easeInOut(duration: 0.2), value: status)
             .animation(reduceMotion ? nil : .easeInOut(duration: 0.35), value: phase)
@@ -81,19 +73,10 @@ struct TimerPageView: View {
         }
     }
 
-    /// 主視窗暫停時計時圓環中央已顯示「已暫停」，結束時刻列不重複、只保留位置；
-    /// 暫停中的超時仍標示「超時」。懸浮窗與瀏海島沒有這段圓環文字，照共用規則顯示「已暫停」。
-    private static func mainWindowCaption(_ controls: TimerControls) -> TimerControls.EndCaption {
-        switch controls.endCaption {
-        case .paused: controls.finishes ? .overtime : .endsAt(nil)
-        case let caption: caption
-        }
-    }
-
     /// 結束時刻那一列；緊接專注的休息期間在旁邊加上成果卡入口（#24）。
     /// 沒有結束時刻（休息停在起點）時只放入口，不留空白讓它偏一邊。
     @ViewBuilder
-    private func endTimeRow(_ caption: TimerControls.EndCaption) -> some View {
+    private func endTimeRow(_ caption: TimerFace.EndCaption) -> some View {
         if let shortcut = model.recapShortcut {
             HStack(spacing: 6) {
                 if caption != .endsAt(nil) {
@@ -113,33 +96,10 @@ struct TimerPageView: View {
     }
 
     /// 只在倒數中顯示結束時刻；暫停或停在起點時保留位置讓版面不跳動。超時中結束時刻已過，改標示「超時」。
-    @ViewBuilder
-    private func endTime(_ caption: TimerControls.EndCaption) -> some View {
-        switch caption {
-        case .overtime:
-            Text("Overtime")
-                .font(.callout)
-                .foregroundStyle(.tint)
-        case .endsAt(let endDate):
-            endTimeText(endDate)
-        case .paused:
-            endTimeText(nil)
-        }
-    }
-
-    private func endTimeText(_ endDate: Date?) -> some View {
-        let text = endDate.map {
-            EndTimeFormat.string(
-                $0, clockFormat: model.settings.clockFormat,
-                language: EndTimeFormat.appLanguage, systemUses24Hour: EndTimeFormat.systemUses24Hour
-            )
-        }
-        return Text("Ends at \(text ?? "--:--")")
+    private func endTime(_ caption: TimerFace.EndCaption) -> some View {
+        EndCaptionText(caption: caption)
             .font(.callout)
-            .monospacedDigit()
-            .foregroundStyle(palette.secondary)
-            .opacity(text == nil ? 0 : 1)
-            .accessibilityHidden(text == nil)
+            .foregroundStyle(caption == .overtime ? AnyShapeStyle(.tint) : AnyShapeStyle(palette.secondary))
     }
 
     /// 超時中「重設」「跳過」由「完成」取代（ADR-0006），暫停／繼續照常。
@@ -154,12 +114,11 @@ struct TimerPageView: View {
                     .labelStyle(.titleAndIcon)
                     .buttonStyle(TimerButtonStyle(prominent: true))
                     .keyboardShortcut(.defaultAction)
-                    .help(Text("Finish this phase and move to the next (⌘S)"))
+                    .help(Text(controls.secondary.help(showsShortcut: true)))
             } else {
-                Button("Reset", systemImage: "arrow.counterclockwise") { model.perform(.reset) }
+                button(controls.reset)
                     .buttonStyle(TimerIconButtonStyle())
-                    .help(Text("Reset the current phase (⌘R)"))
-                    .disabled(!controls.isResetEnabled)
+                    .help(Text(controls.reset.help(showsShortcut: true)))
 
                 button(controls.primary)
                     .labelStyle(.titleAndIcon)
@@ -168,7 +127,7 @@ struct TimerPageView: View {
 
                 button(controls.secondary)
                     .buttonStyle(TimerIconButtonStyle())
-                    .help(Text("Skip to the next phase (⌘S)"))
+                    .help(Text(controls.secondary.help(showsShortcut: true)))
             }
         }
         .labelStyle(.iconOnly)
@@ -176,8 +135,11 @@ struct TimerPageView: View {
         .controlSize(.large)
     }
 
+    /// 主視窗是 key 視窗，⌘S／⌘R 在這裡有效，次要按鈕與重設的說明附上快捷鍵。
+    /// 等待恢復決定時整頁換成恢復畫面（ADR-0014），這裡看得到的停用只有沒有原因的重設。
     private func button(_ action: TimerControls.Action) -> some View {
         Button(action.title, systemImage: action.systemImage) { model.perform(action.intent) }
+            .disabled(!action.isEnabled)
     }
 }
 

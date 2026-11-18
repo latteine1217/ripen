@@ -51,7 +51,7 @@ struct ProjectPickerView: View {
     @ViewBuilder
     private func total(for project: FocusProject?) -> some View {
         if showsTotal {
-            let total = FocusStatistics(records: model.focusLog.records.belonging(to: project?.id), calendar: .current).total
+            let total = model.focusLog.total(ofProject: project?.id)
             Text("\(total.timeText) · \(total.count) focuses")
                 .font(.caption)
                 .monospacedDigit()
@@ -120,7 +120,7 @@ private struct ProjectMenu: View {
 
     private var entries: [UUID?] { [nil] + model.focusLog.projects.map(\.id) }
     /// 同名的分類只能靠代表色分辨（#78）；名稱欄下方說明，Return 與「Add」都不送出。
-    private var isNameTaken: Bool { model.focusLog.isProjectNameTaken(name) }
+    private var isNameTaken: Bool { model.focusLog.check(.addProject(name: name, color: nil)) == .nameTaken }
     private var canCreate: Bool { FocusProject.normalizedName(name) != nil && !isNameTaken }
 
     var body: some View {

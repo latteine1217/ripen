@@ -64,6 +64,24 @@ extension EnvironmentValues {
     @Entry var timerSurfaceVisible = true
 }
 
+/// 主視窗、懸浮窗與瀏海島共用的刷新：照 `CountdownTickSchedule` 每格重讀一次時鐘，把那一格的 `TimerFace` 交給內容（ADR-0002）。
+///
+/// 只在倒數中且畫面可見時排下一格；暫停或停在起點時呈現值不變，不必刷新。
+/// 選單列項目另用 `CountdownTickSchedule.ticks`，見 `MenuBarLabel`。
+struct TimerFaceTimeline<Content: View>: View {
+    let model: AppModel
+    @ViewBuilder let content: (TimerFace) -> Content
+
+    @Environment(\.timerSurfaceVisible) private var isVisible
+
+    var body: some View {
+        TimelineView(CountdownTickSchedule(paused: !isVisible || model.status != .running,
+                                           clockRevision: model.systemClockRevision)) { _ in
+            content(model.timerFace())
+        }
+    }
+}
+
 /// 把計時器的觸發轉成 publisher；計時器加在 main run loop，所以一律在主執行緒觸發。
 @MainActor
 private final class TickTarget: NSObject {

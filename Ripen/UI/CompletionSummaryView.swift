@@ -105,7 +105,7 @@ struct CompletionTimeSwap<Countdown: View>: View {
 /// 懸浮窗與瀏海島的結束時刻格：完成摘要期間換成分類累積。
 struct CompletionOrEndCaption: View {
     let model: AppModel
-    let display: PhaseDisplay
+    let caption: TimerFace.EndCaption
 
     var body: some View {
         ZStack {
@@ -113,7 +113,7 @@ struct CompletionOrEndCaption: View {
                 CompletionTotalCaption(summary: summary, project: model.focusLog.project(withID: summary.projectID))
                     .transition(.opacity)
             } else {
-                EndCaption(display: display, clockFormat: model.settings.clockFormat)
+                EndCaptionText(caption: caption)
                     .transition(.opacity)
             }
         }

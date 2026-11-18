@@ -12,14 +12,16 @@ struct TimerCommands: Commands {
     var body: some Commands {
         let model = mainWindow.isKey ? timer : nil
         CommandMenu("Timer") {
-            // 讀 `reachedZero` 讓選單在跨過 0 時重建；點下時由 skipOrFinish 依當下是否超時決定
-            let controls = model.map { _ = $0.reachedZero; return $0.timerControls() }
-            Button(controls?.secondary.title ?? "Skip") { model?.perform(.skipOrFinish) }
+            // 讀 `reachedZero` 讓選單在跨過 0 時重建；點下時由 skipOrFinish 依當下是否超時決定。
+            // 標題一律取自計時規則（主視窗不是 key 時也顯示「完成」），只有能不能按依 key 視窗決定
+            let _ = timer.reachedZero
+            let controls = timer.timerControls()
+            Button(controls.secondary.title) { model?.perform(controls.secondary.intent) }
                 .keyboardShortcut("s")
-                .disabled(controls?.secondary.isEnabled != true)
-            Button("Reset") { model?.perform(.reset) }
+                .disabled(model == nil || !controls.secondary.isEnabled)
+            Button(controls.reset.title) { model?.perform(controls.reset.intent) }
                 .keyboardShortcut("r")
-                .disabled(controls?.isResetEnabled != true)
+                .disabled(model == nil || !controls.reset.isEnabled)
         }
         // 主視窗沒有文字欄位，⌘Z 在那裡就是復原計時操作；其他視窗（設定）照常送給回應鏈復原文字
         CommandGroup(replacing: .undoRedo) {

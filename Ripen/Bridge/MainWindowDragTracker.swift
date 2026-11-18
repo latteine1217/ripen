@@ -91,7 +91,7 @@ final class MainWindowDragTracker {
         }
         guard !hint.isShown else { return }
         panel.orderFrontRegardless()
-        hint.tint = model.phase.tint
+        hint.tint = model.displayTint
         // 進入範圍的那一刻給觸覺回饋，與拉出脫離瀏海時一致（spec #1 user story 65）
         NSHapticFeedbackManager.defaultPerformer.perform(.levelChange, performanceTime: .now)
         withAnimation(Self.hintAnimation) { hint.isShown = true }

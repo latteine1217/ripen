@@ -28,7 +28,7 @@ struct MenuBarItem: Scene {
 /// 選單列上的標籤：閒置時只有圖示，有階段在跑或暫停時加上剩餘時間。
 ///
 /// 模型由 App 獨立刷新；這裡的節拍只更新標籤，不負責提醒或復原期限。
-/// 用計時器而不是 `TimelineView`，才能只在文字真的變了時讓標籤失效（見 `shownText`）。
+/// 用計時器而不是 `TimerFaceTimeline`，才能只在文字真的變了時讓標籤失效（見 `shownText`）。
 struct MenuBarLabel: View {
     let model: AppModel
 
@@ -40,9 +40,9 @@ struct MenuBarLabel: View {
 
     var body: some View {
         let _ = shownText
-        let display = model.display
-        let text = Self.remainingText(for: display)
-        Image(nsImage: Self.render(text, overtimeTint: display.isOvertime ? display.phase.overtimeTint : nil))
+        let face = model.timerFace()
+        let text = Self.remainingText(for: face.display)
+        Image(nsImage: Self.render(text, overtimeTint: face.timeStyle.isOvertime ? face.tint : nil))
             .onReceive(Self.ticks) { _ in
                 let latest = Self.remainingText(for: model)
                 if latest != shownText { shownText = latest }
@@ -106,9 +106,9 @@ private struct MenuBarMenu: View {
         Button(controls.secondary.title) { model.perform(controls.secondary.intent) }
             .disabled(!controls.secondary.isEnabled)
             .keyboardShortcut("s")
-        Button("Reset") { model.perform(.reset) }
+        Button(controls.reset.title) { model.perform(controls.reset.intent) }
             .keyboardShortcut("r")
-            .disabled(!controls.isResetEnabled)
+            .disabled(!controls.reset.isEnabled)
         // 復原期限只有幾秒，選單打開時才看得到；選單開著時過期，點下也不會做任何事
         if let undo = controls.undo {
             Button(undo.title) { model.perform(undo.intent) }

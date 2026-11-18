@@ -14,45 +14,34 @@ final class InMemoryFocusStorage: FocusStorage {
         self.recovery = recovery
     }
 
-    func load() -> [StoredFocusRecord] { entries }
+    func load() -> StoredFocusLog { StoredFocusLog(records: entries, projects: projects) }
 
-    func append(_ records: [StoredFocusRecord]) {
-        for entry in records where !entries.contains(where: { $0.id == entry.id }) { entries.append(entry) }
-    }
-
-    func loadProjects() -> [FocusProject] { projects }
-
-    func appendProjects(_ added: [FocusProject]) {
-        for project in added where !projects.contains(where: { $0.id == project.id }) { projects.append(project) }
-    }
-
-    func updateProjectColors(_ colors: [UUID: ProjectColor]) {
-        projects = projects.map { project in
-            colors[project.id].map { FocusProject(id: project.id, name: project.name, color: $0) } ?? project
+    func apply(_ write: FocusLogWrite) {
+        switch write {
+        case .addProjects(let added):
+            for project in added where !projects.contains(where: { $0.id == project.id }) { projects.append(project) }
+        case .appendRecords(let records):
+            append(records)
+        case .recolorProjects(let colors):
+            projects = projects.map { project in
+                colors[project.id].map { FocusProject(id: project.id, name: project.name, color: $0) } ?? project
+            }
+        case .renameProjects(let names):
+            projects = projects.map { project in
+                names[project.id].map { FocusProject(id: project.id, name: $0, color: project.color) } ?? project
+            }
+        case .updateRecords(let records):
+            let updated = Dictionary(records.map { ($0.id, $0) }, uniquingKeysWith: { _, last in last })
+            entries = entries.map { updated[$0.id] ?? $0 }
+            journal = journal.map { updated[$0.id] ?? $0 }
+        case .deleteRecords(let ids):
+            entries.removeAll { ids.contains($0.id) }
+            journal.removeAll { ids.contains($0.id) }
+        case .deleteProjects(let ids):
+            projects.removeAll { ids.contains($0.id) }
+            entries = entries.map { Self.uncategorizing($0, from: ids) }
+            journal = journal.map { Self.uncategorizing($0, from: ids) }
         }
-    }
-
-    func deleteProjects(_ ids: Set<UUID>) {
-        projects.removeAll { ids.contains($0.id) }
-        entries = entries.map { Self.uncategorizing($0, from: ids) }
-        journal = journal.map { Self.uncategorizing($0, from: ids) }
-    }
-
-    func renameProjects(_ names: [UUID: String]) {
-        projects = projects.map { project in
-            names[project.id].map { FocusProject(id: project.id, name: $0, color: project.color) } ?? project
-        }
-    }
-
-    func updateRecords(_ records: [StoredFocusRecord]) {
-        let updated = Dictionary(records.map { ($0.id, $0) }, uniquingKeysWith: { _, last in last })
-        entries = entries.map { updated[$0.id] ?? $0 }
-        journal = journal.map { updated[$0.id] ?? $0 }
-    }
-
-    func deleteRecords(_ ids: Set<UUID>) {
-        entries.removeAll { ids.contains($0.id) }
-        journal.removeAll { ids.contains($0.id) }
     }
 
     func loadRecovery() -> TimerRecovery? { recovery }
@@ -72,6 +61,10 @@ final class InMemoryFocusStorage: FocusStorage {
         append(journal)
         journal = []
         return true
+    }
+
+    private func append(_ records: [StoredFocusRecord]) {
+        for entry in records where !entries.contains(where: { $0.id == entry.id }) { entries.append(entry) }
     }
 
     private static func uncategorizing(_ entry: StoredFocusRecord, from ids: Set<UUID>) -> StoredFocusRecord {

@@ -38,61 +38,39 @@ struct SQLiteFocusLogStorage: FocusLogStorage, TimerRecoveryStorage, FocusBackup
         self.upgrades = upgrades
     }
 
-    func load() throws -> [StoredFocusRecord] {
-        try open().records()
-    }
-
-    func append(_ records: [StoredFocusRecord]) throws {
+    func load() throws -> StoredFocusLog {
         let database = try open()
-        try database.transaction { try database.insert(records) }
+        return StoredFocusLog(records: try database.records(), projects: try database.projects())
     }
 
-    func loadProjects() throws -> [FocusProject] {
-        try open().projects()
-    }
-
-    func appendProjects(_ projects: [FocusProject]) throws {
-        let database = try open()
-        try database.transaction { try database.insert(projects) }
-    }
-
-    func updateProjectColors(_ colors: [UUID: ProjectColor]) throws {
-        let database = try open()
-        try database.transaction { try database.updateColors(colors) }
-    }
-
-    func deleteProjects(_ ids: Set<UUID>) throws {
+    func apply(_ write: FocusLogWrite) throws {
         let database = try open()
         try database.transaction {
-            try database.deleteProjects(ids)
-            let journal = try database.completionJournal().map { entry in
-                guard let id = entry.record.projectID, ids.contains(id) else { return entry }
-                return StoredFocusRecord(id: entry.id,
-                    record: FocusRecord(startedAt: entry.record.startedAt, duration: entry.record.duration))
+            switch write {
+            case .addProjects(let projects):
+                try database.insert(projects)
+            case .appendRecords(let records):
+                try database.insert(records)
+            case .recolorProjects(let colors):
+                try database.updateColors(colors)
+            case .renameProjects(let names):
+                try database.rename(names)
+            case .updateRecords(let records):
+                try database.update(records)
+                let updated = Dictionary(uniqueKeysWithValues: records.map { ($0.id, $0) })
+                try database.saveCompletionJournal(try database.completionJournal().map { updated[$0.id] ?? $0 })
+            case .deleteRecords(let ids):
+                try database.deleteRecords(ids)
+                try database.saveCompletionJournal(try database.completionJournal().filter { !ids.contains($0.id) })
+            case .deleteProjects(let ids):
+                try database.deleteProjects(ids)
+                let journal = try database.completionJournal().map { entry in
+                    guard let id = entry.record.projectID, ids.contains(id) else { return entry }
+                    return StoredFocusRecord(id: entry.id,
+                        record: FocusRecord(startedAt: entry.record.startedAt, duration: entry.record.duration))
+                }
+                try database.saveCompletionJournal(journal)
             }
-            try database.saveCompletionJournal(journal)
-        }
-    }
-
-    func renameProjects(_ names: [UUID: String]) throws {
-        let database = try open()
-        try database.transaction { try database.rename(names) }
-    }
-
-    func updateRecords(_ records: [StoredFocusRecord]) throws {
-        let database = try open()
-        try database.transaction {
-            try database.update(records)
-            let updated = Dictionary(uniqueKeysWithValues: records.map { ($0.id, $0) })
-            try database.saveCompletionJournal(try database.completionJournal().map { updated[$0.id] ?? $0 })
-        }
-    }
-
-    func deleteRecords(_ ids: Set<UUID>) throws {
-        let database = try open()
-        try database.transaction {
-            try database.deleteRecords(ids)
-            try database.saveCompletionJournal(try database.completionJournal().filter { !ids.contains($0.id) })
         }
     }
 
@@ -202,9 +180,9 @@ struct SQLiteFocusLogStorage: FocusLogStorage, TimerRecoveryStorage, FocusBackup
         let copy = Self(directory: workspace, upgrades: upgrades)
         try data.write(to: copy.databaseURL)
         do {
-            let records = try copy.load()
-            guard SQLiteDatabase.isSupported(records) else { throw FocusStorageError.invalidData }
-            return (records, try copy.loadProjects())
+            let log = try copy.load()
+            guard SQLiteDatabase.isSupported(log.records) else { throw FocusStorageError.invalidData }
+            return (log.records, log.projects)
         } catch FocusStorageError.unsupportedVersion(let version) where version > upgrades.count + 1 {
             throw FocusRestoreError.newerVersion
         } catch {

@@ -3,7 +3,7 @@ import Foundation
 /// 目前階段的執行狀態與它的轉移：純值型別，所有查詢與操作都傳入「現在」。
 ///
 /// 復原是把操作前的值整份換回（引擎記的是結束時刻，換回後時間照牆上時鐘接著走，ADR-0002）；
-/// 分類歸屬與使用者是否在場不在這裡，復原不還原它們。存檔、提醒與到點計時器由 `AppModel` 協調。
+/// 分類歸屬與使用者是否在場不在這裡，復原不還原它們。轉移與存檔由 `PhaseRunner` 協調，提醒與到點計時器由 `AppModel` 處理。
 struct PhaseRun: Equatable, Sendable {
     /// 閒置滿這麼久，長休息間隔就重新計數（GLOSSARY）。
     static let idleResetInterval: TimeInterval = 2 * 60 * 60

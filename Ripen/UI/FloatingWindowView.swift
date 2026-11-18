@@ -43,9 +43,9 @@ struct FloatingWindowView: View {
     var onResize: (ResizeCorner?) -> Void = { _ in }
 
     var body: some View {
-        TimelineView(CountdownTickSchedule(paused: model.status != .running, clockRevision: model.systemClockRevision)) { _ in
+        TimerFaceTimeline(model: model) { face in
             FloatingWindowGlass(
-                model: model, presentation: presentation, display: model.display, blend: FloatingWindowSizeBlend(state.size), frame: state.glassFrame,
+                model: model, presentation: presentation, face: face, blend: FloatingWindowSizeBlend(state.size), frame: state.glassFrame,
                 widensLeftward: state.widensLeftward,
                 grip: state.isHovering && !state.isResizing ? state.gripCorner : nil,
                 keepsResizeCursor: state.isHovering || state.isResizing,
@@ -61,7 +61,7 @@ struct FloatingWindowView: View {
 struct FloatingWindowGlass: View, Animatable {
     let model: AppModel
     let presentation: PresentationModel
-    let display: PhaseDisplay
+    let face: TimerFace
     var blend: FloatingWindowSizeBlend
     /// 玻璃在父 view 內的框（左上原點）；寬度不足這一刻的最小寬度時往 `widensLeftward` 那邊撐開。
     let frame: CGRect
@@ -89,10 +89,10 @@ struct FloatingWindowGlass: View, Animatable {
         let size = CGSize(width: width, height: frame.height)
         let layout = blend.layout(in: size)
         let shape = RoundedRectangle(cornerRadius: layout.cornerRadius, style: .continuous)
-        FloatingWindowContent(model: model, presentation: presentation, display: display, layout: layout, showsHints: showsHints)
+        FloatingWindowContent(model: model, presentation: presentation, face: face, layout: layout, showsHints: showsHints)
             .frame(width: size.width, height: size.height)
             // 提醒在倒數到 0 時播出，閃的是該階段的超時色；鋪在內容底下、玻璃之上，裁成玻璃的形狀
-            .reminderFlash(model.lastReminder, tint: display.displayTint)
+            .reminderFlash(model.lastReminder, tint: face.tint)
             .clipShape(shape)
             .ripenGlass(in: shape, settings: model.settings)
             .contentShape(shape)
@@ -107,9 +107,9 @@ struct FloatingWindowGlass: View, Animatable {
                 ResizeHandles(size: size, layout: layout, grip: grip,
                               keepsCursor: keepsResizeCursor, onResize: onResize)
             }
-            .overlay { PhaseRipple(shape: shape, reminderID: model.lastReminder?.id, tint: display.displayTint) }
+            .overlay { PhaseRipple(shape: shape, reminderID: model.lastReminder?.id, tint: face.tint) }
             // 超時色是時間推導的值；這個 view 在 TimelineView 裡，每次刷新都重讀
-            .tint(display.displayContentTint)
+            .tint(face.contentTint)
             .scaleEffect(isDismissing && !reduceMotion ? 0.85 : 1)
             .opacity(isDismissing ? 0 : 1)
             .accessibilityElement(children: .contain)
@@ -156,19 +156,19 @@ private struct FloatingWindowContent: View {
     @Environment(\.appPalette) private var palette
     let model: AppModel
     let presentation: PresentationModel
-    let display: PhaseDisplay
+    let face: TimerFace
     let layout: FloatingWindowLayout
     let showsHints: Bool
 
     var body: some View {
-        let status = display.status
-        let isPaused = status == .paused
-        let controls = model.timerControls(display: display)
+        let controls = face.controls
         PlacedLayout(placements: placements) {
-            ring(isPaused: isPaused)
+            ProgressRing(progress: face.progress, lineWidth: layout.ringLineWidth,
+                         track: AnyShapeStyle(palette.progressTrack), insetsStroke: true,
+                         isPaused: face.isPaused, pausedGlyphOpacity: layout.ringGlyphOpacity)
             // 成果卡入口接在階段後，與復原膠囊同一格：膠囊倒數完才浮現（#25）
             HStack(spacing: 4) {
-                PhaseCaption(display: display)
+                PhaseCaption(display: face.display)
                 RecapIconButton(model: model)
             }
                 .font(.system(size: layout.caption.fontSize, weight: .semibold, design: .rounded))
@@ -180,18 +180,18 @@ private struct FloatingWindowContent: View {
                 .undoCapsuleOverlay(model, compact: true,
                                     alignment: layout.caption.anchorX < 0.5 ? .leading : .center)
                 .opacity(layout.caption.opacity)
-            timeText(status: status)
+            timeText
             // 小尺寸這一格本來就隱藏
-            CompletionOrEndCaption(model: model, display: display)
+            CompletionOrEndCaption(model: model, caption: face.endCaption)
                 .font(.system(size: layout.end.fontSize, weight: .medium, design: .rounded))
                 .foregroundStyle(palette.secondary)
                 .fixedSize()
                 .opacity(layout.end.opacity)
-            ProgressBar(progress: display.phaseProgress)
+            ProgressBar(progress: face.progress)
                 .opacity(layout.barOpacity)
             TimerIconButton(model: model, action: controls.primary)
                 .environment(\.iconButtonMetrics, startPauseMetrics)
-            SkipOrDoneButton(model: model, controls: controls)
+            TimerIconButton(model: model, action: controls.secondary)
             // 與瀏海島的「顯示主視窗」同一個圖示
             IslandIconButton(
                 "Expand into Main Window", systemImage: "macwindow",
@@ -228,31 +228,17 @@ private struct FloatingWindowContent: View {
         ]
     }
 
-    /// 進度圈：小尺寸裡放開始／暫停，中尺寸是上排的小圈，大尺寸是圓形進度。
-    private func ring(isPaused: Bool) -> some View {
-        let line = layout.ringLineWidth
-        return ZStack {
-            Circle().inset(by: line / 2).stroke(palette.progressTrack, lineWidth: line)
-            Circle().inset(by: line / 2)
-                .trim(from: 0, to: display.phaseProgress)
-                .stroke(.tint, style: StrokeStyle(lineWidth: line, lineCap: .round))
-                .rotationEffect(.degrees(-90))
-            Image(systemName: "pause.fill")
-                .font(.system(size: 6, weight: .bold))
-                .foregroundStyle(.tint)
-                .opacity(isPaused ? layout.ringGlyphOpacity : 0)
-        }
-        // 換階段時進度由滿歸零；跟著動畫會像倒帶
-        .transaction { $0.animation = nil }
-        .accessibilityHidden(true)
-    }
-
     /// 剩餘時間：三種尺寸共用這一個元件，只換字級與位置。完成專注後約 3 秒換成完成摘要（#25）。
-    private func timeText(status: TimerStatus) -> some View {
-        CompletionTimeSwap(summary: model.completionSummary) {
-            Text(verbatim: display.timeText)
-                .foregroundStyle(display.isOvertime ? AnyShapeStyle(.tint)
-                                 : AnyShapeStyle(status == .running ? palette.primary : palette.secondary))
+    /// 超時中用超時色；只有倒數中用主要文字色，停在起點與暫停時淡化。
+    private var timeText: some View {
+        let style: AnyShapeStyle = switch face.timeStyle {
+        case .overtime: AnyShapeStyle(.tint)
+        case .running: AnyShapeStyle(palette.primary)
+        case .idle, .paused: AnyShapeStyle(palette.secondary)
+        }
+        return CompletionTimeSwap(summary: model.completionSummary) {
+            Text(verbatim: face.timeText)
+                .foregroundStyle(style)
                 .monospacedDigit()
         }
         .font(.system(size: layout.time.fontSize, weight: .semibold, design: .rounded))
