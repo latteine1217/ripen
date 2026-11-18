@@ -13,7 +13,7 @@ xcodebuild test -project Ripen.xcodeproj -scheme Ripen -destination 'platform=ma
 
 只跑單一測試檔：在 `xcodebuild test` 後加上 `-only-testing:RipenTests/AppModelFocusTests`。
 
-完成一個變更後執行 `./scripts/check.sh`，與 CI 跑同一套檢查：`swift-format lint --strict`（規則、4 空格縮排與 140 字行長在 `.swift-format`）、`shellcheck`、`actionlint`，再以 `build-for-testing` 建置 App 與測試 target，最後跑完整測試，結果存於 `build/check/Tests.xcresult`。另需 `brew install shellcheck actionlint`。格式問題以 `xcrun swift-format format -i -r Ripen RipenTests` 修正；swift-format 隨 Xcode 提供，本機與 CI 使用同一版 Xcode，結果才一致。
+完成一個變更後執行 `./scripts/check.sh`，與 CI 跑同一套檢查：`swift-format lint --strict`（規則、4 空格縮排與 140 字行長在 `.swift-format`）、`shellcheck`、`actionlint`，再以 `build-for-testing` 建置 App 與測試 target（Swift 警告視為錯誤），最後跑完整測試，結果存於 `build/check/Tests.xcresult`。另需 `brew install shellcheck actionlint`。格式問題以 `xcrun swift-format format -i -r Ripen RipenTests` 修正；swift-format 隨 Xcode 提供，本機與 CI 使用同一版 Xcode，結果才一致。
 
 開發與測試使用 Xcode 預設的 DerivedData（`~/Library/Developer/Xcode/DerivedData`），不要以 `-derivedDataPath` 放進專案內：專案位於 `~/Documents` 等受保護資料夾時，測試會從那裡啟動 ad-hoc 簽章的 App，每次重建簽章都不同，macOS 會反覆要求檔案存取權。發行打包使用 `build/release`。
 
