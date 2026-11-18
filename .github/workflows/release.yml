@@ -35,9 +35,9 @@ jobs:
       version: ${{ steps.assets.outputs.version }}
       sha256: ${{ steps.assets.outputs.sha256 }}
     steps:
+      # 不 checkout 標籤：release 事件的預設 commit 就是標籤所指，手動執行時則用 main 的檢查腳本，
+      # 舊版本的標籤可能還沒有這些腳本。公鑰固定不換（ADR-0017），用哪一版的原始碼驗證結果相同。
       - uses: actions/checkout@v7.0.1
-        with:
-          ref: ${{ env.TAG }}
       - name: Download assets
         id: assets
         run: |
