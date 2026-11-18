@@ -17,10 +17,11 @@ For anything larger than a small fix, open an issue first so we can agree on the
 You need macOS 14 or later, Xcode with Swift 6, and [XcodeGen](https://github.com/yonaskolb/XcodeGen). `Ripen.xcodeproj` is generated from `project.yml` and is not checked in.
 
 ```sh
-brew install xcodegen
-xcodegen generate
-xcodebuild test -project Ripen.xcodeproj -scheme Ripen -destination 'platform=macOS'
+brew install xcodegen shellcheck actionlint
+./scripts/check.sh
 ```
+
+`scripts/check.sh` runs the same checks as CI: `swift-format lint`, `shellcheck` and `actionlint`, a build of the app and tests with Swift warnings treated as errors, then the full test suite. Fix formatting with `xcrun swift-format format -i -r Ripen RipenTests`.
 
 More on the project layout, frame-by-frame UI checks and packaging is in [docs/development.md](docs/development.md) (Traditional Chinese). Domain terms are defined in [GLOSSARY.md](GLOSSARY.md).
 
