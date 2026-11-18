@@ -8,16 +8,17 @@
   <title>Ripen — 留一點空間，給專注。</title>
   <link rel="icon" type="image/png" href="assets/app-icon.png">
   <link rel="stylesheet" href="styles.css">
-  <script src="script.js" defer></script>
+  <script src="script.js?v=20261106" defer></script>
 </head>
 <body>
   <a class="skip-link" href="#main">跳至主要內容</a>
   <header class="site-header wrap">
     <a class="brand" href="#" aria-label="Ripen 首頁"><img src="assets/app-icon.png" alt="" width="42" height="42"><span>Ripen</span></a>
     <nav aria-label="主要導覽">
-      <a href="#experience">看看 Ripen</a>
+      <a class="nav-optional" href="#experience">看看 Ripen</a>
+      <a class="nav-optional" href="#download">下載</a>
       <a href="#questions">常見問題</a>
-      <a class="nav-support" href="https://ko-fi.com/latteine1217" target="_blank" rel="noopener noreferrer">支持開發<span class="sr-only">（另開分頁）</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h12v7a6 6 0 0 1-12 0V7Zm12 1h1a3 3 0 1 1 0 6h-1M4 21h14"/></svg></a>
+      <a href="https://github.com/latteine1217/ripen" target="_blank" rel="noopener noreferrer">GitHub<span class="sr-only">（另開分頁）</span></a>
       <label class="language-picker" hidden><span class="sr-only">語言</span><select id="language-select" aria-label="語言"><option value="zh-Hant" lang="zh-Hant">繁體中文</option><option value="en" lang="en">English</option></select></label>
     </nav>
   </header>
@@ -27,13 +28,19 @@
       <div class="hero-copy">
         <p class="availability"><span aria-hidden="true"></span>給 Mac 的專注小工具</p>
         <h1 id="hero-title">留一點空間，<br>給專注。</h1>
-        <p class="hero-description">時間留在視線裡，<br>注意力留給手上的事。</p>
+        <p class="hero-description">時間留在視線裡，注意力留給手上的事。</p>
         <a class="button button-primary" href="#download"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m-5-5 5 5 5-5M5 16v4h14v-4"/></svg>免費下載 macOS 版</a>
-        <p class="hero-note">macOS 14 以上・不需要帳號<br><span>免費使用，自願支持開發</span></p>
+        <p class="hero-note">免費・開源・不需帳號<br><span>macOS 14 以上・未經 Apple 公證，第一次打開要手動允許一次。</span></p>
       </div>
-      <div class="hero-scene" aria-label="Ripen 暖瓷白主視窗實際截圖">
-        <img class="hero-app" src="assets/main-white.jpg" data-src-en="assets/en/main-white.jpg" width="960" height="1200" alt="Ripen 暖瓷白主視窗：圓環顯示剩餘專注時間，可暫停與切換階段" fetchpriority="high">
-      </div>
+      <!-- 雙語操作短片沿用靜態畫面備援；播放規則見 docs/development.md。 -->
+      <figure class="clip clip-forms" data-video="assets/demos/zh-Hant/forms.mp4?v=20261106-app" data-video-en="assets/demos/en/forms.mp4?v=20261106-app">
+        <div class="forms-stage">
+          <img class="window-notch" src="assets/window-notch.png" data-src-en="assets/en/window-notch.png" width="720" height="312" alt="展開的瀏海島：顯示 18:42、進度條與控制按鈕" fetchpriority="high">
+          <img class="window-main" src="assets/window-main.jpg" data-src-en="assets/en/window-main.jpg" width="728" height="1048" alt="Ripen 主視窗：圓環倒數 18:42，分類為深度工作，可暫停" fetchpriority="high">
+          <img class="window-floating" src="assets/window-floating.png" data-src-en="assets/en/window-floating.png" width="736" height="496" alt="懸浮窗：顯示 18:42、進度條與控制按鈕" fetchpriority="high">
+        </div>
+        <figcaption>Ripen 的三種形態：主視窗、懸浮窗與瀏海島。</figcaption>
+      </figure>
     </section>
 
     <div class="quiet-facts wrap" aria-label="產品特色摘要">
@@ -45,35 +52,17 @@
         <h2 id="experience-title">找到你的<br>專注位置。</h2>
         <p>需要時就在眼前，忙起來就退到一旁。<br>同一個計時，三種相處方式。</p>
       </div>
-      <div class="mode-layout">
-        <div class="mode-choices" role="tablist" aria-label="切換計時形態" aria-orientation="vertical">
-          <button class="mode-tab" id="tab-main" type="button" role="tab" aria-selected="true" aria-controls="panel-main" tabindex="0"><span class="mode-symbol" aria-hidden="true"><svg viewBox="0 0 28 28"><rect x="5" y="3" width="18" height="22" rx="4"/><circle cx="14" cy="14" r="5"/></svg></span><span><strong>主視窗</strong><small>坐下來，開始這一段。</small></span><span class="tab-dot" aria-hidden="true"></span></button>
-          <button class="mode-tab" id="tab-floating" type="button" role="tab" aria-selected="false" aria-controls="panel-floating" tabindex="-1"><span class="mode-symbol" aria-hidden="true"><svg viewBox="0 0 28 28"><rect x="3" y="7" width="22" height="15" rx="4"/><path d="M8 12h6m-6 5h12"/></svg></span><span><strong>懸浮窗</strong><small>拖出圓環，放在順眼的地方。</small></span><span class="tab-dot" aria-hidden="true"></span></button>
-          <button class="mode-tab" id="tab-notch" type="button" role="tab" aria-selected="false" aria-controls="panel-notch" tabindex="-1"><span class="mode-symbol" aria-hidden="true"><svg viewBox="0 0 28 28"><path d="M3 5h22M6 5v8a4 4 0 0 0 4 4h8a4 4 0 0 0 4-4V5"/><path d="M11 10h6"/></svg></span><span><strong>瀏海島</strong><small>收進螢幕頂端，抬眼就看見。</small></span><span class="tab-dot" aria-hidden="true"></span></button>
-        </div>
-        <div class="mode-stage">
-          <div class="mode-panel" id="panel-main" role="tabpanel" aria-labelledby="tab-main" tabindex="0"><img src="assets/main.jpg" data-src-en="assets/en/main.jpg" alt="Main window：主視窗圓環計時與暫停按鈕" width="960" height="1200" loading="lazy"><p>完整控制，安靜地陪你開始。</p></div>
-          <div class="mode-panel" id="panel-floating" role="tabpanel" aria-labelledby="tab-floating" tabindex="0" hidden><img src="assets/floating.jpg" data-src-en="assets/en/floating.jpg" alt="Floating window：置頂懸浮窗顯示時間、進度與操作按鈕" width="880" height="640" loading="lazy"><p>永遠置頂，三種尺寸，記得你放的位置。</p></div>
-          <div class="mode-panel" id="panel-notch" role="tabpanel" aria-labelledby="tab-notch" tabindex="0" hidden><img src="assets/notch.jpg" data-src-en="assets/en/notch.jpg" alt="Notch island：滑鼠移入後展開的瀏海島與計時控制" width="1600" height="440" loading="lazy"><p>移入展開控制，往下拉回主視窗。沒有瀏海也能用。</p></div>
-          <span class="stage-label">App 實際截圖</span>
-        </div>
+      <div class="form-grid">
+        <article class="form-card form-card-main"><img src="assets/main.jpg" data-src-en="assets/en/main.jpg" alt="玻璃外觀的主視窗：圓環倒數 18:42 與暫停按鈕" width="960" height="1200" loading="lazy"><div><h3>主視窗</h3><p>完整控制，安靜地陪你開始。</p></div></article>
+        <article class="form-card form-card-floating"><img src="assets/floating.jpg" data-src-en="assets/en/floating.jpg" alt="玻璃外觀的懸浮窗：顯示時間、進度與操作按鈕" width="880" height="640" loading="lazy"><div><h3>懸浮窗</h3><p>永遠置頂，三種尺寸，記得你放的位置。</p></div></article>
+        <article class="form-card"><img src="assets/notch.jpg" data-src-en="assets/en/notch.jpg" alt="滑鼠移入後展開的瀏海島與計時控制" width="1600" height="440" loading="lazy"><div><h3>瀏海島</h3><p>移入展開控制，往下拉回主視窗。沒有瀏海也能用。</p></div></article>
       </div>
     </section>
 
     <section class="overtime-section" aria-labelledby="overtime-title">
       <div class="overtime-layout wrap">
-        <div class="overtime-art"><img src="assets/overtime.jpg" data-src-en="assets/en/overtime.jpg" width="960" height="1200" alt="Overtime：專注到點後，以青綠色 +03:17 繼續計時" loading="lazy"></div>
+        <figure class="clip clip-overtime" data-video="assets/demos/zh-Hant/overtime.mp4?v=20261106" data-video-en="assets/demos/en/overtime.mp4?v=20261106"><img src="assets/overtime.jpg" data-src-en="assets/en/overtime.jpg" width="960" height="1200" alt="專注超時：圓環與時間以洋紅色顯示 +03:17，下方是完成按鈕" loading="lazy"></figure>
         <div class="overtime-copy"><p class="small-note">給還沒寫完的那一句。</p><h2 id="overtime-title">到點了，<br>也不必急著結束。</h2><p>提示音響起後，Ripen 會換個顏色，繼續往上計時。把這個想法寫完，準備好了，再按「完成」。</p><p>專注紀錄會算進超時的長度；鎖定或睡眠期間的超時不會持續累加。</p><div class="overtime-example" aria-label="倒數到零後進入超時"><span>00:00</span><svg viewBox="0 0 40 16" aria-hidden="true"><path d="M1 8h36m-7-6 7 6-7 6"/></svg><span>+03:17</span></div></div>
-      </div>
-    </section>
-
-    <section class="details-section wrap section-space" aria-labelledby="details-title">
-      <h2 id="details-title">把簡單的事，<br>照顧好。</h2>
-      <div class="detail-grid">
-        <article><svg class="detail-icon" viewBox="0 0 32 32" aria-hidden="true"><path d="M16 3 5 8v8c0 6 11 13 11 13s11-7 11-13V8L16 3Z"/><path d="m11 16 3 3 7-7"/></svg><h3>你的紀錄，只留給你</h3><p>不用註冊、不需要帳號。專注紀錄保存在你的 Mac，不用把一天交給另一個雲端服務。</p></article>
-        <article><svg class="detail-icon" viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="12"/><path d="M16 8v8l5 3"/></svg><h3>照自己的節奏</h3><p>調整專注、短休息與長休息的時間。用全域快速鍵開始或暫停，手不用離開鍵盤。</p></article>
-        <article><svg class="detail-icon" viewBox="0 0 32 32" aria-hidden="true"><path d="M5 5v22h23M11 21v-6m7 6V8m7 13v-9"/></svg><h3>看見這一週的累積</h3><p>切換最近 7 天或 30 天，看專注了多久、時間花在哪些分類。點進分類，看它累積了多少。</p></article>
-        <article><svg class="detail-icon" viewBox="0 0 32 32" aria-hidden="true"><rect x="7" y="4" width="18" height="24" rx="3"/><path d="M12 21v-3m4 3v-7m4 7v-5"/></svg><h3>把累積做成一張卡</h3><p>每個分類都有一張成果卡，方形或直式版面。存成圖片、複製，或用系統分享選單傳出去。</p></article>
       </div>
     </section>
 
@@ -82,14 +71,14 @@
         <div class="story-copy">
           <h2 id="projects-title">每一段投入，<br>都看得見。</h2>
           <p>工作、閱讀，或正在學的新事物。把專注分給不同分類，看看這一週，時間花在哪裡。</p>
-          <p>今天的投入、七天的節奏、一路累積的時間，都留在你的 Mac。</p>
+          <p>切換最近 7 天或 30 天，看專注了多久、時間花在哪些分類。點進分類，看它累積了多少。</p>
         </div>
-        <div class="statistics-scene"><img src="assets/stats.jpg" data-src-en="assets/en/stats.jpg" width="960" height="1200" loading="lazy" alt="分類統計：依代表色呈現最近七天的專注；展示資料"></div>
+        <figure class="clip clip-stats" data-video="assets/demos/zh-Hant/stats.mp4?v=20261106" data-video-en="assets/demos/en/stats.mp4?v=20261106"><img src="assets/stats.jpg" data-src-en="assets/en/stats.jpg" width="960" height="1200" loading="lazy" alt="統計頁：最近 7 天的專注依分類代表色堆疊，下方列出各分類的累積時間；展示資料"></figure>
       </div>
       <div class="recap-story">
-        <div class="recap-scene" aria-label="方形與直式成果卡">
-          <img class="recap-square" src="assets/recap-square.png" data-src-en="assets/en/recap-square.png" width="1080" height="1080" loading="lazy" alt="方形分類成果卡；展示資料">
-          <img class="recap-portrait" src="assets/recap-portrait.png" data-src-en="assets/en/recap-portrait.png" width="1080" height="1920" loading="lazy" alt="直式分類成果卡；展示資料">
+        <div class="recap-scene" role="group" aria-label="方形與直式成果卡">
+          <img class="recap-square" src="assets/recap-square.png" data-src-en="assets/en/recap-square.png" width="1080" height="1080" loading="lazy" alt="方形成果卡：分類累積時間、今日投入、完成次數、專注天數與最近 7 天；展示資料">
+          <img class="recap-portrait" src="assets/recap-portrait.png" data-src-en="assets/en/recap-portrait.png" width="1080" height="1920" loading="lazy" alt="直式成果卡，內容與方形相同；展示資料">
         </div>
         <div class="story-copy">
           <h2>把累積，<br>留成一張卡。</h2>
@@ -100,9 +89,34 @@
       <p class="gallery-note">畫面中的分類與專注紀錄為展示資料。</p>
     </section>
 
+    <section class="details-section wrap" aria-labelledby="details-title">
+      <h2 id="details-title">把簡單的事，<br>照顧好。</h2>
+      <div class="detail-grid">
+        <article><svg class="detail-icon" viewBox="0 0 32 32" aria-hidden="true"><path d="M16 3 5 8v8c0 6 11 13 11 13s11-7 11-13V8L16 3Z"/><path d="m11 16 3 3 7-7"/></svg><h3>你的紀錄，只留給你</h3><p>不用註冊、不需要帳號。專注紀錄保存在你的 Mac，不用把一天交給另一個雲端服務。</p></article>
+        <article><svg class="detail-icon" viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="12"/><path d="M16 8v8l5 3"/></svg><h3>照自己的節奏</h3><p>調整專注、短休息與長休息的時間。用全域快速鍵開始或暫停，手不用離開鍵盤。</p></article>
+        <article><svg class="detail-icon" viewBox="0 0 32 32" aria-hidden="true"><path d="M11 7 5 13l6 6"/><path d="M5 13h14a7 7 0 0 1 0 14h-6"/></svg><h3>按錯了，也能復原</h3><p>跳過、重設與完成之後 5 秒內，按倒數膠囊或 ⌘Z 就能復原。</p></article>
+        <article><svg class="detail-icon" viewBox="0 0 32 32" aria-hidden="true"><rect x="5" y="6" width="22" height="15" rx="2"/><path d="M11 26h10M16 21v5M16 9v8m-3-3 3 3 3-3"/></svg><h3>換一台 Mac，也帶得走</h3><p>備份專注紀錄與分類，到新 Mac 還原；也能把完成的專注匯出成 CSV。</p></article>
+      </div>
+    </section>
+
     <section class="download-section wrap" id="download" aria-labelledby="download-title">
-      <div><img class="download-icon" src="assets/app-icon.png" alt="" width="80" height="80" loading="lazy"><h2 id="download-title">下一段專注，<br>留給 Ripen。</h2><p>免費使用，不需要帳號。<br>如果它剛好幫上忙，再請我喝杯咖啡。</p></div>
-      <div class="download-info"><div class="download-status"><span aria-hidden="true"></span>Mac 版現已開放下載</div><p>下載後打開 DMG，將 Ripen 拖進「應用程式」。<br>安裝後可從 App 選單手動檢查更新。</p><a class="button button-primary" href="https://github.com/latteine1217/ripen/releases/download/v0.3.4/Ripen-0.3.4.dmg">下載 Ripen 0.3.4</a><dl><div><dt>適用系統</dt><dd>macOS 14 Sonoma 以上</dd></div><div><dt>支援晶片</dt><dd>Apple silicon 與 Intel</dd></div><div><dt>介面語言</dt><dd>繁體中文、English</dd></div></dl><p class="install-note">目前版本尚未經 Apple 公證。首次開啟可能需要到「系統設定 › 隱私權與安全性」允許開啟。</p><p class="install-note"><a href="https://github.com/latteine1217/ripen/releases">查看所有版本與更新說明</a></p></div>
+      <div class="download-main">
+        <img class="download-icon" src="assets/app-icon.png" alt="" width="80" height="80" loading="lazy">
+        <h2 id="download-title">下一段專注，<br>留給 Ripen。</h2>
+        <p>免費使用，不需要帳號。<br>下載後打開 DMG，將 Ripen 拖進「應用程式」。</p>
+        <a class="button button-primary" href="https://github.com/latteine1217/ripen/releases/download/v0.3.4/Ripen-0.3.4.dmg">下載 Ripen 0.3.4</a>
+        <dl><div><dt>適用系統</dt><dd>macOS 14 Sonoma 以上</dd></div><div><dt>支援晶片</dt><dd>Apple silicon 與 Intel</dd></div><div><dt>介面語言</dt><dd>繁體中文、English</dd></div></dl>
+        <p class="install-note"><a href="https://github.com/latteine1217/ripen/releases">查看所有版本與更新說明</a></p>
+      </div>
+      <div class="download-info">
+        <h3>或用 Homebrew 安裝</h3>
+        <div class="command"><code>brew install --cask latteine1217/tap/ripen</code><button class="copy-button" type="button" aria-label="複製安裝指令">複製</button></div>
+        <p class="copy-status" role="status"></p>
+        <h3>第一次打開，要手動允許一次</h3>
+        <p>Ripen 未經 Apple 公證，第一次打開會被 Gatekeeper 擋下。允許一次之後，就能正常雙擊打開。</p>
+        <dl class="open-steps"><div><dt>macOS 14</dt><dd>在「應用程式」資料夾對 Ripen 按右鍵（或 Control 點按）選「打開」，再於對話框按「打開」。</dd></div><div><dt>macOS 15 以上</dt><dd>先雙擊 Ripen 讓系統擋下，再到「系統設定 › 隱私權與安全性」，在下方找到 Ripen 按「強制打開」並確認。</dd></div></dl>
+        <p class="install-note">安裝後可從 App 選單手動檢查更新。</p>
+      </div>
     </section>
 
     <section class="faq-section wrap section-space" id="questions" aria-labelledby="faq-title">
@@ -115,10 +129,8 @@
         <details><summary>如何支持開發？</summary><p>如果 Ripen 讓你的工作日順了一點，可以透過 <a href="https://ko-fi.com/latteine1217" target="_blank" rel="noopener noreferrer">Ko-fi 自願支持<span class="sr-only">（另開分頁）</span></a>。不支持也能完整使用目前的免費版本。</p></details>
       </div>
     </section>
-
-    <section class="support-section wrap" aria-labelledby="support-title"><div><h2 id="support-title">一個小工具，<br>慢慢做好。</h2><p>喜歡 Ripen 的話，一杯咖啡就是很好的鼓勵。</p></div><a class="button button-support" href="https://ko-fi.com/latteine1217" target="_blank" rel="noopener noreferrer"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h12v7a6 6 0 0 1-12 0V7Zm12 1h1a3 3 0 1 1 0 6h-1M4 21h14"/></svg>在 Ko-fi 支持開發<span class="sr-only">（另開分頁）</span></a></section>
   </main>
 
-  <footer class="site-footer wrap"><a class="brand" href="#" aria-label="回到 Ripen 首頁"><img src="assets/app-icon.png" alt="" width="32" height="32"><span>Ripen</span></a><p>留一點空間，給專注。</p><span>獨立開發，為日常而做。</span></footer>
+  <footer class="site-footer wrap"><a class="brand" href="#" aria-label="回到 Ripen 首頁"><img src="assets/app-icon.png" alt="" width="32" height="32"><span>Ripen</span></a><p>留一點空間，給專注。</p><span>獨立開發，為日常而做。</span><a class="nav-support" href="https://ko-fi.com/latteine1217" target="_blank" rel="noopener noreferrer">在 Ko-fi 支持開發<span class="sr-only">（另開分頁）</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h12v7a6 6 0 0 1-12 0V7Zm12 1h1a3 3 0 1 1 0 6h-1M4 21h14"/></svg></a><p class="github-support">喜歡 Ripen？<a href="https://github.com/latteine1217/ripen" target="_blank" rel="noopener noreferrer">歡迎在 GitHub 給個 star，支持後續開發。<span class="sr-only">（另開分頁）</span></a></p></footer>
 </body>
 </html>

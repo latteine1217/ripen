@@ -1,18 +1,15 @@
 // 保留原始文字節點，切換語言時不重建連結、圖示或互動元件。
 const englishTranslations = new Map(Object.entries({
+  "Ripen 的三種形態：主視窗、懸浮窗與瀏海島。": "Ripen in three forms: main window, floating window, and notch island.",
   "每一段投入，": "See the time",
   "都看得見。": "you put in.",
   "工作、閱讀，或正在學的新事物。把專注分給不同分類，看看這一週，時間花在哪裡。": "Work, reading, or something you’re learning. Give each focus a project, and see where your time went this week.",
-  "今天的投入、七天的節奏、一路累積的時間，都留在你的 Mac。": "Today’s effort, your weekly rhythm, and all the time you’ve put in. Kept on your Mac.",
   "把累積，": "Time well spent,",
   "留成一張卡。": "made into a card.",
   "一個分類，一張成果卡。把持續投入的時間，存成自己看得見的成果。": "One project, one recap card. Turn the time you keep putting in into something you can see.",
   "選方形或直式，存成圖片、複製，或透過系統分享選單傳出去。": "Choose square or portrait. Save an image, copy it, or send it through the macOS share menu.",
   "畫面中的分類與專注紀錄為展示資料。": "Projects and focus history shown here are demonstration data.",
-  "分類統計：依代表色呈現最近七天的專注；展示資料": "Project statistics: seven days of focuses stacked by project color; demonstration data",
   "方形與直式成果卡": "Square and portrait recap cards",
-  "方形分類成果卡；展示資料": "Square project recap card; demonstration data",
-  "直式分類成果卡；展示資料": "Portrait project recap card; demonstration data",
 
   "Ripen 是原生 macOS 番茄鐘。收進瀏海、拖成懸浮窗，到點後繼續專注。免費使用，不需要帳號，專注紀錄留在你的 Mac。": "Ripen is a native macOS Pomodoro timer. Tuck it into the notch, float it above your work, and keep focusing past zero. Free to use, with no account. Your focus history stays on your Mac.",
   "Ripen — 留一點空間，給專注。": "Ripen — A little space for focus.",
@@ -21,18 +18,11 @@ const englishTranslations = new Map(Object.entries({
   "主要導覽": "Main navigation",
   "看看 Ripen": "Explore Ripen",
   "常見問題": "FAQ",
-  "支持開發": "Support",
   "（另開分頁）": " (opens in a new tab)",
   "給 Mac 的專注小工具": "A little focus companion for Mac",
   "留一點空間，": "A little space",
   "給專注。": "for focus.",
-  "時間留在視線裡，": "Keep time in sight.",
-  "注意力留給手上的事。": "Keep your attention on your work.",
   "免費下載 macOS 版": "Download free for macOS",
-  "macOS 14 以上・不需要帳號": "macOS 14 or later · No account needed",
-  "免費使用，自願支持開發": "Free to use. Support is optional.",
-  "Ripen 暖瓷白主視窗實際截圖": "Screenshot of Ripen’s warm white main window",
-  "Ripen 暖瓷白主視窗：圓環顯示剩餘專注時間，可暫停與切換階段": "Ripen’s warm white main window with a focus countdown ring, pause button, and session controls",
   "產品特色摘要": "Features at a glance",
   "原生 macOS": "Native macOS",
   "免費使用": "Free to use",
@@ -42,21 +32,12 @@ const englishTranslations = new Map(Object.entries({
   "專注位置。": "to focus.",
   "需要時就在眼前，忙起來就退到一旁。": "There when you need it. Out of the way when you don’t.",
   "同一個計時，三種相處方式。": "One timer. Three ways to keep it close.",
-  "切換計時形態": "Choose a timer view",
   "主視窗": "Main window",
-  "坐下來，開始這一段。": "Settle in and start a session.",
   "懸浮窗": "Floating window",
-  "拖出圓環，放在順眼的地方。": "Drag the ring out and put it where it feels right.",
   "瀏海島": "Notch island",
-  "收進螢幕頂端，抬眼就看見。": "Tuck it at the top of your screen, a glance away.",
-  "Main window：主視窗圓環計時與暫停按鈕": "Main window with a countdown ring and pause button",
   "完整控制，安靜地陪你開始。": "All the controls. A quiet place to begin.",
-  "Floating window：置頂懸浮窗顯示時間、進度與操作按鈕": "Always-on-top floating window with time, progress, and controls",
   "永遠置頂，三種尺寸，記得你放的位置。": "Always on top. Three sizes. Right where you left it.",
-  "Notch island：滑鼠移入後展開的瀏海島與計時控制": "Notch island expanded on hover to show timer controls",
   "移入展開控制，往下拉回主視窗。沒有瀏海也能用。": "Hover for controls. Pull down for the main window. Works without a notch, too.",
-  "App 實際截圖": "Actual app screenshots",
-  "Overtime：專注到點後，以青綠色 +03:17 繼續計時": "Focus overtime counting up in teal at +03:17",
   "給還沒寫完的那一句。": "For the thought you haven’t finished yet.",
   "到點了，": "Time’s up.",
   "也不必急著結束。": "Take your time.",
@@ -69,16 +50,10 @@ const englishTranslations = new Map(Object.entries({
   "不用註冊、不需要帳號。專注紀錄保存在你的 Mac，不用把一天交給另一個雲端服務。": "No sign-up. No account. Your focus history stays on your Mac, without handing your day to another cloud service.",
   "照自己的節奏": "Follow your own rhythm",
   "調整專注、短休息與長休息的時間。用全域快速鍵開始或暫停，手不用離開鍵盤。": "Choose your focus, short break, and long break lengths. Start or pause with a global shortcut, without leaving the keyboard.",
-  "看見這一週的累積": "See your week add up",
   "切換最近 7 天或 30 天，看專注了多久、時間花在哪些分類。點進分類，看它累積了多少。": "Switch between the last 7 and 30 days to see how long you focused and which projects took the time. Open a project to see its total.",
-  "把累積做成一張卡": "Turn it into a card",
-  "每個分類都有一張成果卡，方形或直式版面。存成圖片、複製，或用系統分享選單傳出去。": "Every project has a recap card in a square or portrait layout. Save it as an image, copy it, or share it from the macOS share menu.",
   "下一段專注，": "Your next focus",
   "留給 Ripen。": "starts with Ripen.",
   "免費使用，不需要帳號。": "Free to use. No account needed.",
-  "如果它剛好幫上忙，再請我喝杯咖啡。": "If it helps your day, you can buy me a coffee.",
-  "Mac 版現已開放下載": "Available now for Mac",
-  "下載後打開 DMG，將 Ripen 拖進「應用程式」。": "Open the DMG and drag Ripen into Applications.",
   "安裝後可從 App 選單手動檢查更新。": "Once installed, check for updates from the app menu.",
   "下載 Ripen 0.3.4": "Download Ripen 0.3.4",
   "適用系統": "Requires",
@@ -87,7 +62,6 @@ const englishTranslations = new Map(Object.entries({
   "Apple silicon 與 Intel": "Apple silicon and Intel",
   "介面語言": "Languages",
   "繁體中文、English": "Traditional Chinese and English",
-  "目前版本尚未經 Apple 公證。首次開啟可能需要到「系統設定 › 隱私權與安全性」允許開啟。": "This version is not notarized by Apple. On first launch, you may need to allow it in System Settings › Privacy & Security.",
   "查看所有版本與更新說明": "View all releases and release notes",
   "你可能想知道。": "A few things to know.",
   "真的可以免費使用嗎？": "Is it really free?",
@@ -102,13 +76,44 @@ const englishTranslations = new Map(Object.entries({
   "如果 Ripen 讓你的工作日順了一點，可以透過": "If Ripen makes your workday a little smoother, you can ",
   "Ko-fi 自願支持": "support it on Ko-fi",
   "。不支持也能完整使用目前的免費版本。": ". You can use all the features of the current free version without contributing.",
-  "一個小工具，": "A little app,",
-  "慢慢做好。": "made with care.",
-  "喜歡 Ripen 的話，一杯咖啡就是很好的鼓勵。": "Enjoying Ripen? A coffee is a lovely way to encourage its development.",
   "在 Ko-fi 支持開發": "Support on Ko-fi",
   "回到 Ripen 首頁": "Back to Ripen home",
   "留一點空間，給專注。": "A little space for focus.",
   "獨立開發，為日常而做。": "Independently made for everyday life.",
+  "時間留在視線裡，注意力留給手上的事。": "Keep time in sight and your attention on your work.",
+  "免費・開源・不需帳號": "Free · Open source · No account needed",
+  "macOS 14 以上・未經 Apple 公證，第一次打開要手動允許一次。": "macOS 14 or later · Not notarized by Apple. Allow it once on first launch.",
+  "喜歡 Ripen？": "Enjoying Ripen? ",
+  "歡迎在 GitHub 給個 star，支持後續開發。": "Star it on GitHub to support future development.",
+  "展開的瀏海島：顯示 18:42、進度條與控制按鈕": "Expanded notch island showing 18:42, a progress bar, and controls",
+  "Ripen 主視窗：圓環倒數 18:42，分類為深度工作，可暫停": "Ripen’s main window with a countdown ring at 18:42, the Deep Work project, and a pause button",
+  "懸浮窗：顯示 18:42、進度條與控制按鈕": "Floating window showing 18:42, a progress bar, and controls",
+  "下載": "Download",
+  "玻璃外觀的主視窗：圓環倒數 18:42 與暫停按鈕": "Main window in the glass appearance with a countdown ring at 18:42 and a pause button",
+  "玻璃外觀的懸浮窗：顯示時間、進度與操作按鈕": "Floating window in the glass appearance with time, progress, and controls",
+  "滑鼠移入後展開的瀏海島與計時控制": "Notch island expanded on hover to show timer controls",
+  "專注超時：圓環與時間以洋紅色顯示 +03:17，下方是完成按鈕": "Focus overtime with the ring and time in magenta at +03:17, above a Done button",
+  "統計頁：最近 7 天的專注依分類代表色堆疊，下方列出各分類的累積時間；展示資料": "Statistics page: seven days of focuses stacked by project color, with time per project below; demonstration data",
+  "方形成果卡：分類累積時間、今日投入、完成次數、專注天數與最近 7 天；展示資料": "Square recap card with total focus, today, focus count, focus days, and the last 7 days; demonstration data",
+  "直式成果卡，內容與方形相同；展示資料": "Portrait recap card with the same content as the square one; demonstration data",
+  "切換最近 7 天或 30 天，看專注了多久、時間花在哪些分類。點進分類，看它累積了多少。": "Switch between the last 7 and 30 days to see how long you focused and which projects took the time. Open a project to see its total.",
+  "按錯了，也能復原": "Undo a slip",
+  "跳過、重設與完成之後 5 秒內，按倒數膠囊或 ⌘Z 就能復原。": "For 5 seconds after you skip, reset, or finish, press the countdown capsule or ⌘Z to undo it.",
+  "換一台 Mac，也帶得走": "Bring it to a new Mac",
+  "備份專注紀錄與分類，到新 Mac 還原；也能把完成的專注匯出成 CSV。": "Back up your focus history and projects, then restore them on a new Mac. You can also export completed focuses as CSV.",
+  "下載後打開 DMG，將 Ripen 拖進「應用程式」。": "Open the DMG and drag Ripen into Applications.",
+  "或用 Homebrew 安裝": "Or install with Homebrew",
+  "複製安裝指令": "Copy the install command",
+  "複製": "Copy",
+  "已複製": "Copied",
+  "無法自動複製，請手動選取指令。": "Couldn’t copy automatically. Select the command by hand.",
+  "第一次打開，要手動允許一次": "Allow it once on first launch",
+  "Ripen 未經 Apple 公證，第一次打開會被 Gatekeeper 擋下。允許一次之後，就能正常雙擊打開。": "Ripen isn’t notarized by Apple, so Gatekeeper blocks the first launch. After you allow it once, it opens normally.",
+  "macOS 15 以上": "macOS 15 or later",
+  "在「應用程式」資料夾對 Ripen 按右鍵（或 Control 點按）選「打開」，再於對話框按「打開」。": "In Applications, right-click (or Control-click) Ripen, choose Open, then click Open in the dialog.",
+  "先雙擊 Ripen 讓系統擋下，再到「系統設定 › 隱私權與安全性」，在下方找到 Ripen 按「強制打開」並確認。": "Double-click Ripen and let macOS block it. Then go to System Settings › Privacy & Security, find Ripen near the bottom, click Open Anyway, and confirm.",
+  "播放": "Play",
+  "暫停": "Pause",
   "語言": "Language"
 }));
 const localizedText = [];
@@ -138,6 +143,8 @@ const localizedImages = Array.from(document.querySelectorAll('img[data-src-en]')
 
 const languageSelect = document.getElementById('language-select');
 const languageStorageKey = 'ripen-language';
+const languageListeners = [];
+const localized = (text) => (document.documentElement.lang === 'en' ? englishTranslations.get(text) : text);
 function setLanguage(language) {
   document.documentElement.lang = language;
   languageSelect.value = language;
@@ -150,6 +157,7 @@ function setLanguage(language) {
   for (const { element, original, translation } of localizedImages) {
     element.setAttribute('src', language === 'en' ? translation : original);
   }
+  for (const listener of languageListeners) listener();
 }
 
 let savedLanguage;
@@ -170,37 +178,74 @@ languageSelect.addEventListener('change', () => {
   }
 });
 
-const tabs = Array.from(document.querySelectorAll('[role="tab"]'));
-const mobileLayout = window.matchMedia('(max-width: 680px)');
-
-function updateTabOrientation() {
-  document.querySelector('[role="tablist"]').setAttribute('aria-orientation', mobileLayout.matches ? 'horizontal' : 'vertical');
-}
-
-updateTabOrientation();
-mobileLayout.addEventListener('change', updateTabOrientation);
-
-function selectTab(selectedTab) {
-  for (const tab of tabs) {
-    const selected = tab === selectedTab;
-    tab.setAttribute('aria-selected', String(selected));
-    tab.tabIndex = selected ? 0 : -1;
-    document.getElementById(tab.getAttribute('aria-controls')).hidden = !selected;
+const copyButton = document.querySelector('.copy-button');
+const copyStatus = document.querySelector('.copy-status');
+let copyStatusTimer;
+copyButton.addEventListener('click', async () => {
+  const command = document.querySelector('.command code').textContent;
+  try {
+    await navigator.clipboard.writeText(command);
+    copyStatus.textContent = localized('已複製');
+  } catch (error) {
+    console.warn('無法寫入剪貼簿：', error);
+    copyStatus.textContent = localized('無法自動複製，請手動選取指令。');
   }
-}
+  clearTimeout(copyStatusTimer);
+  copyStatusTimer = setTimeout(() => { copyStatus.textContent = ''; }, 2500);
+});
 
-for (const tab of tabs) {
-  tab.addEventListener('click', () => selectTab(tab));
-  tab.addEventListener('keydown', (event) => {
-    const index = tabs.indexOf(tab);
-    let nextIndex;
-    if (event.key === 'ArrowDown' || event.key === 'ArrowRight') nextIndex = (index + 1) % tabs.length;
-    if (event.key === 'ArrowUp' || event.key === 'ArrowLeft') nextIndex = (index - 1 + tabs.length) % tabs.length;
-    if (event.key === 'Home') nextIndex = 0;
-    if (event.key === 'End') nextIndex = tabs.length - 1;
-    if (nextIndex === undefined) return;
-    event.preventDefault();
-    selectTab(tabs[nextIndex]);
-    tabs[nextIndex].focus();
+// 靜態畫面留在底層，影片可播放時才淡入；載入失敗就繼續顯示靜態畫面。
+// 預設在畫面內自動靜音循環；開啟減少動態效果時，由使用者按下才播放。
+const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+function setUpClip(clip) {
+  const video = document.createElement('video');
+  video.muted = true;
+  video.loop = true;
+  video.playsInline = true;
+  video.preload = 'none';
+  // 影片無旁白，內容與底層靜態畫面的 alt 相同，不重複朗讀。
+  video.setAttribute('aria-hidden', 'true');
+  clip.append(video);
+
+  const toggle = document.createElement('button');
+  toggle.className = 'clip-toggle';
+  toggle.type = 'button';
+  clip.append(toggle);
+
+  let inView = false;
+  let pausedByUser = reducedMotion.matches;
+  const updateLabel = () => { toggle.textContent = localized(video.paused ? '播放' : '暫停'); };
+  const sync = () => {
+    if (inView && !pausedByUser) {
+      video.play().catch((error) => { if (error.name !== 'AbortError') console.warn('影片無法播放：', error); });
+    } else {
+      video.pause();
+    }
+  };
+  const loadSource = () => {
+    video.src = document.documentElement.lang === 'en' ? clip.dataset.videoEn : clip.dataset.video;
+    clip.classList.remove('is-ready');
+    updateLabel();
+    sync();
+  };
+
+  video.addEventListener('playing', () => clip.classList.add('is-ready'));
+  video.addEventListener('play', updateLabel);
+  video.addEventListener('pause', updateLabel);
+  video.addEventListener('error', () => {
+    console.warn('影片載入失敗，改顯示靜態畫面：', video.src);
+    video.remove();
+    toggle.remove();
   });
+  toggle.addEventListener('click', () => {
+    pausedByUser = !video.paused;
+    sync();
+  });
+  new IntersectionObserver((entries) => {
+    inView = entries.at(-1).isIntersecting;
+    sync();
+  }, { threshold: 0.4 }).observe(clip);
+  languageListeners.push(loadSource);
+  loadSource();
 }
+document.querySelectorAll('.clip[data-video][data-video-en]').forEach(setUpClip);

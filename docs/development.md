@@ -81,7 +81,7 @@ GitHub 分享預覽圖 `docs/images/brand/social-preview.png`（1280×640）由 
   --screenshot="$PWD/docs/images/brand/social-preview.png" "file://$PWD/scripts/social-preview.html"
 ```
 
-產品截圖採用彩色漸層背景，中英文各十二張：玻璃及暖瓷白主視窗、三尺寸懸浮窗、瀏海島收合／展開、超時、分類統計、分類詳情，以及方形／直式成果卡預覽。`docs/images/en/` 與 `zh-Hant/` 保存供 README 使用的 JPEG 與展示拼圖；`website/assets/` 與 `website/assets/en/` 使用同一批計時及統計素材（`export-website.py` 匯出）。網站首屏採暖瓷白，形態展示保留玻璃；分類介紹採統計畫面配文，成果卡介紹直接使用 App 原有 `RecapCardRenderer` 匯出的 `recap-square.png`（1080×1080）與 `recap-portrait.png`（1080×1920），不含預覽視窗及操作按鈕。README 分類區以統計總覽與分類詳情構圖，成果卡區使用與網站相同的純卡片來源。v0.3.4 的原始 PNG、拍攝副本、工具與對照圖保留於 `build/screenshots-20261115/`，取代前幾輪的產品展示素材。
+產品截圖採用彩色漸層背景，中英文各十二張：玻璃及暖瓷白主視窗、三尺寸懸浮窗、瀏海島收合／展開、超時、分類統計、分類詳情，以及方形／直式成果卡預覽。`docs/images/en/` 與 `zh-Hant/` 保存供 README 使用的 JPEG 與展示拼圖。`website/assets/` 與 `website/assets/en/` 是網站素材，和 README 出自同一批 v0.3.4 擷取：`build/screenshots-20261115/` 的 `prepare-images.py` 輸出 README 用圖，`export-website.py` 輸出網站用圖。首屏舞台使用不含背景的暖瓷白單獨視窗 `window-main.jpg`、`window-floating.png` 與 `window-notch.png`；形態展示保留玻璃；成果卡介紹直接使用 App 原有 `RecapCardRenderer` 匯出的 `recap-square.png`（1080×1080）與 `recap-portrait.png`（1080×1920），不含預覽視窗及操作按鈕。README 分類區以統計總覽與分類詳情構圖，成果卡區使用與網站相同的純卡片來源。v0.3.4 的原始 PNG、拍攝副本、工具與對照圖保留於 `build/screenshots-20261115/`，取代前幾輪的產品展示素材。
 
 拍攝從 v0.3.4 來源重建（`stage.py` 把固定狀態寫進 `staged/` 副本，每個修改點都要求原文只出現一次），使用不同 bundle id、隔離設定與記憶體專注紀錄。只在 `staged/` 副本設定固定時鐘、畫面入口、隱藏首次引導、停用提示音與全域快速鍵；倒數固定為 18:42，超時固定為 +03:17。`backdrop.swift` 開啟不接收滑鼠的彩色背景，不改系統桌布；`capture-all.py` 以 `screencapture` 擷取真實視窗及陰影，完成後結束拍攝 App、背景與保持喚醒程序。展示的七日次數為 `[5,7,4,8,6,3,4]`、每次 25 分鐘，依序分配給深度工作、閱讀、深度工作、學習、未分類（每日循環），英文使用 Deep Work、Reading、Learning。資料只存在拍攝副本的記憶體，README 與網站在圖片旁明示其用途。
 
@@ -163,13 +163,19 @@ Debug App 加 `--render-frames <輸出資料夾> undo-` 可輸出復原膠囊在
 
 ## 產品介紹頁
 
-`website/` 是可獨立託管的靜態介紹頁，包含 HTML、CSS、少量原生 JavaScript 與複製自 `docs/images/` 的品牌及 App 截圖，不需要安裝前端套件或建置。從專案根目錄預覽：
+`website/` 是可獨立託管的靜態介紹頁，包含 HTML、CSS、少量原生 JavaScript 與品牌及 App 截圖，不需要安裝前端套件或建置。從專案根目錄預覽：
 
 ```sh
 uv run python -m http.server 4173 --bind 127.0.0.1 --directory website
 ```
 
-開啟 `http://127.0.0.1:4173/`。形態展示支援點擊、方向鍵與 Home／End；FAQ 使用原生 `details`。修改後檢查桌面與手機版面、圖片載入、頁內錨點與 Ko-fi 連結。
+開啟 `http://127.0.0.1:4173/`。FAQ 使用原生 `details`。修改後檢查桌面與手機版面、圖片載入、頁內錨點與 Ko-fi 連結。
+
+首屏、超時與統計三處的 `.clip` 已以 `data-video` 與 `data-video-en` 接入 `website/assets/demos/{zh-Hant,en}/{forms,overtime,stats}.mp4`。`script.js` 在畫面內自動靜音循環、離開畫面時暫停，並提供暫停按鈕；系統開啟減少動態效果時不自動播放，由訪客按下才播；切換語言時換片；載入失敗則留下靜態畫面。首屏容器比例為 83:54，影片以 contain 保留完整 App 畫面與字幕；另外兩處為 4:5。
+
+短片以 OpenScreen 錄製與剪輯，只擷取 App 視窗，再套其內建 `wallpaper11.jpg` 背景，不收錄真實桌面或其他工作 App，也不製作假的選單列。首屏分段展示主視窗、懸浮窗與瀏海島；單視窗錄影無法跨越不同原生視窗，故以三段素材組合。超時展示從倒數到零、繼續計時至按完成；統計展示分類詳情與成果卡。關閉額外陰影，以圓角遮罩及內容裁切消除來源透明區壓成黑色的邊角。畫面來自 v0.2.6 隔離副本，展示紀錄只在記憶體；倒數以真實時間推進，未加速。
+
+現行來源對照、OpenScreen 文件快照、原始匯出與小尺寸／15fps GIF 位於 `build/website-demo-20261106/`，不部署；拍攝副本與超時、統計原始來源保留於 `build/website-demo-20261105/`。網站 MP4 以 FFmpeg 重新編碼為 H.264／yuv420p（CRF 24），移除音軌並加入 faststart，保留原始匯出供比對。
 
 正式託管使用 GitHub Pages：`.github/workflows/pages.yml` 在 `main` 的 `website/` 或 workflow 變更時，只上傳 `website/` 並部署；也可手動觸發。不部署 App 原始碼、開發文件或本機建置產物。網站網址為 `https://latteine1217.github.io/ripen/`。
 
