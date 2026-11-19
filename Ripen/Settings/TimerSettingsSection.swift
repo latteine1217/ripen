@@ -36,7 +36,7 @@ struct TimerSettingsSection: View {
         steppedRow(title, value: value, in: AppSettings.phaseMinutesRange, unit: Text("min")) { Text("\($0) min") }
     }
 
-    /// 標題在左；右側依序為可直接輸入的數字欄、步進器與單位，符合系統設定的版面。
+    /// 標題在左；右側依序為可直接輸入的數字欄、步進器與單位，符合系統設定的版面。`unit` 為 nil 時單位欄留白但保留寬度。
     /// 輸入超出範圍的值由 `AppSettings` 寫入時夾回（見 `TimerSettings.swift`），不另顯示錯誤。
     /// `spokenValue` 是步進器給 VoiceOver 的目前值（含單位），數字欄則由自身內容朗讀。
     private func steppedRow(
@@ -51,6 +51,9 @@ struct TimerSettingsSection: View {
                     .accessibilityValue(spokenValue(value.wrappedValue))
                 if let unit {
                     unit.foregroundStyle(.secondary)
+                } else {
+                    // 沒有單位的列以隱藏的分鐘單位佔位，數字欄才會與其他列對齊（各語言寬度一致）
+                    Text("min").hidden().accessibilityHidden(true)
                 }
             }
         }
