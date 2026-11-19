@@ -36,8 +36,3 @@ struct EndCaptionText: View {
         }
     }
 }
-
-extension AppModel {
-    /// 目前階段已過的比例 0…1；進度圈與進度條共用。
-    var phaseProgress: Double { display.phaseProgress }
-}
