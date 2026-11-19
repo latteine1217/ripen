@@ -93,6 +93,9 @@ jobs:
           fi
           git -C "$TAP_DIR" diff
       - name: Check cask
+        env:
+          # 未驗證的 runner 共用每小時 60 次的 GitHub API 額度，audit --online 會因額度用完而失敗
+          HOMEBREW_GITHUB_API_TOKEN: ${{ github.token }}
         run: |
           brew style --cask latteine1217/tap/ripen
           brew audit --cask --online latteine1217/tap/ripen
