@@ -59,6 +59,9 @@ final class AppModel {
     /// 完成摘要；由 `refresh()` 收起。
     var completionSummary: CompletedFocus? { run.completionSummary }
     var recapShortcut: CompletedFocus? { run.recapShortcut }
+    /// 完成摘要與成果卡入口所屬的分類；nil 是未分類，或分類已被刪除。畫面不必自己以識別碼查詢紀錄。
+    var completionSummaryProject: FocusProject? { completionSummary.flatMap { focusLog.project(withID: $0.projectID) } }
+    var recapShortcutProject: FocusProject? { recapShortcut.flatMap { focusLog.project(withID: $0.projectID) } }
     /// 緊接專注的休息期間、完成摘要已收起；拖出圓環的一次性提示在這時出現，不擋住摘要（#40）。
     var isRestingAfterFocus: Bool { recapShortcut != nil && completionSummary == nil }
 

@@ -73,7 +73,7 @@ struct TimerPageView: View {
     @ViewBuilder
     private var completionSummary: some View {
         if let summary = model.completionSummary {
-            CompletionSummaryView(summary: summary, project: model.focusLog.project(withID: summary.projectID))
+            CompletionSummaryView(summary: summary, project: model.completionSummaryProject)
                 .transition(reduceMotion ? .opacity : .opacity.combined(with: .scale(scale: 0.92)))
         }
     }
@@ -91,7 +91,7 @@ struct TimerPageView: View {
                         .foregroundStyle(palette.secondary)
                         .accessibilityHidden(true)
                 }
-                RecapShortcutButton(project: model.focusLog.project(withID: shortcut.projectID)) {
+                RecapShortcutButton(project: model.recapShortcutProject) {
                     recapProjectID = .some(shortcut.projectID)
                 }
             }

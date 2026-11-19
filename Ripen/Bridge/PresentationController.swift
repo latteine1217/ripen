@@ -29,7 +29,8 @@ final class PresentationController {
         floating = FloatingWindowController(model: model, presentation: presentation, transitions: transitions)
         dragTracker = MainWindowDragTracker(model: model, presentation: presentation, mainWindow: mainWindow)
         tearOff = TearOffController(
-            model: model, presentation: presentation, mainWindow: mainWindow, floating: floating, transitions: transitions)
+            settings: model.settings, tint: { model.displayTint }, presentation: presentation, mainWindow: mainWindow,
+            floating: floating, transitions: transitions)
         mainWindow.onClose = { [weak presentation] in presentation?.closeMainWindow() }
         mainWindow.onMiniaturize = { [weak presentation] in presentation?.minimizeMainWindow() }
         observe()

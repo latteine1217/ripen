@@ -21,7 +21,9 @@ final class TearOffController {
     /// 拖曳中，或分身還在畫面上（彈回、落地中）；計時圓環在這段期間變淡。
     private(set) var isActive = false
 
-    @ObservationIgnored private let model: AppModel
+    @ObservationIgnored private let settings: AppSettings
+    /// 分身出現當下的階段色；只讀這一項，不依賴整個計時 model。
+    @ObservationIgnored private let tint: () -> Color
     @ObservationIgnored private let presentation: PresentationModel
     @ObservationIgnored private let mainWindow: MainWindowBridge
     @ObservationIgnored private let floating: FloatingWindowController
@@ -40,11 +42,12 @@ final class TearOffController {
     @ObservationIgnored private var landing: CGRect?
 
     init(
-        model: AppModel, presentation: PresentationModel, mainWindow: MainWindowBridge, floating: FloatingWindowController,
-        transitions: PresentationTransitions = PresentationTransitions()
+        settings: AppSettings, tint: @escaping () -> Color, presentation: PresentationModel, mainWindow: MainWindowBridge,
+        floating: FloatingWindowController, transitions: PresentationTransitions = PresentationTransitions()
     ) {
         self.transitions = transitions
-        self.model = model
+        self.settings = settings
+        self.tint = tint
         self.presentation = presentation
         self.mainWindow = mainWindow
         self.floating = floating
@@ -146,7 +149,7 @@ final class TearOffController {
         guard let screen = NSScreen.screens.first(where: { $0.frame.contains(mouse) }) ?? NSScreen.main else { return }
         let overlay = TransitionOverlay(screen: screen)
         operation?.use(overlay)
-        overlay.show(TearOffView(state: ghost, tint: model.displayTint, face: floating.makeGhost()))
+        overlay.show(TearOffView(state: ghost, tint: tint(), face: floating.makeGhost()))
     }
 
     private func cancelByEscape() {
@@ -171,7 +174,7 @@ final class TearOffController {
         landing = floating.tearOffFrame(centeredAt: drag.cursor)
         presentation.tearOffTimerRing()
         // 會拖出了，不必再提示（#40）
-        model.settings.markSeen(.ringTearOff)
+        settings.markSeen(.ringTearOff)
     }
 
     // MARK: - 放開

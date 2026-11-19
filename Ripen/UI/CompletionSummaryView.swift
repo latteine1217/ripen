@@ -110,7 +110,7 @@ struct CompletionOrEndCaption: View {
     var body: some View {
         ZStack {
             if let summary = model.completionSummary {
-                CompletionTotalCaption(summary: summary, project: model.focusLog.project(withID: summary.projectID))
+                CompletionTotalCaption(summary: summary, project: model.completionSummaryProject)
                     .transition(.opacity)
             } else {
                 EndCaptionText(caption: caption)
@@ -170,7 +170,7 @@ struct RecapIconButton: View {
 
     var body: some View {
         if let shortcut = model.recapShortcut {
-            let project = model.focusLog.project(withID: shortcut.projectID)
+            let project = model.recapShortcutProject
             let name = project?.name ?? String(localized: "Uncategorized")
             Button {
                 RecapWindow.shared.open(projectID: shortcut.projectID)
