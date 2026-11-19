@@ -4,6 +4,16 @@ Notable changes to Ripen. The format follows [Keep a Changelog](https://keepacha
 
 ## [Unreleased]
 
+## [0.3.5] - 2026-11-19
+
+### Changed
+
+- Internal restructuring with no change to how Ripen looks or behaves: timer actions, the time shown in the main window, floating window, notch island and menu bar, and every change to projects and focus records each go through a single module. The data format is unchanged, so existing data is used as is.
+
+### Fixed
+
+- If the project a focus session is being moved to is deleted while the edit is open, Save is disabled. Before, pressing it did nothing.
+
 ## [0.3.4] - 2026-11-12
 
 ### Added
@@ -160,7 +170,8 @@ The first release of Ripen, a native macOS Pomodoro timer in frosted glass.
 - Statistics for today and the last 7 days, stored only on your Mac.
 - **Check for Updates…**, which only goes online when you ask.
 
-[Unreleased]: https://github.com/latteine1217/ripen/compare/v0.3.4...HEAD
+[Unreleased]: https://github.com/latteine1217/ripen/compare/v0.3.5...HEAD
+[0.3.5]: https://github.com/latteine1217/ripen/compare/v0.3.4...v0.3.5
 [0.3.4]: https://github.com/latteine1217/ripen/compare/v0.3.3...v0.3.4
 [0.3.3]: https://github.com/latteine1217/ripen/compare/v0.3.1...v0.3.3
 [0.3.1]: https://github.com/latteine1217/ripen/compare/v0.3.0...v0.3.1

@@ -55,7 +55,7 @@ const englishTranslations = new Map(Object.entries({
   "留給 Ripen。": "starts with Ripen.",
   "免費使用，不需要帳號。": "Free to use. No account needed.",
   "安裝後可從 App 選單手動檢查更新。": "Once installed, check for updates from the app menu.",
-  "下載 Ripen 0.3.4": "Download Ripen 0.3.4",
+  "下載 Ripen 0.3.5": "Download Ripen 0.3.5",
   "適用系統": "Requires",
   "macOS 14 Sonoma 以上": "macOS 14 Sonoma or later",
   "支援晶片": "Processors",
